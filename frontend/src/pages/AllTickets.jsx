@@ -5,6 +5,7 @@ import {
   ChevronDown, ChevronUp, X, SlidersHorizontal,
   Layers, ArrowUpDown, LayoutList, LayoutGrid
 } from 'lucide-react';
+import { apiFetch } from '../services/api'; // Importação do apiFetch adicionada
 import './styles/AllTickets.css';
 
 /* ─── helpers ─────────────────────────────────────────────────── */
@@ -62,11 +63,12 @@ const AllTickets = () => {
   const [fDateTo,    setFDateTo]    = useState('');
 
   /* grouping & sort */
-  const [groupBy,  setGroupBy]  = useState('none');   // none | status | priority | category | solicitor | date
-  const [sortBy,   setSortBy]   = useState('date_desc'); // date_desc | date_asc | priority | id
+  const [groupBy,  setGroupBy]  = useState('none');
+  const [sortBy,   setSortBy]   = useState('date_desc'); 
 
   useEffect(() => {
-    fetch('/api/tickets')
+    // Correção: apiFetch com barra no final
+    apiFetch('/tickets/')
       .then(r => r.json())
       .then(data => { setTickets(data); setLoading(false); })
       .catch(() => setLoading(false));
@@ -102,7 +104,7 @@ const AllTickets = () => {
       if (sortBy === 'priority')   return (PRIORITY_WEIGHT[b.prioridade] ?? 0) - (PRIORITY_WEIGHT[a.prioridade] ?? 0);
       if (sortBy === 'date_asc')   return new Date(a.data_criacao) - new Date(b.data_criacao);
       if (sortBy === 'id')         return a.id - b.id;
-      return new Date(b.data_criacao) - new Date(a.data_criacao); // date_desc default
+      return new Date(b.data_criacao) - new Date(a.data_criacao);
     });
 
     return list;
@@ -130,7 +132,6 @@ const AllTickets = () => {
     return map;
   }, [filtered, groupBy]);
 
-  /* active filters count */
   const activeFilters = [fStatus, fPriority, fCategory, fSolicitor, fDateFrom, fDateTo].filter(Boolean).length;
 
   const clearFilters = () => {
@@ -173,7 +174,6 @@ const AllTickets = () => {
 
   return (
     <div className="at-container">
-      {/* ── TOP BAR ── */}
       <div className="at-topbar">
         <div className="at-title-block">
           <Ticket size={24} />
@@ -184,7 +184,6 @@ const AllTickets = () => {
         </div>
 
         <div className="at-controls">
-          {/* search */}
           <div className="at-search">
             <Search size={16} className="at-search-icon" />
             <input
@@ -196,7 +195,6 @@ const AllTickets = () => {
             {search && <button className="at-clear-search" onClick={() => setSearch('')}><X size={14} /></button>}
           </div>
 
-          {/* filter toggle */}
           <button
             className={`at-btn-filters ${filtersOpen ? 'open' : ''} ${activeFilters ? 'has-active' : ''}`}
             onClick={() => setFiltersOpen(p => !p)}
@@ -208,7 +206,6 @@ const AllTickets = () => {
         </div>
       </div>
 
-      {/* ── ACTIVE CHIPS ── */}
       {activeFilters > 0 && (
         <div className="at-chips">
           {fStatus    && <Chip label={`Status: ${STATUS_META[fStatus]?.label ?? fStatus}`} onRemove={() => setFStatus('')} />}
@@ -221,7 +218,6 @@ const AllTickets = () => {
         </div>
       )}
 
-      {/* ── FILTER PANEL ── */}
       {filtersOpen && (
         <div className="at-filter-panel">
           <div className="at-filter-grid">
@@ -272,7 +268,6 @@ const AllTickets = () => {
             </div>
           </div>
 
-          {/* grouping & sort row */}
           <div className="at-filter-row2">
             <div className="at-filter-group">
               <label><Layers size={13} /> Agrupar por</label>
@@ -299,7 +294,6 @@ const AllTickets = () => {
         </div>
       )}
 
-      {/* ── TABLE ── */}
       <div className="at-card">
         {filtered.length === 0 ? (
           <div className="at-empty">
@@ -324,9 +318,9 @@ const AllTickets = () => {
             </thead>
             <tbody>
               {Object.entries(grouped).map(([groupKey, groupTickets]) => (
-                <>
+                <React.Fragment key={`g-${groupKey}`}>
                   {groupBy !== 'none' && (
-                    <tr key={`g-${groupKey}`} className="at-group-row">
+                    <tr className="at-group-row">
                       <td colSpan={7}>
                         <button
                           className="at-group-toggle"
@@ -342,7 +336,7 @@ const AllTickets = () => {
                     </tr>
                   )}
                   {!collapsed[groupKey] && groupTickets.map(renderRow)}
-                </>
+                </React.Fragment>
               ))}
             </tbody>
           </table>

@@ -23,7 +23,8 @@ const Login = ({ setAuth }) => {
     try {
       const data = await login(email, password);
 
-      if (data.success) {
+      // Validação defensiva assegurando a integridade do objeto 'data'
+      if (data && data.success) {
         localStorage.setItem(
           'token',
           data.token
@@ -38,9 +39,10 @@ const Login = ({ setAuth }) => {
 
         navigate('/');
       } else {
+        // Encadeamento opcional (?.) atua como contingência para objetos nulos
         setErro(
-          data.message ||
-          'Usuário ou senha inválidos.'
+          data?.message ||
+          'Usuário ou senha inválidos. Ou não foi possível obter resposta do servidor.'
         );
       }
 

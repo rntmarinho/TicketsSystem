@@ -1,17 +1,18 @@
 import { apiFetch } from './api';
 
 export async function getTickets() {
-  const response = await apiFetch('/api/tickets');
+  // A barra final previne o erro 308 de redirecionamento
+  const response = await apiFetch('/tickets/');
   return await response.json();
 }
 
 export async function getTicket(id) {
-  const response = await apiFetch(`/api/tickets/${id}`);
+  const response = await apiFetch(`/tickets/${id}`);
   return await response.json();
 }
 
 export async function createTicket(data) {
-  const response = await apiFetch('/api/tickets', {
+  const response = await apiFetch('/tickets/', {
     method: 'POST',
     body: JSON.stringify(data)
   });
@@ -19,7 +20,7 @@ export async function createTicket(data) {
 }
 
 export async function updateTicket(id, data) {
-  const response = await apiFetch(`/api/tickets/${id}`, {
+  const response = await apiFetch(`/tickets/${id}`, {
     method: 'PUT',
     body: JSON.stringify(data)
   });
@@ -27,14 +28,14 @@ export async function updateTicket(id, data) {
 }
 
 export async function deleteTicket(id) {
-  const response = await apiFetch(`/api/tickets/${id}`, {
+  const response = await apiFetch(`/tickets/${id}`, {
     method: 'DELETE'
   });
   return await response.json();
 }
 
 export async function updateStatus(id, status) {
-  const response = await apiFetch(`/api/tickets/${id}/status`, {
+  const response = await apiFetch(`/tickets/${id}/status`, {
     method: 'PUT',
     body: JSON.stringify({ status })
   });
@@ -42,22 +43,14 @@ export async function updateStatus(id, status) {
 }
 
 export async function getMessages(ticketId) {
-  const response = await apiFetch(`/api/tickets/${ticketId}/messages`);
+  const response = await apiFetch(`/tickets/${ticketId}/messages`);
   return await response.json();
 }
 
 export async function sendMessage(ticketId, data) {
-  const response = await apiFetch(`/api/tickets/${ticketId}/messages`, {
+  const response = await apiFetch(`/tickets/${ticketId}/messages`, {
     method: 'POST',
     body: JSON.stringify(data)
-  });
-  return await response.json();
-}
-
-export async function mergeTicket(parentId, filhoId) {
-  const response = await apiFetch(`/api/tickets/${parentId}/merge`, {
-    method: 'POST',
-    body: JSON.stringify({ filho_id: filhoId })
   });
   return await response.json();
 }

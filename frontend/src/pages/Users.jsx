@@ -1,5 +1,3 @@
-// frontend/src/pages/Users.jsx
-
 import { useEffect, useState } from 'react';
 import {
   UserPlus,
@@ -12,6 +10,7 @@ import {
   Lock
 } from 'lucide-react';
 
+import { apiFetch } from '../services/api'; // Importação do apiFetch adicionada
 import './styles/Users.css';
 
 const Users = () => {
@@ -32,7 +31,8 @@ const Users = () => {
   }, []);
 
   const loadUsers = () => {
-    fetch('/api/users')
+    // Correção: apiFetch com barra no final
+    apiFetch('/users/')
       .then(res => res.json())
       .then(data => setUsers(data))
       .catch(err => console.error('Erro ao carregar usuários:', err));
@@ -77,13 +77,13 @@ const Users = () => {
         email: formData.email
       };
 
-      // só envia senha se preenchida
       if (formData.senha.trim() !== '') {
         payload.senha = formData.senha;
       }
 
-      const response = await fetch(
-        `/api/users/${selectedUser.id}`,
+      // Correção: apiFetch sem prefixo /api
+      const response = await apiFetch(
+        `/users/${selectedUser.id}`,
         {
           method: 'PUT',
           headers: {
@@ -118,7 +118,6 @@ const Users = () => {
       <header className="page-header">
         <div>
           <h1>Gestão de Usuários</h1>
-
           <p className="subtitle">
             Gerencie usuários, permissões e acessos do sistema.
           </p>
@@ -133,7 +132,6 @@ const Users = () => {
       <div className="users-toolbar">
         <div className="search-box">
           <Search size={18} />
-
           <input
             type="text"
             placeholder="Pesquisar usuários..."
@@ -154,7 +152,6 @@ const Users = () => {
               <th>Ações</th>
             </tr>
           </thead>
-
           <tbody>
             {filteredUsers.length > 0 ? (
               filteredUsers.map(user => (
@@ -164,20 +161,16 @@ const Users = () => {
                       <div className="user-avatar">
                         <User size={16} />
                       </div>
-
                       <span>{user.nome}</span>
                     </div>
                   </td>
-
                   <td>
                     <div className="user-email">
                       <Mail size={15} />
                       {user.email}
                     </div>
                   </td>
-
                   <td>{user.usuario}</td>
-
                   <td>
                     <span
                       className={`badge ${
@@ -187,13 +180,9 @@ const Users = () => {
                       }`}
                     >
                       <Shield size={14} />
-
-                      {user.solicitante === 'sim'
-                        ? 'Comum'
-                        : 'Técnico'}
+                      {user.solicitante === 'sim' ? 'Comum' : 'Técnico'}
                     </span>
                   </td>
-
                   <td>
                     <button
                       className="btn-edit"
@@ -216,8 +205,6 @@ const Users = () => {
         </table>
       </div>
 
-      {/* MODAL */}
-
       {isModalOpen && (
         <div className="modal-overlay">
           <div className="modal-content">
@@ -226,7 +213,6 @@ const Users = () => {
                 <h2>Editar Usuário</h2>
                 <p>Atualize os dados do usuário.</p>
               </div>
-
               <button
                 className="btn-close"
                 onClick={closeModal}
@@ -241,7 +227,6 @@ const Users = () => {
             >
               <div className="form-group">
                 <label>Nome</label>
-
                 <input
                   type="text"
                   name="nome"
@@ -253,7 +238,6 @@ const Users = () => {
 
               <div className="form-group">
                 <label>E-mail</label>
-
                 <input
                   type="email"
                   name="email"
@@ -265,10 +249,8 @@ const Users = () => {
 
               <div className="form-group">
                 <label>Nova Senha</label>
-
                 <div className="password-input">
                   <Lock size={16} />
-
                   <input
                     type="password"
                     name="senha"
@@ -287,7 +269,6 @@ const Users = () => {
                 >
                   Cancelar
                 </button>
-
                 <button
                   type="submit"
                   className="btn-save"

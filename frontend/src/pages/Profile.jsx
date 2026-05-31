@@ -1,5 +1,3 @@
-// frontend/src/pages/Profile.jsx
-
 import { useEffect, useState } from 'react';
 import {
   User,
@@ -9,7 +7,7 @@ import {
   Save,
   Camera
 } from 'lucide-react';
-
+import { apiFetch } from '../services/api'; // Importação do apiFetch adicionada
 import './styles/Profile.css';
 
 const Profile = () => {
@@ -20,10 +18,6 @@ const Profile = () => {
     email: '',
     senha: ''
   });
-
-  // =====================================================
-  // CARREGA USUÁRIO LOGADO
-  // =====================================================
 
   useEffect(() => {
     const loggedUser = JSON.parse(
@@ -43,18 +37,13 @@ const Profile = () => {
     }
   }, []);
 
-  // =====================================================
-  // BUSCA DADOS ATUALIZADOS DO USUÁRIO
-  // =====================================================
-
   const loadUserData = async (userId) => {
     try {
-      const response = await fetch(`/api/users/${userId}`);
-
+      // Correção: apiFetch sem prefixo /api
+      const response = await apiFetch(`/users/${userId}`);
       const data = await response.json();
 
       setUser(data);
-
       setFormData({
         nome: data.nome || '',
         email: data.email || '',
@@ -66,10 +55,6 @@ const Profile = () => {
     }
   };
 
-  // =====================================================
-  // HANDLE INPUT
-  // =====================================================
-
   const handleChange = (e) => {
     setFormData({
       ...formData,
@@ -77,27 +62,22 @@ const Profile = () => {
     });
   };
 
-  // =====================================================
-  // SALVAR ALTERAÇÕES
-  // =====================================================
-
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     try {
-
       const payload = {
         nome: formData.nome,
         email: formData.email
       };
 
-      // só envia senha se preenchida
       if (formData.senha.trim() !== '') {
         payload.senha = formData.senha;
       }
 
-      const response = await fetch(
-        `/api/users/${user.id}`,
+      // Correção: apiFetch sem prefixo /api
+      const response = await apiFetch(
+        `/users/${user.id}`,
         {
           method: 'PUT',
           headers: {
@@ -113,7 +93,6 @@ const Profile = () => {
 
       alert('Perfil atualizado com sucesso!');
 
-      // Atualiza localStorage
       const updatedUser = {
         ...user,
         nome: formData.nome,
@@ -134,14 +113,9 @@ const Profile = () => {
 
     } catch (error) {
       console.error(error);
-
       alert('Erro ao atualizar perfil.');
     }
   };
-
-  // =====================================================
-  // LOADING
-  // =====================================================
 
   if (!user) {
     return (
@@ -151,50 +125,33 @@ const Profile = () => {
     );
   }
 
-  // =====================================================
-  // RENDER
-  // =====================================================
-
   return (
     <div className="profile-page">
-
       <div className="profile-card">
-
-        {/* HEADER */}
-
         <div className="profile-header">
-
           <div className="profile-avatar">
             <User size={42} />
           </div>
 
           <div className="profile-info">
             <h1>{user.nome}</h1>
-
             <p>
               {user.solicitante === 'sim'
                 ? 'Usuário Comum'
                 : 'Técnico'}
             </p>
           </div>
-
         </div>
-
-        {/* FORM */}
 
         <form
           className="profile-form"
           onSubmit={handleSubmit}
         >
-
-          {/* NOME */}
-
           <div className="form-group">
             <label>
               <User size={16} />
               Nome
             </label>
-
             <input
               type="text"
               name="nome"
@@ -204,14 +161,11 @@ const Profile = () => {
             />
           </div>
 
-          {/* EMAIL */}
-
           <div className="form-group">
             <label>
               <Mail size={16} />
               E-mail
             </label>
-
             <input
               type="email"
               name="email"
@@ -221,14 +175,11 @@ const Profile = () => {
             />
           </div>
 
-          {/* NOVA SENHA */}
-
           <div className="form-group">
             <label>
               <Lock size={16} />
               Nova Senha
             </label>
-
             <input
               type="password"
               name="senha"
@@ -238,8 +189,6 @@ const Profile = () => {
             />
           </div>
 
-          {/* BOTÃO */}
-
           <button
             type="submit"
             className="btn-save-profile"
@@ -247,11 +196,8 @@ const Profile = () => {
             <Save size={18} />
             Salvar Alterações
           </button>
-
         </form>
-
       </div>
-
     </div>
   );
 };

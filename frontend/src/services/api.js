@@ -1,3 +1,7 @@
+// Constante que define o endereço absoluto da API backend. 
+// Para a implantação em produção, sugere-se migrar este valor para variáveis de ambiente.
+const API_BASE_URL = 'http://127.0.0.1:5000';
+
 export async function apiFetch(endpoint, options = {}) {
 
   const token = localStorage.getItem('token');
@@ -11,7 +15,8 @@ export async function apiFetch(endpoint, options = {}) {
     headers.Authorization = `Bearer ${token}`;
   }
 
-  const response = await fetch(endpoint, {
+  // Interpolação da URL base com o endpoint submetido na requisição
+  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     ...options,
     headers
   });

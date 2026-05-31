@@ -1,7 +1,7 @@
-// frontend/src/pages/CreateUser.jsx
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { UserPlus, ArrowLeft } from 'lucide-react';
+import { apiFetch } from '../services/api'; // Importação do apiFetch adicionada
 import './styles/CreateUser.css';
 
 const CreateUser = () => {
@@ -11,13 +11,14 @@ const CreateUser = () => {
     email: '',
     senha: '',
     nome: '',
-    solicitante: 'sim' // Padrão 'sim' para usuário comum 
+    solicitante: 'sim' 
   });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch('/api/users', {
+      // Correção: apiFetch com barra no final
+      const response = await apiFetch('/users/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)

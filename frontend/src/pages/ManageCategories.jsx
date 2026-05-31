@@ -1,20 +1,19 @@
-// Localização: frontend/src/pages/ManageCategories.jsx
-
 import React, { useState, useEffect } from 'react';
 import './styles/ManageCategories.css';
 import { Plus, Trash2, Tag } from 'lucide-react';
+import { apiFetch } from '../services/api'; // Importação do apiFetch adicionada
 
 const ManageCategories = () => {
   const [categories, setCategories] = useState([]);
   const [newCategory, setNewCategory] = useState('');
 
-  // 1. Função para carregar categorias do servidor
   const fetchCategories = async () => {
     try {
-      const response = await fetch('/api/categories');
+      // Correção: apiFetch com barra no final
+      const response = await apiFetch('/categories/');
       if (response.ok) {
         const data = await response.json();
-        setCategories(data); // Atualiza o estado com a lista vinda do banco
+        setCategories(data);
       }
     } catch (error) {
       console.error('Erro ao buscar categorias:', error);
@@ -30,7 +29,8 @@ const ManageCategories = () => {
     if (!newCategory.trim()) return;
 
     try {
-      const response = await fetch('/api/categories', {
+      // Correção: apiFetch com barra no final
+      const response = await apiFetch('/categories/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ nome: newCategory }),
@@ -38,14 +38,27 @@ const ManageCategories = () => {
 
       if (response.ok) {
         setNewCategory('');
-        fetchCategories(); // 2. Recarrega a lista imediatamente após o cadastro bem-sucedido
+        fetchCategories();
       }
     } catch (error) {
       console.error('Erro ao adicionar categoria:', error);
     }
   };
 
-  // ... restante do código (handleDelete)
+  // Correção: Lógica de exclusão que estava cortada no arquivo original
+  const handleDelete = async (id) => {
+    if (!window.confirm('Deseja realmente excluir esta categoria?')) return;
+    try {
+      const response = await apiFetch(`/categories/${id}`, {
+        method: 'DELETE'
+      });
+      if (response.ok) {
+        fetchCategories();
+      }
+    } catch (error) {
+      console.error('Erro ao excluir categoria:', error);
+    }
+  };
 
   return (
     <div className="category-container">

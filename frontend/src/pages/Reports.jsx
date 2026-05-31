@@ -6,13 +6,13 @@ import {
   ChevronDown, Download, RefreshCw, ArrowUp, ArrowDown,
   FileText, FileSpreadsheet, FileJson, X, Check
 } from 'lucide-react';
+import { apiFetch } from '../services/api'; // Importação do apiFetch adicionada
 import './styles/Reports.css';
 
 /* ─────────────────────────────────────────────
    UTILITÁRIOS DE EXPORTAÇÃO
 ───────────────────────────────────────────── */
 
-// Exportar como CSV
 const exportCSV = (tickets, metricas, periodoFiltro) => {
   const periodoLabel = {
     todos: 'Todo período',
@@ -22,11 +22,9 @@ const exportCSV = (tickets, metricas, periodoFiltro) => {
   }[periodoFiltro] || periodoFiltro;
 
   const linhas = [
-    // Cabeçalho do relatório
     [`Relatório de Chamados — ${periodoLabel}`],
     [`Gerado em: ${new Date().toLocaleString('pt-BR')}`],
     [],
-    // Seção: Resumo
     ['=== RESUMO GERAL ==='],
     ['Métrica', 'Valor'],
     ['Total de Chamados', metricas.total],
@@ -38,7 +36,6 @@ const exportCSV = (tickets, metricas, periodoFiltro) => {
     ['Baixa Prioridade', metricas.baixa],
     ['Taxa de Resolução (%)', metricas.taxaResolucao],
     [],
-    // Seção: Chamados
     ['=== CHAMADOS DETALHADOS ==='],
     ['ID', 'Assunto', 'Solicitante', 'Categoria', 'Prioridade', 'Status', 'Data Criação'],
     ...tickets.map(t => [
@@ -51,7 +48,6 @@ const exportCSV = (tickets, metricas, periodoFiltro) => {
       new Date(t.data_criacao).toLocaleString('pt-BR'),
     ]),
     [],
-    // Seção: Categorias
     ['=== POR CATEGORIA ==='],
     ['Categoria', 'Total', '% do Total'],
     ...metricas.categorias.map(c => [
@@ -60,7 +56,6 @@ const exportCSV = (tickets, metricas, periodoFiltro) => {
       metricas.total > 0 ? ((c.qtd / metricas.total) * 100).toFixed(1) + '%' : '0%',
     ]),
     [],
-    // Seção: Solicitantes
     ['=== POR SOLICITANTE ==='],
     ['Solicitante', 'Total', 'Fechados', 'Taxa de Resolução'],
     ...metricas.usuarios.map(u => [
@@ -76,7 +71,6 @@ const exportCSV = (tickets, metricas, periodoFiltro) => {
   downloadBlob(blob, `relatorio_chamados_${formatDateFilename()}.csv`);
 };
 
-// Exportar como JSON
 const exportJSON = (tickets, metricas, periodoFiltro) => {
   const payload = {
     meta: {
@@ -115,7 +109,6 @@ const exportJSON = (tickets, metricas, periodoFiltro) => {
   downloadBlob(blob, `relatorio_chamados_${formatDateFilename()}.json`);
 };
 
-// Exportar como PDF (via impressão do navegador com estilos customizados)
 const exportPDF = (tickets, metricas, periodoFiltro) => {
   const periodoLabel = {
     todos: 'Todo período',
@@ -281,7 +274,6 @@ const exportPDF = (tickets, metricas, periodoFiltro) => {
   }, 500);
 };
 
-// Helpers
 const downloadBlob = (blob, filename) => {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -298,15 +290,11 @@ const formatDateFilename = () => {
   return `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}_${String(d.getHours()).padStart(2, '0')}${String(d.getMinutes()).padStart(2, '0')}`;
 };
 
-/* ─────────────────────────────────────────────
-   COMPONENTE: MENU DE EXPORTAÇÃO
-───────────────────────────────────────────── */
 const ExportMenu = ({ onExport, loading }) => {
   const [open, setOpen] = useState(false);
-  const [exporting, setExporting] = useState(null); // 'pdf' | 'csv' | 'json'
+  const [exporting, setExporting] = useState(null); 
   const menuRef = useRef(null);
 
-  // Fecha ao clicar fora
   useEffect(() => {
     const handler = (e) => {
       if (menuRef.current && !menuRef.current.contains(e.target)) setOpen(false);
@@ -318,7 +306,7 @@ const ExportMenu = ({ onExport, loading }) => {
   const handleExport = async (format) => {
     setExporting(format);
     setOpen(false);
-    await new Promise(r => setTimeout(r, 300)); // feedback visual
+    await new Promise(r => setTimeout(r, 300)); 
     onExport(format);
     setTimeout(() => setExporting(null), 1500);
   };
@@ -377,10 +365,6 @@ const ExportMenu = ({ onExport, loading }) => {
   );
 };
 
-/* ─────────────────────────────────────────────
-   COMPONENTES AUXILIARES (sem alteração)
-───────────────────────────────────────────── */
-
 const DonutChart = ({ percentage, color, size = 80 }) => {
   const r = 28;
   const circumference = 2 * Math.PI * r;
@@ -434,9 +418,6 @@ const KpiCard = ({ title, value, subtitle, icon: Icon, color, trend, trendUp }) 
   </div>
 );
 
-/* ─────────────────────────────────────────────
-   COMPONENTE PRINCIPAL
-───────────────────────────────────────────── */
 const Reports = () => {
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -446,7 +427,8 @@ const Reports = () => {
 
   const fetchData = () => {
     setRefreshing(true);
-    fetch('/api/tickets')
+    // Correção: apiFetch com barra no final para as listagens
+    apiFetch('/tickets/')
       .then(res => res.json())
       .then(data => {
         setTickets(data);
@@ -525,7 +507,6 @@ const Reports = () => {
       taxaResolucao, pendentes, categorias, usuarios, porDia, maxDia };
   }, [ticketsFiltrados]);
 
-  // ── Handler de exportação ──────────────────
   const handleExport = (format) => {
     if (format === 'csv') exportCSV(ticketsFiltrados, metricas, periodoFiltro);
     if (format === 'json') exportJSON(ticketsFiltrados, metricas, periodoFiltro);
@@ -552,8 +533,6 @@ const Reports = () => {
 
   return (
     <div className="rp-container">
-
-      {/* ── CABEÇALHO ─────────────────────────── */}
       <header className="rp-header">
         <div className="rp-title-block">
           <h1>Central de Relatórios</h1>
@@ -577,12 +556,10 @@ const Reports = () => {
             Atualizar
           </button>
 
-          {/* ✅ NOVO: Menu de exportação */}
           <ExportMenu onExport={handleExport} loading={loading} />
         </div>
       </header>
 
-      {/* ── TABS ──────────────────────────────── */}
       <nav className="rp-tabs">
         {tabs.map(tab => (
           <button
@@ -596,9 +573,6 @@ const Reports = () => {
         ))}
       </nav>
 
-      {/* ══════════════════════════════════════
-          TAB: VISÃO GERAL
-      ══════════════════════════════════════ */}
       {activeTab === 'geral' && (
         <div className="rp-fade">
           <div className="kpi-grid">
@@ -722,9 +696,6 @@ const Reports = () => {
         </div>
       )}
 
-      {/* ══════════════════════════════════════
-          TAB: EVOLUÇÃO TEMPORAL
-      ══════════════════════════════════════ */}
       {activeTab === 'tempo' && (
         <div className="rp-fade">
           <div className="rp-card">
@@ -817,9 +788,6 @@ const Reports = () => {
         </div>
       )}
 
-      {/* ══════════════════════════════════════
-          TAB: CATEGORIAS
-      ══════════════════════════════════════ */}
       {activeTab === 'categorias' && (
         <div className="rp-fade">
           <div className="rp-row">
@@ -936,9 +904,6 @@ const Reports = () => {
         </div>
       )}
 
-      {/* ══════════════════════════════════════
-          TAB: EQUIPE
-      ══════════════════════════════════════ */}
       {activeTab === 'equipe' && (
         <div className="rp-fade">
           <div className="kpi-grid">

@@ -1,25 +1,26 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Send, ArrowLeft, Info, Users, Tag } from 'lucide-react';
+import { apiFetch } from '../services/api'; // Importação do apiFetch adicionada
 import './styles/NewTicket.css';
 
 const NewTicket = () => {
   const navigate = useNavigate();
   const [users, setUsers] = useState([]); 
-  const [categories, setCategories] = useState([]); // Novo estado para categorias dinâmicas
+  const [categories, setCategories] = useState([]); 
   
   const [formData, setFormData] = useState({
     assunto: '',
     descricao: '',
     prioridade: 'baixa',
-    categoria: '', // Alterado para id_categoria para refletir o banco
+    id_categoria: '', // Variável id_categoria padronizada
     status: 'aberto',
     usuario_id: '' 
   });
 
   useEffect(() => {
-    // 1. Carregar lista de usuários
-    fetch('/api/users')
+    // Correção: apiFetch com barra no final para as listagens
+    apiFetch('/users/')
       .then(res => res.json())
       .then(data => {
         setUsers(data);
@@ -30,8 +31,7 @@ const NewTicket = () => {
       })
       .catch(err => console.error("Erro ao carregar usuários:", err));
 
-    // 2. Carregar lista de categorias dinâmicas da tbl_categorias
-    fetch('/api/categories')
+    apiFetch('/categories/')
       .then(res => res.json())
       .then(data => {
         setCategories(Array.isArray(data) ? data : []);
@@ -42,7 +42,8 @@ const NewTicket = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch('/api/tickets', {
+      // Correção: apiFetch com barra no final
+      const response = await apiFetch('/tickets/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)

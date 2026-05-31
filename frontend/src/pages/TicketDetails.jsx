@@ -1,10 +1,10 @@
-// frontend/src/pages/TicketDetails.jsx
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, Save, Calendar, User, Info, Tag,
   AlertCircle, Clock, Trash2, GitMerge, Send, MessageSquare, X
 } from 'lucide-react';
+import { apiFetch } from '../services/api'; // Importação do apiFetch adicionada
 import './styles/TicketDetails.css';
 
 /* ─── componente de modal de fusão ─────────────────────────────────────── */
@@ -61,7 +61,8 @@ const NewMessageForm = ({ ticketId, currentUser, onMessageSent }) => {
     if (!texto.trim()) return;
     setSending(true);
     try {
-      const res = await fetch(`/api/tickets/${ticketId}/messages`, {
+      // Correção: apiFetch sem prefixo /api
+      const res = await apiFetch(`/tickets/${ticketId}/messages`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ autor: currentUser?.nome ?? 'Técnico', conteudo: texto }),
@@ -115,14 +116,14 @@ const TicketDetails = () => {
     usuario_id: ''
   });
 
-  /* carrega tudo em paralelo */
   useEffect(() => {
+    // Correção: apiFetch com barra no final em rotas raiz e remoção do /api
     Promise.all([
-      fetch(`/api/tickets/${id}`).then(r => r.json()),
-      fetch('/api/users').then(r => r.json()),
-      fetch('/api/categories').then(r => r.json()),
-      fetch('/api/tickets').then(r => r.json()),
-      fetch(`/api/tickets/${id}/messages`).then(r => r.json()),
+      apiFetch(`/tickets/${id}`).then(r => r.json()),
+      apiFetch('/users/').then(r => r.json()),
+      apiFetch('/categories/').then(r => r.json()),
+      apiFetch('/tickets/').then(r => r.json()),
+      apiFetch(`/tickets/${id}/messages`).then(r => r.json()),
     ]).then(([ticketData, userData, categoryData, allData, msgData]) => {
       setFormData({ ...ticketData, categoria: ticketData.categoria });
       setUsers(userData);
@@ -136,16 +137,17 @@ const TicketDetails = () => {
     });
   }, [id]);
 
-  /* recarrega só as mensagens (após envio ou fusão) */
   const reloadMessages = () => {
-    fetch(`/api/tickets/${id}/messages`)
+    // Correção: apiFetch sem prefixo /api
+    apiFetch(`/tickets/${id}/messages`)
       .then(r => r.json())
       .then(data => setMessages(Array.isArray(data) ? data : []));
   };
 
   const handleSave = async () => {
     try {
-      const res = await fetch(`/api/tickets/${id}`, {
+      // Correção: apiFetch sem prefixo /api
+      const res = await apiFetch(`/tickets/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
@@ -164,7 +166,8 @@ const TicketDetails = () => {
   const handleDelete = async () => {
     if (!window.confirm('Tem certeza que deseja excluir este chamado permanentemente?')) return;
     try {
-      const res = await fetch(`/api/tickets/${id}`, { method: 'DELETE' });
+      // Correção: apiFetch sem prefixo /api
+      const res = await apiFetch(`/tickets/${id}`, { method: 'DELETE' });
       if (res.ok) {
         alert('Chamado excluído com sucesso!');
         navigate('/');
@@ -176,10 +179,10 @@ const TicketDetails = () => {
     }
   };
 
-  /* fusão: o chamado atual é o PAI, filho_id vem do modal */
   const handleMergeConfirm = async (filhoId) => {
     try {
-      const res = await fetch(`/api/tickets/${id}/merge`, {
+      // Correção: apiFetch sem prefixo /api
+      const res = await apiFetch(`/tickets/${id}/merge`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ filho_id: filhoId }),
@@ -189,7 +192,6 @@ const TicketDetails = () => {
         alert(data.message);
         setShowMergeModal(false);
         reloadMessages();
-        // atualiza lista de chamados (filho sumiu)
         setAllTickets(prev => prev.filter(t => t.id !== filhoId));
       } else {
         alert('Erro: ' + data.message);
@@ -237,16 +239,13 @@ const TicketDetails = () => {
       </header>
 
       <div className="details-grid">
-        {/* ── coluna principal ─────────────────────────────────────────── */}
         <main className="main-content">
-          {/* descrição original */}
           <div className="static-card">
             <label className="section-label"><Info size={16} /> Detalhes do Chamado</label>
             <h2 className="static-subject">{formData.assunto}</h2>
             <div className="static-description">{formData.descricao}</div>
           </div>
 
-          {/* fio de mensagens */}
           <div className="messages-section">
             <h3 className="messages-title">
               <MessageSquare size={18} /> Histórico ({messages.length})
@@ -270,7 +269,6 @@ const TicketDetails = () => {
                     {new Date(msg.criado_em).toLocaleString('pt-BR')}
                   </span>
                 </div>
-                {/* renderiza quebras de linha e o marcador simples de negrito */}
                 <div className="message-body">
                   {msg.conteudo.split('\n').map((line, i) => (
                     <p key={i}>{line}</p>
@@ -287,7 +285,6 @@ const TicketDetails = () => {
           </div>
         </main>
 
-        {/* ── barra lateral ─────────────────────────────────────────────── */}
         <aside className="sidebar-info">
           <div className="info-group">
             <button onClick={handleSave} className="btn-save">

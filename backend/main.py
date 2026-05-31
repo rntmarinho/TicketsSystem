@@ -10,6 +10,10 @@ from users.user_routes import user_bp
 from clients.client_routes import client_bp
 from tickets.ticket_routes import ticket_bp
 
+# Importação dos blueprints de categorias e prioridades (Ajuste caso o caminho seja diferente)
+from tickets.categories.category_routes import category_bp
+from tickets.priorities.priority_routes import priority_bp
+
 from services.email_service import iniciar_daemon_email
 
 from flask_cors import CORS
@@ -20,6 +24,9 @@ load_dotenv()
 def create_app():
 
     app = Flask(__name__)
+
+    # Inicialização do CORS para permitir requisições cross-origin (preflight OPTIONS)
+    CORS(app)
 
     # JWT
     app.config["JWT_SECRET_KEY"] = os.getenv(
@@ -35,10 +42,12 @@ def create_app():
 
     jwt = JWTManager(app)
 
-    # Blueprints
+    # Blueprints - Registro de todas as rotas da aplicação
     app.register_blueprint(user_bp)
     app.register_blueprint(client_bp)
     app.register_blueprint(ticket_bp)
+    app.register_blueprint(category_bp) # Registro das rotas de categorias
+    app.register_blueprint(priority_bp) # Registro das rotas de prioridades
 
     # Health Check
     @app.route("/", methods=["GET"])

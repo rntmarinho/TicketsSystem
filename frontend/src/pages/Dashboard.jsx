@@ -1,6 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Plus } from 'lucide-react'; 
 import { Link } from 'react-router-dom';
+
+// IMPORTANTE: Utilização do serviço com autenticação integrada
+import { getTickets } from '../services/ticketService'; 
+
 import './styles/Dashboard.css';
 
 const Dashboard = () => {
@@ -8,9 +12,8 @@ const Dashboard = () => {
   const [stats, setStats] = useState({ aberto: 0, atendimento: 0, fechado: 0 });
 
   useEffect(() => {
-    // Busca os tickets do backend (Flask)
-    fetch('api/tickets')
-      .then(res => res.json())
+    // A função getTickets() processa a rota correta e anexa o JWT
+    getTickets()
       .then(data => {
         setTickets(data);
         
@@ -44,9 +47,18 @@ const Dashboard = () => {
       </header>
 
       <section className="stats-cards">
-        <div className="card"><h3>{stats.aberto}</h3><p>Em Aberto</p></div>
-        <div className="card warning"><h3>{stats.atendimento}</h3><p>Em Atendimento</p></div>
-        <div className="card success"><h3>{stats.fechado}</h3><p>Fechados</p></div>
+        <div className="card">
+          <h3>{stats.aberto}</h3>
+          <p>Abertos</p>
+        </div>
+        <div className="card">
+          <h3>{stats.atendimento}</h3>
+          <p>Em Atendimento</p>
+        </div>
+        <div className="card">
+          <h3>{stats.fechado}</h3>
+          <p>Fechados</p>
+        </div>
       </section>
 
       <div>
