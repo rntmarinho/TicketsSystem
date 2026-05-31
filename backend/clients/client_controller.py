@@ -1,0 +1,69 @@
+from clients.client_model import ClientModel
+
+
+class ClientController:
+
+    @staticmethod
+    def create_client(data):
+
+        required = [
+            "cnpj",
+            "razao",
+            "email",
+            "contact"
+        ]
+
+        for field in required:
+            if field not in data:
+                return {
+                    "success": False,
+                    "message": f"Campo '{field}' obrigatório."
+                }, 400
+
+        client_id = ClientModel.create(data)
+
+        return {
+            "success": True,
+            "message": "Cliente criado com sucesso.",
+            "id": client_id
+        }, 201
+
+    @staticmethod
+    def list_clients():
+
+        clients = ClientModel.get_all()
+
+        result = []
+
+        for client in clients:
+
+            result.append({
+                "id": client[0],
+                "cnpj": client[1],
+                "razao": client[2],
+                "email": client[3],
+                "contact": client[4],
+                "situation": client[5]
+            })
+
+        return result
+
+    @staticmethod
+    def update_client(client_id, data):
+
+        ClientModel.update(client_id, data)
+
+        return {
+            "success": True,
+            "message": "Cliente atualizado com sucesso."
+        }
+
+    @staticmethod
+    def delete_client(client_id):
+
+        ClientModel.delete(client_id)
+
+        return {
+            "success": True,
+            "message": "Cliente inativado com sucesso."
+        }

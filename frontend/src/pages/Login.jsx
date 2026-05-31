@@ -1,0 +1,123 @@
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { LogIn } from 'lucide-react';
+
+import { login } from '../services/authService';
+
+import './styles/Login.css';
+
+const Login = ({ setAuth }) => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [erro, setErro] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const navigate = useNavigate();
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+
+    setErro('');
+    setLoading(true);
+
+    try {
+      const data = await login(email, password);
+
+      if (data.success) {
+        localStorage.setItem(
+          'token',
+          data.token
+        );
+
+        localStorage.setItem(
+          'user',
+          JSON.stringify(data.user)
+        );
+
+        setAuth(true);
+
+        navigate('/');
+      } else {
+        setErro(
+          data.message ||
+          'Usuário ou senha inválidos.'
+        );
+      }
+
+    } catch (error) {
+      console.error('Erro no login:', error);
+
+      setErro(
+        error.message ||
+        'Não foi possível conectar ao servidor.'
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="login-container">
+      <div className="login-card">
+
+        <div className="login-header">
+          <h1>Sistema de Chamados</h1>
+          <p>Faça login para acessar o sistema</p>
+        </div>
+
+        <form onSubmit={handleLogin}>
+
+          <div className="form-group">
+            <label>E-mail</label>
+
+            <input
+              type="email"
+              placeholder="Digite seu e-mail"
+              value={email}
+              onChange={(e) =>
+                setEmail(e.target.value)
+              }
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Senha</label>
+
+            <input
+              type="password"
+              placeholder="Digite sua senha"
+              value={password}
+              onChange={(e) =>
+                setPassword(e.target.value)
+              }
+              required
+            />
+          </div>
+
+          {erro && (
+            <div className="error-message">
+              {erro}
+            </div>
+          )}
+
+          <button
+            type="submit"
+            className="btn-login"
+            disabled={loading}
+          >
+            <LogIn size={18} />
+
+            {loading
+              ? 'Entrando...'
+              : 'Entrar'}
+          </button>
+
+        </form>
+
+      </div>
+    </div>
+  );
+};
+
+export default Login;

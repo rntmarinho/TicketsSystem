@@ -1,0 +1,27 @@
+.sidebar {
+  width: 260px;
+  min-width: 260px;
+  background: #21967d;
+  color: white;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #a2a3b7;
+  text-decoration: none;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 5px;
+}
+
+.nav-item.active, .nav-item:hover {
+  background: #21967d;
+  color: white;
+}
+
