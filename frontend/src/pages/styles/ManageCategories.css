@@ -1,85 +1,156 @@
-/* frontend/src/pages/styles/ManageCategories.css */
-
+/* Container Principal */
 .category-container {
-  padding: 2rem;
-  max-width: 800px;
-  margin: 0 auto;
+  max-width: 900px;
+  margin: 40px auto;
+  padding: 24px;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
 }
 
+/* Título */
 .category-container h1 {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  color: #333;
-  margin-bottom: 2rem;
+  gap: 10px;
+  color: #1f2937;
+  font-size: 1.8rem;
+  margin-bottom: 24px;
 }
 
+/* Formulário */
 .add-category-form {
   display: flex;
-  gap: 1rem;
-  margin-bottom: 2rem;
-  background: white;
-  padding: 1.5rem;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 30px;
 }
 
-.add-category-form input {
+.add-category-form input,
+.add-category-form select {
   flex: 1;
-  padding: 0.75rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 1rem;
+  min-width: 220px;
+  padding: 12px 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
 }
 
+.add-category-form input:focus,
+.add-category-form select:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+/* Botão Adicionar */
 .add-category-form button {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.5rem;
-  background-color: #2563eb;
-  color: white;
+  gap: 8px;
+  padding: 12px 20px;
+  background: #2563eb;
+  color: #ffffff;
   border: none;
-  border-radius: 4px;
+  border-radius: 10px;
+  font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: all 0.3s ease;
 }
 
 .add-category-form button:hover {
-  background-color: #1d4ed8;
+  background: #1d4ed8;
+  transform: translateY(-1px);
 }
 
+/* Lista */
 .category-list {
-  display: grid;
-  gap: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
+/* Item */
 .category-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  padding: 16px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  transition: all 0.3s ease;
 }
 
-.category-item span {
-  font-weight: 500;
-  color: #4b5563;
+.category-item:hover {
+  background: #f3f4f6;
+  border-color: #cbd5e1;
+  transform: translateY(-2px);
 }
 
+/* Nome da categoria */
+.category-item span:first-child {
+  color: #111827;
+  font-size: 1rem;
+}
+
+/* Texto da prioridade */
+.category-item span:last-child {
+  margin-top: 4px;
+  color: #6b7280;
+}
+
+/* Botão excluir */
 .btn-del {
-  padding: 0.5rem;
-  color: #ef4444;
-  background: transparent;
-  border: 1px solid #fee2e2;
-  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border: none;
+  border-radius: 10px;
+  background: #fee2e2;
+  color: #dc2626;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.3s ease;
 }
 
 .btn-del:hover {
-  background-color: #fef2f2;
-  border-color: #fca5a5;
+  background: #fecaca;
+  transform: scale(1.05);
+}
+
+/* Mensagem vazia */
+.category-list p {
+  text-align: center;
+  color: #6b7280;
+  padding: 20px;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .category-container {
+    margin: 20px;
+    padding: 20px;
+  }
+
+  .add-category-form {
+    flex-direction: column;
+  }
+
+  .add-category-form button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .category-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .btn-del {
+    align-self: flex-end;
+  }
 }

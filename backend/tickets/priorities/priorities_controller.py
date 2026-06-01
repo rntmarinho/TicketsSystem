@@ -4,10 +4,17 @@ class PriorityController:
 
     @staticmethod
     def create_priority(data):
+        # Validação do nome e do SLA (que é obrigatório na base de dados)
         if "name" not in data or not data["name"].strip():
             return {
                 "success": False,
                 "message": "Campo 'name' é obrigatório."
+            }, 400
+            
+        if "sla" not in data:
+            return {
+                "success": False,
+                "message": "Campo 'sla' (prazo em horas) é obrigatório."
             }, 400
 
         try:
@@ -31,7 +38,8 @@ class PriorityController:
         for priority in priorities:
             result.append({
                 "id": priority[0],
-                "name": priority[1]
+                "name": priority[1],
+                "sla": priority[2],
             })
 
         return result, 200

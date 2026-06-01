@@ -9,6 +9,13 @@ class CategoryController:
                 "success": False,
                 "message": "Campo 'name' é obrigatório e não pode estar vazio."
             }, 400
+            
+        # Nova validação exigindo a presença da chave estrangeira
+        if "priority_id" not in data:
+            return {
+                "success": False,
+                "message": "A vinculação a uma prioridade (priority_id) é obrigatória."
+            }, 400
 
         try:
             category_id = CategoryModel.create(data)
@@ -31,7 +38,9 @@ class CategoryController:
         for category in categories:
             result.append({
                 "id": category[0],
-                "name": category[1]
+                "name": category[1],
+                "priority_id": category[2],
+                "priority_name": category[3] # Nome da prioridade recuperado pelo JOIN
             })
 
         return result, 200

@@ -8,10 +8,10 @@ class CategoryModel:
         cursor = conn.cursor()
 
         cursor.execute("""
-            INSERT INTO tbl_categories (name)
-            VALUES (%s)
+            INSERT INTO tbl_categories (name, priority_id)
+            VALUES (%s, %s)
             RETURNING id
-        """, (data["name"],))
+        """, (data["name"], data["priority_id"]))
 
         category_id = cursor.fetchone()[0]
 
@@ -26,10 +26,12 @@ class CategoryModel:
         conn = get_db_connection()
         cursor = conn.cursor()
 
+        # Utilização de JOIN para buscar a nomenclatura da prioridade vinculada
         cursor.execute("""
-            SELECT id, name
-            FROM tbl_categories
-            ORDER BY name ASC
+            SELECT c.id, c.name, c.priority_id, p.name as priority_name
+            FROM tbl_categories c
+            LEFT JOIN tbl_priorities p ON c.priority_id = p.id
+            ORDER BY c.name ASC
         """)
 
         categories = cursor.fetchall()

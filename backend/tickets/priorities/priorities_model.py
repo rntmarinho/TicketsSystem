@@ -7,11 +7,12 @@ class PriorityModel:
         conn = get_db_connection()
         cursor = conn.cursor()
 
+        # Inserção atualizada com as colunas sla e color
         cursor.execute("""
-            INSERT INTO tbl_priorities (name)
-            VALUES (%s)
+            INSERT INTO tbl_priorities (name, sla, color)
+            VALUES (%s, %s, %s)
             RETURNING id
-        """, (data["name"],))
+        """, (data["name"], data["sla"], data.get("color", "#2563eb")))
 
         priority_id = cursor.fetchone()[0]
 
@@ -27,7 +28,7 @@ class PriorityModel:
         cursor = conn.cursor()
 
         cursor.execute("""
-            SELECT id, name
+            SELECT id, name, sla, color
             FROM tbl_priorities
             ORDER BY id ASC
         """)

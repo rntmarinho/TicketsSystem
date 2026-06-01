@@ -1,62 +1,74 @@
 import React, { useState, useEffect } from 'react';
 import './styles/ManageCategories.css';
 import { Plus, Trash2, Tag } from 'lucide-react';
-import { apiFetch } from '../services/api'; // Importação do apiFetch adicionada
+import { apiFetch } from '../services/api';
 
 const ManageCategories = () => {
   const [categories, setCategories] = useState([]);
-  const [newCategory, setNewCategory] = useState('');
+  const [priorities, setPriorities] = useState([]); // Novo estado para armazenar as prioridades
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [selectedPriorityId, setSelectedPriorityId] = useState(''); // Novo estado para seleção
 
-  const fetchCategories = async () => {
+  // Agrupamento das requisições para carregamento inicial
+  const fetchData = async () => {
     try {
-      // Correção: apiFetch com barra no final
-      const response = await apiFetch('/categories/');
-      if (response.ok) {
-        const data = await response.json();
-        setCategories(data);
+      const categoriesResponse = await apiFetch('/categories/');
+      if (categoriesResponse.ok) {
+        setCategories(await categoriesResponse.json());
+      }
+
+      // Consumo do endpoint de prioridades para preenchimento do formulário
+      const prioritiesResponse = await apiFetch('/priorities/');
+      if (prioritiesResponse.ok) {
+        setPriorities(await prioritiesResponse.json());
       }
     } catch (error) {
-      console.error('Erro ao buscar categorias:', error);
+      console.error('Erro de comunicação estrutural:', error);
     }
   };
 
   useEffect(() => {
-    fetchCategories();
+    fetchData();
   }, []);
 
   const handleAddCategory = async (e) => {
     e.preventDefault();
-    if (!newCategory.trim()) return;
+    if (!newCategoryName.trim() || !selectedPriorityId) {
+      alert("A inserção do nome e a seleção da prioridade são mandatórias.");
+      return;
+    }
 
     try {
-      // Correção: apiFetch com barra no final
       const response = await apiFetch('/categories/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nome: newCategory }),
+        // Transmissão consolidada dos atributos requeridos pelo backend
+        body: JSON.stringify({ 
+          name: newCategoryName, 
+          priority_id: parseInt(selectedPriorityId) 
+        }),
       });
 
       if (response.ok) {
-        setNewCategory('');
-        fetchCategories();
+        setNewCategoryName('');
+        setSelectedPriorityId('');
+        fetchData();
+      } else {
+        const errorData = await response.json();
+        alert(`Falha na inserção: ${errorData.message}`);
       }
     } catch (error) {
-      console.error('Erro ao adicionar categoria:', error);
+      console.error('Falha na persistência da categoria:', error);
     }
   };
 
-  // Correção: Lógica de exclusão que estava cortada no arquivo original
   const handleDelete = async (id) => {
-    if (!window.confirm('Deseja realmente excluir esta categoria?')) return;
+    if (!window.confirm('Deseja efetivamente proceder com a exclusão desta categoria?')) return;
     try {
-      const response = await apiFetch(`/categories/${id}`, {
-        method: 'DELETE'
-      });
-      if (response.ok) {
-        fetchCategories();
-      }
+      const response = await apiFetch(`/categories/${id}`, { method: 'DELETE' });
+      if (response.ok) fetchData();
     } catch (error) {
-      console.error('Erro ao excluir categoria:', error);
+      console.error('Falha na operação de deleção:', error);
     }
   };
 
@@ -67,10 +79,22 @@ const ManageCategories = () => {
       <form onSubmit={handleAddCategory} className="add-category-form">
         <input
           type="text"
-          value={newCategory}
-          onChange={(e) => setNewCategory(e.target.value)}
+          value={newCategoryName}
+          onChange={(e) => setNewCategoryName(e.target.value)}
           placeholder="Nome da nova categoria..."
+          required
         />
+        {/* Elemento de seleção vinculado ao conjunto de prioridades ativas */}
+        <select 
+          value={selectedPriorityId} 
+          onChange={(e) => setSelectedPriorityId(e.target.value)}
+          required
+        >
+          <option value="">Selecione uma Prioridade</option>
+          {priorities.map((p) => (
+            <option key={p.id} value={p.id}>{p.name}</option>
+          ))}
+        </select>
         <button type="submit"><Plus size={20} /> Adicionar</button>
       </form>
 
@@ -78,7 +102,13 @@ const ManageCategories = () => {
         {categories.length > 0 ? (
           categories.map((category) => (
             <div key={category.id} className="category-item">
-              <span>{category.nome}</span>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <span style={{ fontWeight: 'bold' }}>{category.name}</span>
+                {/* Renderização da hierarquia da prioridade */}
+                <span style={{ fontSize: '0.85em', color: '#666' }}>
+                  Prioridade base: {category.priority_name || 'Não atribuída'}
+                </span>
+              </div>
               <button 
                 onClick={() => handleDelete(category.id)} 
                 className="btn-del"
@@ -88,7 +118,7 @@ const ManageCategories = () => {
             </div>
           ))
         ) : (
-          <p>Nenhuma categoria cadastrada.</p>
+          <p>Não há registros cadastrais na base de dados.</p>
         )}
       </div>
     </div>
