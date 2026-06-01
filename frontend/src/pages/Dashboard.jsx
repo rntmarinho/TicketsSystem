@@ -1,10 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Plus } from 'lucide-react'; 
 import { Link } from 'react-router-dom';
-
-// IMPORTANTE: Utilização do serviço com autenticação integrada
 import { getTickets } from '../services/ticketService'; 
-
 import './styles/Dashboard.css';
 
 const Dashboard = () => {

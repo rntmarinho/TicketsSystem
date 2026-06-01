@@ -182,6 +182,8 @@ def create_tables():
             priority_id INTEGER
             REFERENCES tbl_priorities(id),
 
+            description TEXT,
+
             status VARCHAR(50) NOT NULL DEFAULT 'open',
 
             creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

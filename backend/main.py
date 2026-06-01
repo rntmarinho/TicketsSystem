@@ -1,21 +1,14 @@
 import os
 import threading
-
 from dotenv import load_dotenv
-
 from flask import Flask, jsonify
 from flask_jwt_extended import JWTManager
-
 from users.user_routes import user_bp
 from clients.client_routes import client_bp
 from tickets.ticket_routes import ticket_bp
-
-# Importação dos blueprints de categorias e prioridades (Ajuste caso o caminho seja diferente)
 from tickets.categories.categories_routes import category_bp
 from tickets.priorities.priorities_routes import priority_bp
-
 from services.email_service import iniciar_daemon_email
-
 from flask_cors import CORS
 
 load_dotenv()

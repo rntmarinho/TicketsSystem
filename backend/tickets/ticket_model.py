@@ -1,11 +1,34 @@
 from database.connect_database import get_db_connection
 
-
 class TicketModel:
 
     @staticmethod
-    def create(data):
+    def get_priority_sla(priority_id):
+        """
+        Recupera o valor quantitativo de horas estabelecido para o SLA 
+        de uma dada prioridade na base de dados.
+        """
+        conn = get_db_connection()
+        cursor = conn.cursor()
 
+        cursor.execute("""
+            SELECT sla 
+            FROM tbl_priorities 
+            WHERE id = %s
+        """, (priority_id,))
+
+        result = cursor.fetchone()
+
+        cursor.close()
+        conn.close()
+
+        return result[0] if result else None
+
+    @staticmethod
+    def create(data, calculated_sla):
+        """
+        Persiste o chamado no banco de dados com o SLA já computado.
+        """
         conn = get_db_connection()
         cursor = conn.cursor()
 
@@ -26,7 +49,7 @@ class TicketModel:
             data["user_id"],
             data["priority_id"],
             "open",
-            data.get("sla")
+            calculated_sla
         ))
 
         ticket_id = cursor.fetchone()[0]
@@ -40,7 +63,6 @@ class TicketModel:
 
     @staticmethod
     def get_by_id(ticket_id):
-
         conn = get_db_connection()
         cursor = conn.cursor()
 
@@ -73,7 +95,6 @@ class TicketModel:
 
     @staticmethod
     def get_all():
-
         conn = get_db_connection()
         cursor = conn.cursor()
 
@@ -106,7 +127,6 @@ class TicketModel:
 
     @staticmethod
     def update_status(ticket_id, status):
-
         conn = get_db_connection()
         cursor = conn.cursor()
 
@@ -114,10 +134,7 @@ class TicketModel:
             UPDATE tbl_tickets
             SET status = %s
             WHERE id = %s
-        """, (
-            status,
-            ticket_id
-        ))
+        """, (status, ticket_id))
 
         conn.commit()
 
@@ -126,7 +143,6 @@ class TicketModel:
 
     @staticmethod
     def delete(ticket_id):
-
         conn = get_db_connection()
         cursor = conn.cursor()
 
@@ -140,21 +156,20 @@ class TicketModel:
         cursor.close()
         conn.close()
 
-@staticmethod
-def exists(ticket_id):
+    @staticmethod
+    def exists(ticket_id):
+        conn = get_db_connection()
+        cursor = conn.cursor()
 
-    conn = get_db_connection()
-    cursor = conn.cursor()
+        cursor.execute("""
+            SELECT id
+            FROM tbl_tickets
+            WHERE id = %s
+        """, (ticket_id,))
 
-    cursor.execute("""
-        SELECT id
-        FROM tbl_tickets
-        WHERE id = %s
-    """, (ticket_id,))
+        result = cursor.fetchone()
 
-    result = cursor.fetchone()
+        cursor.close()
+        conn.close()
 
-    cursor.close()
-    conn.close()
-
-    return result is not None
+        return result is not None

@@ -1,5 +1,5 @@
+from datetime import datetime, timedelta
 from tickets.ticket_model import TicketModel
-
 
 class TicketController:
 
@@ -13,32 +13,44 @@ class TicketController:
             "priority_id"
         ]
 
+        # 1. Validação de integridade dos campos da requisição
         for field in required:
-
             if field not in data:
-
                 return {
                     "success": False,
-                    "message": f"Campo '{field}' obrigatório."
+                    "message": f"Campo estrutural '{field}' é obrigatório."
                 }, 400
 
-        ticket_id = TicketModel.create(data)
+        # 2. Obtenção do parâmetro SLA em horas proveniente da tbl_priorities
+        priority_id = data["priority_id"]
+        sla_hours = TicketModel.get_priority_sla(priority_id)
+
+        if sla_hours is None:
+            return {
+                "success": False,
+                "message": "Prioridade não identificada no registro referencial."
+            }, 404
+
+        # 3. Cômputo do SLA a partir do timestamp momentâneo
+        creation_timestamp = datetime.now()
+        calculated_sla = creation_timestamp + timedelta(hours=sla_hours)
+
+        # 4. Delegação da persistência à camada de Modelo
+        ticket_id = TicketModel.create(data, calculated_sla)
 
         return {
             "success": True,
-            "message": "Chamado criado com sucesso.",
-            "ticket_id": ticket_id
+            "message": "Chamado processado e registrado com êxito.",
+            "ticket_id": ticket_id,
+            "sla_projected": calculated_sla.strftime("%Y-%m-%d %H:%M:%S")
         }, 201
 
     @staticmethod
     def list_tickets():
-
         tickets = TicketModel.get_all()
-
         result = []
 
         for ticket in tickets:
-
             result.append({
                 "id": ticket[0],
                 "subject": ticket[1],
@@ -54,14 +66,12 @@ class TicketController:
 
     @staticmethod
     def get_ticket(ticket_id):
-
         ticket = TicketModel.get_by_id(ticket_id)
 
         if not ticket:
-
             return {
                 "success": False,
-                "message": "Chamado não encontrado."
+                "message": "Registro de chamado não encontrado."
             }, 404
 
         return {
@@ -77,23 +87,16 @@ class TicketController:
 
     @staticmethod
     def update_status(ticket_id, status):
-
-        TicketModel.update_status(
-            ticket_id,
-            status
-        )
-
+        TicketModel.update_status(ticket_id, status)
         return {
             "success": True,
-            "message": "Status atualizado."
+            "message": "Estado do chamado devidamente atualizado."
         }
 
     @staticmethod
     def delete_ticket(ticket_id):
-
         TicketModel.delete(ticket_id)
-
         return {
             "success": True,
-            "message": "Chamado removido."
+            "message": "Chamado removido da base de dados."
         }
