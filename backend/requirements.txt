@@ -1,0 +1,13 @@
+# Framework Web e Extensões
+Flask>=3.0.0
+Flask-Cors>=4.0.0
+Flask-JWT-Extended>=4.6.0
+
+# Criptografia e Segurança
+bcrypt>=4.1.2
+
+# Driver de Banco de Dados (PostgreSQL)
+psycopg2-binary>=2.9.9
+
+# Gerenciamento de Variáveis de Ambiente
+python-dotenv>=1.0.1
