@@ -1,64 +1,62 @@
 import { useEffect, useState } from 'react';
-import {
-  UserPlus,
-  User,
-  Pencil,
-  Mail,
-  Shield,
-  Search,
-  X,
-  Lock
-} from 'lucide-react';
-
-import { apiFetch } from '../services/api'; // Importação do apiFetch adicionada
+import { UserPlus, User, Pencil, Mail, Shield, Search, X, Building2 } from 'lucide-react';
+import { apiFetch } from '../services/api'; 
+import { deleteUser } from '../services/userService'; 
+// Importação do serviço para obter a lista consolidada de clientes
+import { getClients } from '../services/clientService'; 
 import './styles/Users.css';
 
 const Users = () => {
   const [users, setUsers] = useState([]);
+  const [clientsList, setClientsList] = useState([]);
   const [search, setSearch] = useState('');
-
   const [selectedUser, setSelectedUser] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const [formData, setFormData] = useState({
-    nome: '',
+    name: '',
     email: '',
-    senha: ''
+    client_id: '',
+    access_type: ''
   });
 
+  // Carrega tanto utilizadores quanto clientes na inicialização
   useEffect(() => {
     loadUsers();
+    loadClients();
   }, []);
 
   const loadUsers = () => {
-    // Correção: apiFetch com barra no final
     apiFetch('/users/')
       .then(res => res.json())
       .then(data => setUsers(data))
       .catch(err => console.error('Erro ao carregar usuários:', err));
   };
 
+  const loadClients = async () => {
+    try {
+      const data = await getClients();
+      setClientsList(data);
+    } catch (err) {
+      console.error('Erro ao carregar clientes:', err);
+    }
+  };
+
   const openEditModal = (user) => {
     setSelectedUser(user);
-
     setFormData({
-      nome: user.nome || '',
+      name: user.name || '',
       email: user.email || '',
-      senha: ''
+      client_id: user.client_id || '',
+      access_type: user.access_type || 'comum'
     });
-
     setIsModalOpen(true);
   };
 
   const closeModal = () => {
     setSelectedUser(null);
     setIsModalOpen(false);
-
-    setFormData({
-      nome: '',
-      email: '',
-      senha: ''
-    });
+    setFormData({ name: '', email: '', client_id: '', access_type: '' });
   };
 
   const handleChange = (e) => {
@@ -73,44 +71,41 @@ const Users = () => {
 
     try {
       const payload = {
-        nome: formData.nome,
-        email: formData.email
+        name: formData.name,
+        email: formData.email,
+        access_type: formData.access_type,
+        client_id: parseInt(formData.client_id) // Garante a submissão como Inteiro
       };
 
-      if (formData.senha.trim() !== '') {
-        payload.senha = formData.senha;
-      }
+      const response = await apiFetch(`/users/${selectedUser.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
 
-      // Correção: apiFetch sem prefixo /api
-      const response = await apiFetch(
-        `/users/${selectedUser.id}`,
-        {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(payload)
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error('Erro ao atualizar usuário');
-      }
+      if (!response.ok) throw new Error('Erro ao atualizar usuário');
 
       closeModal();
       loadUsers();
-
-      alert('Usuário atualizado com sucesso!');
     } catch (error) {
       console.error(error);
       alert('Erro ao atualizar usuário.');
     }
   };
 
+  const handleInactivateUser = async (userId) => {
+    if(!window.confirm("Deseja realmente inativar este usuário?")) return;
+    try {
+      await deleteUser(userId);
+      loadUsers();
+    } catch (err) {
+      alert('Erro ao inativar usuário.');
+    }
+  };
+
   const filteredUsers = users.filter(user =>
-    user.nome?.toLowerCase().includes(search.toLowerCase()) ||
-    user.email?.toLowerCase().includes(search.toLowerCase()) ||
-    user.usuario?.toLowerCase().includes(search.toLowerCase())
+    user.name?.toLowerCase().includes(search.toLowerCase()) ||
+    user.email?.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
@@ -118,14 +113,10 @@ const Users = () => {
       <header className="page-header">
         <div>
           <h1>Gestão de Usuários</h1>
-          <p className="subtitle">
-            Gerencie usuários, permissões e acessos do sistema.
-          </p>
+          <p className="subtitle">Gerencie usuários, perfis e vínculos do sistema.</p>
         </div>
-
         <a href="/users/novo" className="btn-create">
-          <UserPlus size={18} />
-          Novo Usuário
+          <UserPlus size={18} /> Novo Usuário
         </a>
       </header>
 
@@ -134,7 +125,7 @@ const Users = () => {
           <Search size={18} />
           <input
             type="text"
-            placeholder="Pesquisar usuários..."
+            placeholder="Pesquisar por nome ou e-mail..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -147,53 +138,66 @@ const Users = () => {
             <tr>
               <th>Nome</th>
               <th>E-mail</th>
-              <th>Usuário</th>
+              <th>Cliente Vinculado</th>
               <th>Perfil</th>
               <th>Ações</th>
             </tr>
           </thead>
           <tbody>
             {filteredUsers.length > 0 ? (
-              filteredUsers.map(user => (
-                <tr key={user.id}>
-                  <td>
-                    <div className="user-info">
-                      <div className="user-avatar">
-                        <User size={16} />
+              filteredUsers.map(user => {
+                const isInactive = user.situation === 'I';
+                
+                // Realiza a correspondência do ID para exibir a Razão Social na tabela
+                const linkedClient = clientsList.find(c => c.id === user.client_id);
+                const clientDisplayName = linkedClient ? linkedClient.razao : `Cliente #${user.client_id}`;
+
+                return (
+                  <tr key={user.id} style={{ opacity: isInactive ? 0.6 : 1, backgroundColor: isInactive ? '#f9f9f9' : 'transparent' }}>
+                    <td>
+                      <div className="user-info">
+                        <div className="user-avatar">
+                          <User size={16} />
+                        </div>
+                        <span>{user.name}</span>
                       </div>
-                      <span>{user.nome}</span>
-                    </div>
-                  </td>
-                  <td>
-                    <div className="user-email">
-                      <Mail size={15} />
-                      {user.email}
-                    </div>
-                  </td>
-                  <td>{user.usuario}</td>
-                  <td>
-                    <span
-                      className={`badge ${
-                        user.solicitante === 'sim'
-                          ? 'comum'
-                          : 'tecnico'
-                      }`}
-                    >
-                      <Shield size={14} />
-                      {user.solicitante === 'sim' ? 'Comum' : 'Técnico'}
-                    </span>
-                  </td>
-                  <td>
-                    <button
-                      className="btn-edit"
-                      onClick={() => openEditModal(user)}
-                    >
-                      <Pencil size={16} />
-                      Editar
-                    </button>
-                  </td>
-                </tr>
-              ))
+                    </td>
+                    <td>
+                      <div className="user-email">
+                        <Mail size={15} />
+                        {user.email}
+                      </div>
+                    </td>
+                    <td>
+                      {user.client_id ? (
+                        <span className="badge cliente-badge" title={linkedClient?.cnpj}>
+                          <Building2 size={14}/> {clientDisplayName}
+                        </span>
+                      ) : '-'}
+                    </td>
+                    <td>
+                      <span className={`badge ${user.access_type === 'comum' ? 'comum' : 'tecnico'}`}>
+                        <Shield size={14} />
+                        {user.access_type === 'comum' ? 'Comum' : 'Técnico'}
+                      </span>
+                    </td>
+                    <td>
+                      <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <button className="btn-edit" onClick={() => openEditModal(user)}>
+                          <Pencil size={16} /> Editar
+                        </button>
+                        {!isInactive ? (
+                          <button className="btn-delete" onClick={() => handleInactivateUser(user.id)} style={{ padding: '0.4rem 0.8rem', backgroundColor: '#e74c3c', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
+                            Inativar
+                          </button>
+                        ) : (
+                          <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#e74c3c', alignSelf: 'center' }}>INATIVO</span>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })
             ) : (
               <tr>
                 <td colSpan="5" className="empty-state">
@@ -211,70 +215,53 @@ const Users = () => {
             <div className="modal-header">
               <div>
                 <h2>Editar Usuário</h2>
-                <p>Atualize os dados do usuário.</p>
+                <p>Atualize os dados cadastrais.</p>
               </div>
-              <button
-                className="btn-close"
-                onClick={closeModal}
-              >
-                <X size={20} />
-              </button>
+              <button className="btn-close" onClick={closeModal}><X size={20} /></button>
             </div>
 
-            <form
-              className="modal-form"
-              onSubmit={handleUpdateUser}
-            >
+            <form className="modal-form" onSubmit={handleUpdateUser}>
               <div className="form-group">
-                <label>Nome</label>
-                <input
-                  type="text"
-                  name="nome"
-                  value={formData.nome}
-                  onChange={handleChange}
-                  required
-                />
+                <label>Nome Completo</label>
+                <input type="text" name="name" value={formData.name} onChange={handleChange} required />
               </div>
 
               <div className="form-group">
                 <label>E-mail</label>
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  required
-                />
+                <input type="email" name="email" value={formData.email} onChange={handleChange} required />
               </div>
 
               <div className="form-group">
-                <label>Nova Senha</label>
-                <div className="password-input">
-                  <Lock size={16} />
-                  <input
-                    type="password"
-                    name="senha"
-                    placeholder="Digite apenas se quiser redefinir"
-                    value={formData.senha}
-                    onChange={handleChange}
-                  />
-                </div>
+                <label>Perfil do Usuário</label>
+                <select name="access_type" value={formData.access_type} onChange={handleChange}>
+                  <option value="comum">Comum (Solicitante)</option>
+                  <option value="tecnico">Técnico (Suporte)</option>
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label>Cliente Vinculado</label>
+                <select 
+                  name="client_id" 
+                  value={formData.client_id} 
+                  onChange={handleChange} 
+                  required
+                >
+                  <option value="" disabled>Selecione um cliente...</option>
+                  {clientsList.map(client => (
+                    // Exibe o cliente no select se ele estiver ativo OU se ele já for o cliente atual do usuário (para não quebrar edições legadas)
+                    (client.situation !== 'I' || client.id === parseInt(formData.client_id)) && (
+                      <option key={client.id} value={client.id}>
+                        {client.razao} ({client.cnpj}) {client.situation === 'I' ? '[INATIVO]' : ''}
+                      </option>
+                    )
+                  ))}
+                </select>
               </div>
 
               <div className="modal-actions">
-                <button
-                  type="button"
-                  className="btn-cancel"
-                  onClick={closeModal}
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="btn-save"
-                >
-                  Salvar Alterações
-                </button>
+                <button type="button" className="btn-cancel" onClick={closeModal}>Cancelar</button>
+                <button type="submit" className="btn-save">Salvar Alterações</button>
               </div>
             </form>
           </div>

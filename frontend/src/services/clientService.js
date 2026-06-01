@@ -32,3 +32,11 @@ export async function deleteClient(id) {
   });
   return await response.json();
 }
+
+export async function updateClientSituation(id, situation) {
+  const response = await apiFetch(`/clients/${id}/situation`, {
+    method: 'PATCH',
+    body: JSON.stringify({ situation })
+  });
+  return await response.json();
+}

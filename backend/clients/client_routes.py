@@ -53,3 +53,16 @@ def delete_client(client_id):
     )
 
     return jsonify(response)
+
+@client_bp.route("/<int:client_id>/situation", methods=["PATCH"])
+@jwt_required()
+def update_situation(client_id):
+
+    data = request.get_json()
+    
+    response, status_code = ClientController.update_situation(
+        client_id,
+        data.get("situation")
+    )
+
+    return jsonify(response), status_code

@@ -67,3 +67,24 @@ class ClientController:
             "success": True,
             "message": "Cliente inativado com sucesso."
         }
+    
+    @staticmethod
+    def update_situation(client_id, situation):
+        
+        if not situation:
+            return {
+                "success": False,
+                "message": "O parâmetro 'situation' é mandatório."
+            }, 400
+
+        try:
+            ClientModel.update_situation(client_id, situation)
+            return {
+                "success": True,
+                "message": "Situação do cliente atualizada com êxito."
+            }, 200
+        except Exception as e:
+            return {
+                "success": False,
+                "message": f"Erro na transação com o banco de dados: {str(e)}"
+            }, 500

@@ -1,0 +1,270 @@
+.clients-container {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #333;
+}
+
+.clients-header {
+  margin-bottom: 2rem;
+  border-bottom: 2px solid #eaeaea;
+  padding-bottom: 1rem;
+}
+
+.clients-header h2 {
+  font-size: 1.8rem;
+  color: #2c3e50;
+  margin-bottom: 0.5rem;
+}
+
+.clients-header p {
+  color: #666;
+  font-size: 1rem;
+}
+
+.clients-error-message {
+  background-color: #f8d7da;
+  color: #721c24;
+  padding: 1rem;
+  border-radius: 4px;
+  margin-bottom: 1.5rem;
+  border: 1px solid #f5c6cb;
+}
+
+.clients-form-section {
+  background-color: #f9f9f9;
+  padding: 2rem;
+  border-radius: 6px;
+  margin-bottom: 2rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* Nova estrutura de Grid para o formulário complexo */
+.clients-complex-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.clients-input {
+  padding: 0.75rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 1rem;
+  transition: border-color 0.3s;
+}
+
+.clients-input:focus {
+  outline: none;
+  border-color: #3498db;
+  box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+}
+
+.form-actions {
+  grid-column: 1 / -1; /* Ocupa a largura total do grid */
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1rem;
+}
+
+.clients-submit-btn {
+  background-color: #3498db;
+  color: white;
+  border: none;
+  padding: 0.75rem 2rem;
+  border-radius: 4px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  font-weight: bold;
+}
+
+.clients-submit-btn:hover {
+  background-color: #2980b9;
+}
+
+.clients-list-section {
+  background-color: #ffffff;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.table-responsive {
+  overflow-x: auto;
+}
+
+.clients-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.clients-table th,
+.clients-table td {
+  padding: 1rem;
+  border-bottom: 1px solid #eaeaea;
+}
+
+.clients-table th {
+  background-color: #f4f6f8;
+  color: #2c3e50;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  letter-spacing: 0.05em;
+}
+
+.clients-table tr:hover {
+  background-color: #fbfbfb;
+}
+
+.clients-delete-btn {
+  background-color: #e74c3c;
+  color: white;
+  border: none;
+  padding: 0.4rem 0.8rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: background-color 0.3s;
+}
+
+.clients-delete-btn:hover {
+  background-color: #c0392b;
+}
+
+.status-badge {
+  padding: 0.25rem 0.6rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: bold;
+}
+
+.status-badge.inactive {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.clients-empty-state {
+  text-align: center;
+  color: #999;
+  font-style: italic;
+  padding: 2rem !important;
+}
+
+.loading-text {
+  padding: 2rem;
+  text-align: center;
+  color: #666;
+}
+/* Estilização para denotar entidades inativas na tabela */
+.row-inactive {
+  background-color: #f5f5f5 !important; /* Sobrescreve o hover padrão */
+  opacity: 0.6;
+}
+
+.row-inactive td {
+  color: #7f8c8d; /* Escurece a fonte para denotar inatividade */
+}
+
+/* Container para alinhar múltiplos botões de ação na célula */
+.action-buttons-cell {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+/* Botão de Edição */
+.clients-edit-btn {
+  background-color: #f39c12;
+  color: white;
+  border: none;
+  padding: 0.4rem 0.8rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: background-color 0.3s;
+}
+
+.clients-edit-btn:hover {
+  background-color: #d68910;
+}
+
+/* Botão de Cancelamento da Edição no Formulário */
+.clients-cancel-btn {
+  background-color: #95a5a6;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 4px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  font-weight: bold;
+  margin-right: 1rem;
+}
+
+.clients-cancel-btn:hover {
+  background-color: #7f8c8d;
+}
+
+/* Margem para o título do formulário que foi adicionado */
+.clients-form-section h3 {
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  color: #2c3e50;
+  font-size: 1.2rem;
+  border-bottom: 1px solid #e0e0e0;
+  padding-bottom: 0.5rem;
+}
+
+/* Container da barra de pesquisa posicionado acima da tabela */
+.clients-search-bar {
+  padding: 1.5rem;
+  background-color: #ffffff;
+  border-bottom: 1px solid #eaeaea;
+}
+
+/* Modificador de largura para o campo de pesquisa */
+.search-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.85rem;
+  font-size: 1rem;
+  background-color: #fcfcfc;
+  border: 1px solid #dcdde1;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+}
+
+.search-input:focus {
+  background-color: #ffffff;
+  border-color: #3498db;
+  box-shadow: 0 0 8px rgba(52, 152, 219, 0.2);
+}
+
+/* Ajuste sutil na classe de alerta de estado vazio para diferenciar 
+   ausência de dados de uma busca sem resultados */
+.clients-empty-state {
+  text-align: center;
+  color: #7f8c8d;
+  font-style: normal;
+  font-weight: 500;
+  padding: 3rem !important;
+}

@@ -121,3 +121,20 @@ class ClientModel:
 
         cursor.close()
         conn.close()
+
+    @staticmethod
+    def update_situation(client_id, situation):
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            UPDATE tbl_clients
+            SET situation = %s
+            WHERE id = %s
+        """, (situation, client_id))
+
+        conn.commit()
+
+        cursor.close()
+        conn.close()

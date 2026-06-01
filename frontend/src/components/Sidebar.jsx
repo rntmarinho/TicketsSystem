@@ -46,7 +46,7 @@ const Sidebar = () => {
           <Users size={20} /> Usuários
         </Link>
 
-         <Link to="/clients" className={isActive("/clients")}>
+         <Link to="/clientes" className={isActive("/clientes")}>
           <Building2 size={20} /> Clientes
         </Link>             
 

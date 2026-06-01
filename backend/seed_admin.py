@@ -1,5 +1,4 @@
 import bcrypt
-
 from database.connect_database import get_db_connection
 
 
