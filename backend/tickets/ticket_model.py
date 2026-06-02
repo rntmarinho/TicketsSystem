@@ -2,7 +2,8 @@ from datetime import datetime, timedelta
 from database.connect_database import get_db_connection
 
 class TicketModel:
-
+#Processo de criação de chamados com cálculo de SLA baseado na prioridade,
+#incluindo tratamento de casos onde a prioridade não possui SLA definido.
     @staticmethod
     def get_priority_sla(priority_id):
         """
@@ -19,12 +20,14 @@ class TicketModel:
         """, (priority_id,))
 
         result = cursor.fetchone()
-
+        # Implementação de atribuição segura com fallback para 0 horas caso o SLA não esteja definido
+        
         cursor.close()
         conn.close()
 
         return result[0] if result else None
-
+    
+#Metodo de criação de chamados que integra a recuperação do SLA, o cálculo do prazo final e a persistência do registro, garantindo a consistência temporal e a robustez frente a dados incompletos.
     @staticmethod
     def create(data):
         """
@@ -34,7 +37,7 @@ class TicketModel:
         conn = get_db_connection()
         cursor = conn.cursor()
 
-        # 1. Recuperação do quantitativo de horas estipulado para a prioridade
+        #  Recuperação do quantitativo de horas estipulado para a prioridade
         cursor.execute("""
             SELECT sla 
             FROM tbl_priorities 
@@ -46,11 +49,11 @@ class TicketModel:
         # Atribuição segura com conversão padrão para 0 caso não localizado
         sla_horas = resultado[0] if (resultado and resultado[0] is not None) else 0
 
-        # 2. Processamento temporal: estampa de tempo (timestamp) unificada
+        # Processamento temporal: estampa de tempo (timestamp) unificada
         data_criacao = datetime.now()
         prazo_sla = data_criacao + timedelta(hours=float(sla_horas))
 
-        # 3. Inserção do registro contemplando as matrizes de data recém-calculadas
+        #Inserção do registro contemplando as matrizes de data recém-calculadas
         cursor.execute("""
             INSERT INTO tbl_tickets (
                 subject,
@@ -82,11 +85,13 @@ class TicketModel:
 
         return ticket_id
 
+    #Método de consulta que integra a recuperação de dados do chamado com as informações correlatas de categoria, prioridade e usuário, proporcionando uma visão abrangente e contextualizada do registro.
     @staticmethod
     def get_by_id(ticket_id):
         conn = get_db_connection()
         cursor = conn.cursor()
 
+        #Consulta que une as tabelas de tickets, categorias, prioridades e usuários para fornecer uma visão completa do chamado solicitado.
         cursor.execute("""
             SELECT
                 t.id,
@@ -106,7 +111,7 @@ class TicketModel:
                 ON u.id = t.user_id
             WHERE t.id = %s
         """, (ticket_id,))
-
+        #Atribuição direta do resultado da consulta, garantindo a integridade dos dados retornados e a clareza na manipulação do objeto ticket.
         ticket = cursor.fetchone()
 
         cursor.close()
@@ -114,6 +119,7 @@ class TicketModel:
 
         return ticket
 
+    #Método de consulta que recupera a lista completa de chamados, ordenada por data de criação, e enriquecida com as informações correlatas de categoria, prioridade e usuário, proporcionando uma visão abrangente e contextualizada dos registros.
     @staticmethod
     def get_all():
         conn = get_db_connection()
@@ -146,6 +152,7 @@ class TicketModel:
 
         return tickets
 
+    #Método de atualização que permite a modificação do status de um chamado específico, garantindo a persistência da alteração no banco de dados e a integridade do registro.
     @staticmethod
     def update_status(ticket_id, status):
         conn = get_db_connection()
@@ -162,6 +169,8 @@ class TicketModel:
         cursor.close()
         conn.close()
 
+#Método de exclusão que remove um chamado específico do banco de dados, garantindo a integridade referencial e a consistência dos dados.
+#Este método é necessário pois nem todo e-mail é um chamado válido
     @staticmethod
     def delete(ticket_id):
         conn = get_db_connection()
@@ -176,7 +185,7 @@ class TicketModel:
 
         cursor.close()
         conn.close()
-
+#Método de verificação que consulta a existência de um chamado específico no banco de dados, retornando um valor booleano que indica a presença ou ausência do registro.
     @staticmethod
     def exists(ticket_id):
         conn = get_db_connection()

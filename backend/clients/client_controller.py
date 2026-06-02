@@ -3,6 +3,7 @@ from clients.client_model import ClientModel
 
 class ClientController:
 
+    # Método para criar um novo cliente
     @staticmethod
     def create_client(data):
 
@@ -28,6 +29,7 @@ class ClientController:
             "id": client_id
         }, 201
 
+    #   Método para listar todos os clientes
     @staticmethod
     def list_clients():
 
@@ -48,6 +50,7 @@ class ClientController:
 
         return result
 
+    # Método para atualizar os dados de um cliente
     @staticmethod
     def update_client(client_id, data):
 
@@ -57,7 +60,8 @@ class ClientController:
             "success": True,
             "message": "Cliente atualizado com sucesso."
         }
-
+    
+    # Método para inativar um cliente
     @staticmethod
     def delete_client(client_id):
 
@@ -68,6 +72,7 @@ class ClientController:
             "message": "Cliente inativado com sucesso."
         }
     
+    # Método para atualizar a situação de um cliente
     @staticmethod
     def update_situation(client_id, situation):
         

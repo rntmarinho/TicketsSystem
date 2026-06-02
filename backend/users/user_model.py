@@ -112,6 +112,7 @@ class UserModel:
 
         return users
 
+    # Atualiza as informações do usuário, exceto a senha
     @staticmethod
     def update(user_id, data):
 
@@ -139,6 +140,7 @@ class UserModel:
         cursor.close()
         conn.close()
 
+    # Atualiza a senha do usuário
     @staticmethod
     def update_password(user_id, password_hash):
 
@@ -159,6 +161,7 @@ class UserModel:
         cursor.close()
         conn.close()
 
+    # Inativa o usuário alterando seu status para "inativo"
     @staticmethod
     def delete(user_id):
 

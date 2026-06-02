@@ -3,10 +3,10 @@ import psycopg2
 from dotenv import load_dotenv
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 
-
+# Carrega as variáveis de ambiente do arquivo .env
 load_dotenv()
 
-
+# Configurações do banco de dados a partir das variáveis de ambiente
 DB_NAME = os.getenv("DB_NAME")
 DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
@@ -16,20 +16,18 @@ DB_PORT = os.getenv("DB_PORT")
 
 
 # CRIAR BANCO
-
-
 def create_database():
 
     try:
-
+        # Conecta ao banco "helpdesk_db" para criar o novo banco de dados
         conn = psycopg2.connect(
-            dbname="postgres",
+            dbname="helpdesk_db",
             user=DB_USER,
             password=DB_PASSWORD,
             host=DB_HOST,
             port=DB_PORT
         )
-
+        # Define o nível de isolamento para AUTOCOMMIT para permitir a criação do banco de dados
         conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
 
         cursor = conn.cursor()
@@ -40,7 +38,7 @@ def create_database():
         )
 
         exists = cursor.fetchone()
-
+        # Se o banco de dados não existir, cria-o
         if not exists:
 
             cursor.execute(f'CREATE DATABASE "{DB_NAME}"')
@@ -62,11 +60,10 @@ def create_database():
 
 # CRIAR TABELAS
 
-
 def create_tables():
 
     try:
-
+        
         conn = psycopg2.connect(
             dbname=DB_NAME,
             user=DB_USER,
@@ -259,7 +256,7 @@ def create_tables():
         print(f"Erro ao criar tabelas: {e}")
 
 
-
+#Este arquivo executa sozinho, sem conexão com demais. Ele é responsável por criar o banco de dados e as tabelas necessárias para o sistema de tickets.
 if __name__ == "__main__":
 
     create_database()

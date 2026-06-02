@@ -1,16 +1,17 @@
 from tickets.categories.categories_model import CategoryModel
 
 class CategoryController:
-
+    # Controlador para gerenciar as categorias de chamados, incluindo criação, listagem e exclusão.
     @staticmethod
     def create_category(data):
+        # validação para garantir que o campo 'name' esteja presente e não seja vazio
         if "name" not in data or not data["name"].strip():
             return {
                 "success": False,
                 "message": "Campo 'name' é obrigatório e não pode estar vazio."
             }, 400
             
-        # Nova validação exigindo a presença da chave estrangeira
+        # validação exigindo a presença da chave estrangeira
         if "priority_id" not in data:
             return {
                 "success": False,
@@ -30,11 +31,12 @@ class CategoryController:
                 "message": f"Erro interno ao criar categoria: {str(e)}"
             }, 500
 
+    # Método para listar todas as categorias, incluindo o nome da prioridade associada
     @staticmethod
     def list_categories():
         categories = CategoryModel.get_all()
         result = []
-
+        # O método get_all deve ser implementado para realizar um JOIN entre as tabelas de categorias e prioridades, retornando os campos necessários
         for category in categories:
             result.append({
                 "id": category[0],
@@ -44,7 +46,8 @@ class CategoryController:
             })
 
         return result, 200
-
+    
+    # Método para excluir uma categoria, verificando se existem chamados vinculados antes de permitir a exclusão
     @staticmethod
     def delete_category(category_id):
         try:

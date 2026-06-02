@@ -11,6 +11,7 @@ from tickets.priorities.priorities_routes import priority_bp
 from services.email_service import iniciar_daemon_email
 from flask_cors import CORS
 
+# Carrega as variáveis de ambiente do arquivo .env
 load_dotenv()
 
 
@@ -25,7 +26,7 @@ def create_app():
     app.config["JWT_SECRET_KEY"] = os.getenv(
         "JWT_SECRET_KEY"
     )
-
+    # Configuração do tempo de expiração do token de acesso (em segundos)
     app.config["JWT_ACCESS_TOKEN_EXPIRES"] = int(
         os.getenv(
             "JWT_ACCESS_TOKEN_EXPIRES",
@@ -39,8 +40,8 @@ def create_app():
     app.register_blueprint(user_bp)
     app.register_blueprint(client_bp)
     app.register_blueprint(ticket_bp)
-    app.register_blueprint(category_bp) # Registro das rotas de categorias
-    app.register_blueprint(priority_bp) # Registro das rotas de prioridades
+    app.register_blueprint(category_bp) 
+    app.register_blueprint(priority_bp) 
 
     # Health Check
     @app.route("/", methods=["GET"])
@@ -52,6 +53,7 @@ def create_app():
             "version": "1.0.0"
         })
 
+    # Endpoint para verificar a saúde da aplicação
     @app.route("/health", methods=["GET"])
     def health():
 
@@ -64,9 +66,9 @@ def create_app():
 
 app = create_app()
 
-
+# Função para iniciar o serviço de e-mail em um thread separado
 def start_email_service():
-
+    # Inicia o serviço de e-mail em um thread separado para não bloquear a aplicação principal
     daemon = threading.Thread(
         target=iniciar_daemon_email,
         daemon=True
@@ -78,7 +80,7 @@ def start_email_service():
         "Serviço de e-mail iniciado."
     )
 
-
+# Ponto de entrada da aplicação
 if __name__ == "__main__":
 
     email_enabled = os.getenv(
@@ -89,7 +91,8 @@ if __name__ == "__main__":
     if email_enabled:
 
         start_email_service()
-
+        
+# Inicia o servidor Flask com as configurações definidas nas variáveis de ambiente
     app.run(
         host="0.0.0.0",
         port=int(

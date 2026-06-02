@@ -12,7 +12,7 @@ class TicketController:
             "priority_id"
         ]
 
-        # 1. Validação de integridade dos campos da requisição
+        # Validação de integridade dos campos da requisição
         for field in required:
             if field not in data:
                 return {
@@ -20,7 +20,7 @@ class TicketController:
                     "message": f"Campo estrutural '{field}' é obrigatório."
                 }, 400
 
-        # 2. Delegação da persistência à camada de Modelo (O Model agora calcula o SLA)
+        # Delegação da persistência à camada de Modelo (O Model agora calcula o SLA)
         try:
             ticket_id = TicketModel.create(data)
 

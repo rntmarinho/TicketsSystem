@@ -1,8 +1,6 @@
 import bcrypt
 from flask_jwt_extended import create_access_token
-
 from users.user_model import UserModel
-
 
 class UserController:
 
@@ -15,6 +13,7 @@ class UserController:
                 "message": "E-mail já cadastrado."
             }, 400
 
+        # Todas as senhas são armazenadas como hash usando bcrypt
         password_hash = bcrypt.hashpw(
             data["password"].encode("utf-8"),
             bcrypt.gensalt()
@@ -44,6 +43,7 @@ class UserController:
 
         password_hash = user[4]
 
+        # Verifica a senha usando bcrypt, comparando a senha fornecida com o hash armazenado
         if not bcrypt.checkpw(
             password.encode("utf-8"),
             password_hash.encode("utf-8")
@@ -53,7 +53,8 @@ class UserController:
                 "success": False,
                 "message": "Senha inválida."
             }, 401
-
+        
+        # Se a autenticação for bem-sucedida, gera um token JWT com as informações do usuário
         token = create_access_token(
             identity=str(user[0]),
             additional_claims={
@@ -82,6 +83,7 @@ class UserController:
 
         result = []
 
+        # O resultado da consulta é uma lista de tuplas, onde cada tupla representa um usuário.
         for user in users:
 
             result.append({
@@ -105,6 +107,7 @@ class UserController:
             "message": "Usuário atualizado."
         }
 
+    # O método delete_user não remove o registro do usuário do banco de dados, mas sim inativa o usuário, alterando seu status para "inativo". Isso é feito para manter um histórico dos usuários e evitar problemas de integridade referencial em outras partes do sistema que possam estar associadas a esse usuário.
     @staticmethod
     def delete_user(user_id):
 
