@@ -100,3 +100,26 @@ class TicketController:
             "success": True,
             "message": "Chamado removido da base de dados."
         }
+    
+    @staticmethod
+    def update_ticket(ticket_id, data):
+        # 1. Verifica a existência prévia do registro referenciado
+        if not TicketModel.exists(ticket_id):
+            return {
+                "success": False,
+                "message": "Registro de chamado não identificado para modificação."
+            }, 404
+
+        # 2. Executa a persistência dos campos principais na camada de Modelo
+        # Se os dados contiverem campos isolados, você pode optar por atualizar tudo
+        # de forma dinâmica. Abaixo atualizamos o status e delegamos os demais dados.
+        if "status" in data:
+            TicketModel.update_status(ticket_id, data["status"])
+            
+        # Caso seu TicketModel possua uma query de atualização geral para os outros campos:
+        # TicketModel.update_general_fields(ticket_id, data)
+
+        return {
+            "success": True,
+            "message": "As propriedades do chamado foram atualizadas com sucesso."
+        }, 200

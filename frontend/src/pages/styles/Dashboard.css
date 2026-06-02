@@ -1,75 +1,247 @@
 .dashboard-container {
-  padding: 20px;
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+  font-family: 'Segoe UI', Roboto, Helvetica, sans-serif;
+  color: #333;
+}
+
+.dashboard-header {
+  margin-bottom: 24px;
+  border-bottom: 1px solid #e0e0e0;
+  padding-bottom: 16px;
+}
+
+.dashboard-header h1 {
+  font-size: 1.8rem;
+  color: #1a1a1a;
+  margin-bottom: 8px;
+}
+
+.dashboard-header p {
+  color: #666;
+  font-size: 1rem;
 }
 
 .stats-cards {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 20px;
-  margin: 20px 0;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 24px;
+  margin: 24px 0;
 }
 
-.titulo{
-  color: #000;
-}
 .card {
-  background: white;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  background: #ffffff;
+  padding: 24px;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.1);
   text-align: center;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
-.card.warning { border-left: 5px solid #ffc107; }
-.card.success { border-left: 5px solid #28a745; }
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+}
+
+.card h3 {
+  font-size: 2.5rem;
+  margin: 0 0 8px 0;
+  color: #2c3e50;
+}
+
+.card p {
+  font-size: 1.1rem;
+  color: #555;
+  font-weight: 500;
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Indicadores contextuais para os cartões */
+.card.alert { border-top: 5px solid #e74c3c; }
+.card.warning { border-top: 5px solid #f39c12; }
+.card.success { border-top: 5px solid #27ae60; }
+
+.actions-container {
+  margin: 24px 0;
+}
+
+.titulo {
+  color: #2c3e50;
+  font-size: 1.4rem;
+  margin-bottom: 16px;
+  border-left: 4px solid #21967d;
+  padding-left: 10px;
+}
+
+/* Encapsulamento responsivo para a tabela estrutural */
+.table-responsive {
+  overflow-x: auto;
+  background: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
 
 .custom-table {
   width: 100%;
   border-collapse: collapse;
-  margin-top: 20px;
-  background: white;
+  white-space: nowrap;
+}
+
+.custom-table th {
+  background-color: #f8f9fa;
+  color: #495057;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  letter-spacing: 0.5px;
 }
 
 .custom-table th, .custom-table td {
-  padding: 12px;
-  border: 1px solid #ddd;
+  padding: 16px;
+  border-bottom: 1px solid #e9ecef;
   text-align: left;
 }
 
-.badge {
-  padding: 5px 10px;
-  border-radius: 4px;
-  background: #eee;
-  font-size: 0.85em;
+.custom-table tbody tr:hover {
+  background-color: #f1f3f5;
 }
 
-/* Estilo para o botão de Abrir Chamado */
-.btn-primary {
-  background-color: #21967d; /* Preto */
-  color: #fff; /* Branco */
+.custom-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.ticket-link {
+  color: #21967d;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+
+.ticket-link:hover {
+  color: #145c4d;
+  text-decoration: underline;
+}
+
+.empty-state {
+  text-align: center !important;
+  color: #888;
+  font-style: italic;
+  padding: 32px !important;
+}
+
+/* Padronização visual dos emblemas de estado (Badges) */
+.badge {
   padding: 6px 12px;
-  border-radius: 8px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  display: inline-block;
+  letter-spacing: 0.5px;
+}
+
+.badge.aberto, .badge.open {
+  background-color: #fdeaea;
+  color: #c0392b;
+  border: 1px solid #fadbd8;
+}
+
+.badge.fechado, .badge.closed {
+  background-color: #e9f7ef;
+  color: #27ae60;
+  border: 1px solid #d4efdf;
+}
+
+.badge.andamento, .badge.progress {
+  background-color: #fef5e7;
+  color: #d35400;
+  border: 1px solid #fdebd0;
+}
+
+.priority-text {
+  font-weight: 500;
+  color: #555;
+}
+
+/* Estilização do componente de submissão (Botão) */
+.btn-primary {
+  background-color: #21967d;
+  color: #ffffff;
+  padding: 10px 18px;
+  border-radius: 6px;
   text-decoration: none;
   font-weight: 600;
   font-size: 14px;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 8px;
-  transition: background-color 0.3s ease, transform 0.2s ease;
-  border: 1px solid #000;
+  transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s;
+  border: none;
   cursor: pointer;
-  width: fit-content;    /* Faz o botão ter apenas o tamanho do texto interno */
-  min-width: 120px;      /* Define uma largura mínima para não ficar "esmagado" */
-  max-width: 180px;      /* Garante que ele nunca fique muito largo */
+  box-shadow: 0 2px 4px rgba(33, 150, 125, 0.3);
 }
 
-
 .btn-primary:hover {
-  background-color: #333; /* Cinza escuro ao passar o mouse */
-  transform: translateY(-2px); /* Efeito de levante */
-  color: #fff;
+  background-color: #1a7a65;
+  transform: translateY(-2px);
+  color: #ffffff;
+  box-shadow: 0 4px 8px rgba(33, 150, 125, 0.4);
 }
 
 .btn-primary:active {
   transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(33, 150, 125, 0.3);
+}
+/* Definição estrutural básica para todos os emblemas (Badges) */
+.badge {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  display: inline-block;
+  letter-spacing: 0.5px;
+  text-align: center;
+  min-width: 100px; /* Garante uniformidade de tamanho na coluna */
+}
+
+/* Status: Aberto (Verde) */
+.badge-open {
+  background-color: #e9f7ef;
+  color: #27ae60;
+  border: 1px solid #d4efdf;
+}
+
+/* Status: Em Atendimento (Amarelo) */
+.badge-progress {
+  background-color: #fef5e7;
+  color: #d35400;
+  border: 1px solid #fdebd0;
+}
+
+/* Status: Pendente (Azul) */
+.badge-pending {
+  background-color: #eaf2f8;
+  color: #2980b9;
+  border: 1px solid #d4e6f1;
+}
+
+/* Status: Fechado (Geralmente Cinza ou Vermelho, caso precise renderizar em outro local) */
+.badge-closed {
+  background-color: #f2f3f4;
+  color: #7f8c8d;
+  border: 1px solid #e5e8e8;
+}
+
+/* Status: Padrão / Desconhecido */
+.badge-default {
+  background-color: #f8f9fa;
+  color: #6c757d;
+  border: 1px solid #dee2e6;
 }

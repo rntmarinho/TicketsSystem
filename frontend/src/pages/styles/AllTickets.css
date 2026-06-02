@@ -347,11 +347,29 @@
   font-weight: 700;
 }
 
+
+/* ─────────────────────────────────────────────
+    DATAS 
+───────────────────────────────────────────── */
 .at-date {
   display: flex;
   align-items: center;
   gap: 6px;
   color: #64748b;
+}
+
+.at-date-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #64748b;
+  white-space: nowrap; /* Impede a quebra de linha entre o ícone e o texto */
+}
+
+/* Identificador visual para violação ou aproximação do limite do SLA */
+.at-date-wrapper.sla-overdue {
+  color: #dc2626;
+  font-weight: 700;
 }
 
 /* ─────────────────────────────────────────────

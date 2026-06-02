@@ -10,14 +10,38 @@ import { apiFetch } from '../services/api';
 import './styles/AllTickets.css';
 
 /* ─── Definições Auxiliares ────────────────────────────────────────────── */
-const STATUS_META = {
-  open:   { label: 'Aberto',         bg: '#dbeafe', color: '#1d4ed8' },
-  in_progress: { label: 'Em Atendimento', bg: '#fef3c7', color: '#b45309' },
-  closed: { label: 'Fechado',        bg: '#dcfce7', color: '#15803d' },
+
+// Função aprimorada para lidar com divergências de status provenientes do backend
+const getStatusMeta = (status) => {
+  if (!status) return { label: 'Desconhecido', bg: '#f3f4f6', color: '#374151' };
+  const s = status.toLowerCase();
+  
+  if (s === 'open' || s === 'aberto') return { label: 'Aberto', bg: '#dbeafe', color: '#1d4ed8' };
+  if (s === 'in_progress' || s === 'andamento' || s === 'em atendimento') return { label: 'Em Atendimento', bg: '#fef3c7', color: '#b45309' };
+  if (s === 'pending' || s === 'pendente') return { label: 'Pendente', bg: '#eaf2f8', color: '#2980b9' };
+  if (s === 'closed' || s === 'fechado') return { label: 'Fechado', bg: '#dcfce7', color: '#15803d' };
+  
+  return { label: status, bg: '#f3f4f6', color: '#374151' };
 };
 
-const fmtDate = (iso) =>
-  iso ? new Date(iso).toLocaleDateString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '—';
+// Formatação cronológica com correção de fuso horário (remoção da assinatura GMT)
+const fmtDate = (val) => {
+  if (!val) return '—';
+  
+  // Limpa o GMT para forçar a interpretação como horário local da máquina
+  const cleanVal = typeof val === 'string' ? val.replace(' GMT', '') : val;
+  const date = new Date(cleanVal);
+  
+  if (isNaN(date.getTime())) return val;
+  
+  return date.toLocaleString('pt-BR', { 
+    day: '2-digit', 
+    month: '2-digit', 
+    year: 'numeric',
+    hour: '2-digit', 
+    minute: '2-digit' 
+  });
+};
 
 /* ─── Sub-componentes ──────────────────────────────────────────────────── */
 const Badge = ({ children, bg, color }) => (
@@ -70,15 +94,26 @@ const AllTickets = () => {
         t.category?.toLowerCase().includes(q)
       );
     }
-    if (fStatus)   list = list.filter(t => t.status === fStatus);
+    
+    if (fStatus) {
+      list = list.filter(t => {
+        const s = t.status ? t.status.toLowerCase() : '';
+        return s === fStatus || (fStatus === 'in_progress' && s === 'em atendimento');
+      });
+    }
     if (fCategory) list = list.filter(t => t.category === fCategory);
     if (fPriority) list = list.filter(t => t.priority === fPriority);
 
     list.sort((a, b) => {
-      if (sortBy === 'creation_asc') return new Date(a.creation) - new Date(b.creation);
-      if (sortBy === 'sla_asc')      return new Date(a.sla) - new Date(b.sla);
+      const dateA = a.creation ? new Date(a.creation.replace(' GMT', '')) : new Date(0);
+      const dateB = b.creation ? new Date(b.creation.replace(' GMT', '')) : new Date(0);
+      const slaA = a.sla ? new Date(a.sla.replace(' GMT', '')) : new Date(8640000000000000);
+      const slaB = b.sla ? new Date(b.sla.replace(' GMT', '')) : new Date(8640000000000000);
+
+      if (sortBy === 'creation_asc') return dateA - dateB;
+      if (sortBy === 'sla_asc')      return slaA - slaB;
       if (sortBy === 'id')           return a.id - b.id;
-      return new Date(b.creation) - new Date(a.creation); // default: creation_desc
+      return dateB - dateA; // default: creation_desc
     });
 
     return list;
@@ -108,33 +143,48 @@ const AllTickets = () => {
   const activeFilters = [fStatus, fCategory, fPriority].filter(Boolean).length;
 
   const renderRow = (ticket) => {
-    const sm = STATUS_META[ticket.status] ?? { label: ticket.status, bg: '#f3f4f6', color: '#374151' };
+    const sm = getStatusMeta(ticket.status);
     
-    // Análise temporal do SLA
-    const isSlaOverdue = new Date(ticket.sla) < new Date();
+    // Análise temporal do SLA (avaliado a partir do momento atual local)
+    const cleanSla = ticket.sla ? ticket.sla.replace(' GMT', '') : null;
+    const isSlaOverdue = cleanSla && new Date(cleanSla) < new Date();
 
     return (
       <tr key={ticket.id} className="at-row">
         <td className="at-td at-id">#{ticket.id}</td>
+        
         <td className="at-td at-subject">
           <span className="at-assunto">{ticket.subject}</span>
           <span className="at-cat-tag">{ticket.category || 'Não categorizado'}</span>
         </td>
+        
         <td className="at-td">
           <div className="at-user-cell">
             <span>{ticket.user || '—'}</span>
           </div>
         </td>
+        
         <td className="at-td">{ticket.priority}</td>
+        
         <td className="at-td"><Badge bg={sm.bg} color={sm.color}>{sm.label}</Badge></td>
-        <td className="at-td at-date">
-          <Calendar size={13} style={{marginRight: '4px'}}/>
-          {fmtDate(ticket.creation)}
+        
+        {/* Coluna 6: Data de Abertura */}
+        <td className="at-td">
+          <div className="at-date-wrapper">
+            <Calendar size={13} />
+            <span>{fmtDate(ticket.creation)}</span>
+          </div>
         </td>
-        <td className="at-td at-date" style={{ color: isSlaOverdue ? '#dc2626' : 'inherit', fontWeight: isSlaOverdue ? 'bold' : 'normal' }}>
-          <Clock size={13} style={{marginRight: '4px'}}/>
-          {fmtDate(ticket.sla)}
+        
+        {/* Coluna 7: Data Limite de SLA */}
+        <td className="at-td">
+          <div className={`at-date-wrapper ${isSlaOverdue ? 'sla-overdue' : ''}`}>
+            <Clock size={13} />
+            <span>{fmtDate(ticket.sla)}</span>
+          </div>
         </td>
+        
+        {/* Coluna 8: Botão de Operação */}
         <td className="at-td">
           <Link to={`/tickets/${ticket.id}`} className="at-btn-view">Inspecionar</Link>
         </td>
@@ -177,7 +227,7 @@ const AllTickets = () => {
 
       {activeFilters > 0 && (
         <div className="at-chips">
-          {fStatus   && <Chip label={`Status: ${fStatus}`} onRemove={() => setFStatus('')} />}
+          {fStatus   && <Chip label={`Status Ativo`} onRemove={() => setFStatus('')} />}
           {fCategory && <Chip label={`Categoria: ${fCategory}`} onRemove={() => setFCategory('')} />}
           {fPriority && <Chip label={`Prioridade: ${fPriority}`} onRemove={() => setFPriority('')} />}
           <button className="at-clear-all" onClick={clearFilters}>Restaurar padrão</button>

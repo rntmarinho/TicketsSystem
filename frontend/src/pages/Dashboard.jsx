@@ -9,21 +9,18 @@ const Dashboard = () => {
   const [stats, setStats] = useState({ aberto: 0, atendimento: 0, fechado: 0 });
 
   useEffect(() => {
-    // A função getTickets() processa a rota correta e anexa o JWT
     getTickets()
       .then(data => {
         setTickets(data);
         
-        // Calcula estatísticas dinâmicas baseadas nas novas regras
         const summary = data.reduce((acc, t) => {
           const status = t.status?.toLowerCase();
           
-          if (status === 'aberto') {
+          if (status === 'aberto' || status === 'open') {
             acc.aberto++;
-          } else if (status === 'fechado') {
+          } else if (status === 'fechado' || status === 'closed') {
             acc.fechado++;
           } else {
-            // Qualquer status que não seja aberto ou fechado é "Em Atendimento"
             acc.atendimento++;
           }
           return acc;
@@ -31,72 +28,114 @@ const Dashboard = () => {
 
         setStats(summary);
       })
-      .catch(err => console.error("Erro ao carregar chamados:", err));
+      .catch(err => console.error("Erro na aquisição dos registros de chamados:", err));
   }, []);
+
+  // Função auxiliar para tradução visual do texto
+  const formatStatus = (status) => {
+    if (!status) return 'Desconhecido';
+    const s = status.toLowerCase();
+    
+    if (s === 'open' || s === 'aberto') return 'Aberto';
+    if (s === 'in_progress' || s === 'andamento') return 'Em atendimento';
+    if (s === 'pending' || s === 'pendente') return 'Pendente';
+    if (s === 'closed' || s === 'fechado') return 'Fechado';
+    
+    return status;
+  };
+
+  // Função auxiliar para atribuir a classe CSS correta independentemente do idioma
+  const getBadgeClass = (status) => {
+    if (!status) return 'badge-default';
+    const s = status.toLowerCase();
+    
+    if (s === 'open' || s === 'aberto') return 'badge-open';
+    if (s === 'in_progress' || s === 'andamento') return 'badge-progress';
+    if (s === 'pending' || s === 'pendente') return 'badge-pending';
+    if (s === 'closed' || s === 'fechado') return 'badge-closed';
+    
+    return 'badge-default';
+  };
 
   return (
     <div className="dashboard-container">
-      <header>
+      <header className="dashboard-header">
         <div>
-          <h1>Bem-vindo ao Sistema de Chamados</h1>
-          <p>Olá! Aqui está o resumo das atividades de hoje.</p>
+          <h1>Sistema de Gerenciamento de Chamados</h1>
+          <p>Síntese das atividades operacionais e quadro geral de solicitações.</p>
         </div>       
       </header>
 
       <section className="stats-cards">
-        <div className="card">
+        <div className="card alert">
           <h3>{stats.aberto}</h3>
           <p>Abertos</p>
         </div>
-        <div className="card">
+        <div className="card warning">
           <h3>{stats.atendimento}</h3>
           <p>Em Atendimento</p>
         </div>
-        <div className="card">
+        <div className="card success">
           <h3>{stats.fechado}</h3>
           <p>Fechados</p>
         </div>
       </section>
 
-      <div>
+      <div className="actions-container">
         <Link to="/novo-chamado" className="btn-primary">
-          <Plus size={18} /> Abrir Novo Chamado
+          <Plus size={18} /> Novo Chamado
         </Link>
       </div>
 
-      <br />
-
       <section className="tickets-table-section">
-        <h2 className='titulo'>Chamados Recentes</h2>
-        <table className="custom-table">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Assunto</th>
-              <th>Solicitante</th>
-              <th>Status</th>
-              <th>Prioridade</th>
-              <th>Data de Criação</th>
-            </tr>
-          </thead>
-          <tbody>
-            {/* Filtra para não exibir tickets fechados no dashboard principal */}
-            {tickets.filter(t => t.status?.toLowerCase() !== 'fechado').map(ticket => (
-              <tr key={ticket.id}>
-                <td>#{ticket.id}</td>
-                <td>
-                    <Link to={`/tickets/${ticket.id}`} className="ticket-link">
-                     {ticket.assunto}
-                    </Link>
-                  </td>
-                <td>{ticket.solicitante_nome || 'N/A'}</td>
-                <td><span className={`badge ${ticket.status?.toLowerCase()}`}>{ticket.status}</span></td>
-                <td>{ticket.prioridade}</td>
-                <td>{new Date(ticket.data_criacao).toLocaleDateString('pt-BR')}</td>
+        <h2 className="titulo">Chamados Recentes</h2>
+        <div className="table-responsive">
+          <table className="custom-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Assunto</th>
+                <th>Solicitante</th>
+                <th>Status</th>
+                <th>Prioridade</th>
+                <th>Data de Registro</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {tickets
+                .filter(t => {
+                  const s = t.status?.toLowerCase();
+                  return s !== 'fechado' && s !== 'closed';
+                })
+                .map(ticket => (
+                <tr key={ticket.id}>
+                  <td><strong>#{ticket.id}</strong></td>
+                  <td>
+                      <Link to={`/tickets/${ticket.id}`} className="ticket-link">
+                       {ticket.subject || 'Sem Assunto'}
+                      </Link>
+                    </td>
+                  <td>{ticket.user || 'Não Atribuído'}</td>
+                  <td>
+                    {/* Aplicação da classe normalizada */}
+                    <span className={`badge ${getBadgeClass(ticket.status)}`}>
+                      {formatStatus(ticket.status)}
+                    </span>
+                  </td>
+                  <td>
+                    <span className="priority-text">{ticket.priority || 'Padrão'}</span>
+                  </td>
+                  <td>{new Date(ticket.creation).toLocaleDateString('pt-BR')}</td>
+                </tr>
+              ))}
+              {tickets.length === 0 && (
+                <tr>
+                  <td colSpan="6" className="empty-state">Nenhum chamado ativo no momento.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </section>
     </div>
   );

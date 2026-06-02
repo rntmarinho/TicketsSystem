@@ -95,7 +95,7 @@ const NewTicket = () => {
           </div>
 
           <div className="form-group">
-            <label>Assunto (Subject)</label>
+            <label>Assunto</label>
             <input 
               type="text" 
               placeholder="Síntese da ocorrência"

@@ -21,6 +21,7 @@ import './styles/TicketDetails.css';
 const STATUS_OPTIONS = [
   { value: 'open', label: 'Aberto' },
   { value: 'in_progress', label: 'Em atendimento' },
+  { value: 'pending', label: 'Pendente' },
   { value: 'closed', label: 'Fechado' }
 ];
 
@@ -125,20 +126,38 @@ const TicketDetails = () => {
         requestJson(`/tickets/${id}/messages`)
       ]);
 
+      // Certifica-se de que estamos trabalhando com arrays válidos
+      const uData = Array.isArray(userData) ? userData : (userData?.data || []);
+      const cData = Array.isArray(categoryData) ? categoryData : (categoryData?.data || []);
+      const pData = Array.isArray(priorityData) ? priorityData : (priorityData?.data || []);
+      const mData = Array.isArray(messageData) ? messageData : (messageData?.data || []);
+
+      setUsers(uData);
+      setCategories(cData);
+      setPriorities(pData);
+      setMessages(mData);
+
+      // O Backend retorna os 'nomes' das chaves estrangeiras. Procuramos seus devidos IDs.
+      const matchedCategory = cData.find(c => c.name === ticketData.category);
+      const matchedPriority = pData.find(p => p.name === ticketData.priority);
+      const matchedUser = uData.find(u => u.name === ticketData.user);
+
+      // Normalização amigável de status para contemplar possíveis traduções retornadas pela API
+      let backendStatus = (ticketData.status || 'open').toLowerCase();
+      if (backendStatus === 'aberto') backendStatus = 'open';
+      if (backendStatus === 'fechado') backendStatus = 'closed';
+      if (backendStatus === 'em atendimento' || backendStatus === 'andamento') backendStatus = 'in_progress';
+
       setFormData({
         subject: ticketData.subject || '',
-        status: ticketData.status || 'open',
-        category_id: ticketData.category_id || '',
-        priority_id: ticketData.priority_id || '',
-        user_id: ticketData.user_id || '',
+        status: backendStatus,
+        category_id: ticketData.category_id || matchedCategory?.id || '',
+        priority_id: ticketData.priority_id || matchedPriority?.id || '',
+        user_id: ticketData.user_id || matchedUser?.id || '',
         creation: ticketData.creation || '',
         sla: ticketData.sla || ''
       });
 
-      setUsers(Array.isArray(userData) ? userData : []);
-      setCategories(Array.isArray(categoryData) ? categoryData : []);
-      setPriorities(Array.isArray(priorityData) ? priorityData : []);
-      setMessages(Array.isArray(messageData) ? messageData : []);
     } catch (err) {
       console.error('Erro ao carregar dados do chamado:', err);
       setError('Não foi possível carregar os dados do chamado. Verifique a conexão ou tente novamente.');
@@ -150,7 +169,7 @@ const TicketDetails = () => {
   const loadMessages = async () => {
     try {
       const messageData = await requestJson(`/tickets/${id}/messages`);
-      setMessages(Array.isArray(messageData) ? messageData : []);
+      setMessages(Array.isArray(messageData) ? messageData : (messageData?.data || []));
     } catch (err) {
       console.error('Erro ao atualizar histórico:', err);
       setError('Não foi possível atualizar o histórico de atividades.');
@@ -324,7 +343,7 @@ const TicketDetails = () => {
         <div className="loading-state">
           <RefreshCw className="loading-icon" size={28} />
           <h2>Carregando chamado</h2>
-          <p>Estamos buscando as informações do protocolo.</p>
+          <p>Estamos buscando as informações do chamado.</p>
         </div>
       </div>
     );
@@ -344,7 +363,7 @@ const TicketDetails = () => {
 
         <div className="header-title">
           <span className="header-eyebrow">Detalhes do chamado</span>
-          <h1>Protocolo #{id}</h1>
+          <h1> Chamado #{id} - {formData.subject}</h1>
           <span className={`badge-status-top status-${formData.status}`}>
             {statusLabel}
           </span>
@@ -402,19 +421,15 @@ const TicketDetails = () => {
 
       <div className="details-grid">
         <main className="main-content">
-          <section className="static-card">
+         <section className="static-card">
             <label className="section-label">
               <Info size={16} />
-              Identificação principal
+              Descrição do chamado
             </label>
 
-            <input
-              type="text"
-              className="subject-input"
-              value={formData.subject}
-              onChange={event => handleFieldChange('subject', event.target.value)}
-              placeholder="Informe o assunto do chamado"
-            />
+            <div className="subject-text-view">
+              {formData.subject || 'Nenhum assunto ou descrição fornecida.'}
+            </div>
           </section>
 
           <section className="messages-section">
