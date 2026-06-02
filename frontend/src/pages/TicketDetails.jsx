@@ -73,10 +73,12 @@ const TicketDetails = () => {
 
   const isClosed = formData.status === 'closed';
 
+  // CORREÇÃO: Limpeza do sufixo de fuso horário para evitar divergência com o banco
   const formatDate = value => {
     if (!value) return 'Não informado';
 
-    const date = new Date(value);
+    const cleanVal = typeof value === 'string' ? value.replace(' GMT', '') : value;
+    const date = new Date(cleanVal);
 
     if (Number.isNaN(date.getTime())) {
       return 'Data inválida';

@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 from database.connect_database import get_db_connection
 
 class TicketModel:
@@ -25,13 +26,31 @@ class TicketModel:
         return result[0] if result else None
 
     @staticmethod
-    def create(data, calculated_sla):
+    def create(data):
         """
-        Persiste o chamado no banco de dados com o SLA já computado.
+        Busca a métrica de SLA atrelada à prioridade requisitada, realiza o
+        cômputo do prazo final e persiste o chamado no banco de dados.
         """
         conn = get_db_connection()
         cursor = conn.cursor()
 
+        # 1. Recuperação do quantitativo de horas estipulado para a prioridade
+        cursor.execute("""
+            SELECT sla 
+            FROM tbl_priorities 
+            WHERE id = %s
+        """, (data["priority_id"],))
+        
+        resultado = cursor.fetchone()
+        
+        # Atribuição segura com conversão padrão para 0 caso não localizado
+        sla_horas = resultado[0] if (resultado and resultado[0] is not None) else 0
+
+        # 2. Processamento temporal: estampa de tempo (timestamp) unificada
+        data_criacao = datetime.now()
+        prazo_sla = data_criacao + timedelta(hours=float(sla_horas))
+
+        # 3. Inserção do registro contemplando as matrizes de data recém-calculadas
         cursor.execute("""
             INSERT INTO tbl_tickets (
                 subject,
@@ -39,9 +58,10 @@ class TicketModel:
                 user_id,
                 priority_id,
                 status,
+                creation,
                 sla
             )
-            VALUES (%s, %s, %s, %s, %s, %s)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
             RETURNING id
         """, (
             data["subject"],
@@ -49,7 +69,8 @@ class TicketModel:
             data["user_id"],
             data["priority_id"],
             "open",
-            calculated_sla
+            data_criacao,
+            prazo_sla
         ))
 
         ticket_id = cursor.fetchone()[0]

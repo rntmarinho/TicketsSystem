@@ -5,7 +5,6 @@ class TicketController:
 
     @staticmethod
     def create_ticket(data):
-
         required = [
             "subject",
             "category_id",
@@ -21,29 +20,21 @@ class TicketController:
                     "message": f"Campo estrutural '{field}' é obrigatório."
                 }, 400
 
-        # 2. Obtenção do parâmetro SLA em horas proveniente da tbl_priorities
-        priority_id = data["priority_id"]
-        sla_hours = TicketModel.get_priority_sla(priority_id)
+        # 2. Delegação da persistência à camada de Modelo (O Model agora calcula o SLA)
+        try:
+            ticket_id = TicketModel.create(data)
 
-        if sla_hours is None:
+            return {
+                "success": True,
+                "message": "Chamado processado e registrado com êxito.",
+                "ticket_id": ticket_id
+            }, 201
+            
+        except Exception as e:
             return {
                 "success": False,
-                "message": "Prioridade não identificada no registro referencial."
-            }, 404
-
-        # 3. Cômputo do SLA a partir do timestamp momentâneo
-        creation_timestamp = datetime.now()
-        calculated_sla = creation_timestamp + timedelta(hours=sla_hours)
-
-        # 4. Delegação da persistência à camada de Modelo
-        ticket_id = TicketModel.create(data, calculated_sla)
-
-        return {
-            "success": True,
-            "message": "Chamado processado e registrado com êxito.",
-            "ticket_id": ticket_id,
-            "sla_projected": calculated_sla.strftime("%Y-%m-%d %H:%M:%S")
-        }, 201
+                "message": f"Erro ao registrar chamado: {str(e)}"
+            }, 500
 
     @staticmethod
     def list_tickets():
@@ -123,3 +114,4 @@ class TicketController:
             "success": True,
             "message": "As propriedades do chamado foram atualizadas com sucesso."
         }, 200
+    
