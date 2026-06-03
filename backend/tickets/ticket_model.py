@@ -157,12 +157,13 @@ class TicketModel:
     def update_status(ticket_id, status):
         conn = get_db_connection()
         cursor = conn.cursor()
+        data_atualizacao = datetime.now()
 
         cursor.execute("""
             UPDATE tbl_tickets
-            SET status = %s
+            SET status = %s, close_time = %s
             WHERE id = %s
-        """, (status, ticket_id))
+        """, (status, data_atualizacao, ticket_id))
 
         conn.commit()
 
