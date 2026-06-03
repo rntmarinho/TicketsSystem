@@ -109,8 +109,8 @@ const CreateUser = () => {
                 value={formData.access_type} 
                 onChange={e => setFormData({...formData, access_type: e.target.value})}
               >
-                <option value="comum">Comum (Solicitante)</option>
-                <option value="tecnico">Técnico (Suporte / Admin)</option>
+                <option value="client">Cliente / Comum</option>
+                <option value="technician">Técnico</option>
               </select>
             </div>
             

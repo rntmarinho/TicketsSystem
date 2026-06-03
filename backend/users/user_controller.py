@@ -31,30 +31,48 @@ class UserController:
 
     @staticmethod
     def login(email, password):
-
         user = UserModel.get_by_email(email)
 
         if not user:
-
             return {
                 "success": False,
                 "message": "Usuário não encontrado."
             }, 404
 
+        user_id = user[0]
         password_hash = user[4]
+        locked_until = user[8] # Índice referente à coluna locked_until
 
-        # Verifica a senha usando bcrypt, comparando a senha fornecida com o hash armazenado
-        if not bcrypt.checkpw(
-            password.encode("utf-8"),
-            password_hash.encode("utf-8")
-        ):
+        # 1. Validação de Bloqueio Preexistente
+        if locked_until and locked_until > datetime.now():
+            return {
+                "success": False,
+                "message": "Conta temporariamente bloqueada devido a múltiplas tentativas de login falhas. Tente novamente mais tarde."
+            }, 403
+
+        # 2. Verificação Criptográfica da Senha
+        if not bcrypt.checkpw(password.encode("utf-8"), password_hash.encode("utf-8")):
+            
+            # Incrementar tentativas falhas
+            new_attempts = UserModel.increment_failed_attempts(user_id)
+            
+            # Limite estabelecido: 5 tentativas
+            if new_attempts >= 5:
+                UserModel.lock_user(user_id, lock_duration_minutes=15)
+                return {
+                    "success": False,
+                    "message": "Limite de tentativas excedido. Por questões de segurança, a conta foi bloqueada por 15 minutos."
+                }, 403
 
             return {
                 "success": False,
-                "message": "Senha inválida."
+                "message": f"Credenciais inválidas. Tentativa {new_attempts} de 5."
             }, 401
         
-        # Se a autenticação for bem-sucedida, gera um token JWT com as informações do usuário
+        # 3. Restabelecimento do Estado (Sucesso no Login)
+        UserModel.reset_login_attempts(user_id)
+
+        # 4. Geração do Token JWT (Lógica Original Mantida)
         token = create_access_token(
             identity=str(user[0]),
             additional_claims={

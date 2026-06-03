@@ -1,5 +1,5 @@
 from database.connect_database import get_db_connection
-
+from datetime import datetime, timedelta
 
 class UserModel:
 
@@ -38,10 +38,10 @@ class UserModel:
 
     @staticmethod
     def get_by_email(email):
-
         conn = get_db_connection()
         cursor = conn.cursor()
 
+        # Adicionadas as colunas failed_attempts e locked_until no final do SELECT
         cursor.execute("""
             SELECT
                 id,
@@ -50,7 +50,9 @@ class UserModel:
                 client_id,
                 password,
                 access_type,
-                situation
+                situation,
+                failed_attempts,
+                locked_until
             FROM tbl_users
             WHERE email = %s
         """, (email,))
@@ -199,5 +201,57 @@ class UserModel:
 
         conn.commit()
 
+        cursor.close()
+        conn.close()
+
+    @staticmethod
+    def increment_failed_attempts(user_id):
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            UPDATE tbl_users 
+            SET failed_attempts = failed_attempts + 1 
+            WHERE id = %s
+            RETURNING failed_attempts
+        """, (user_id,))
+        
+        attempts = cursor.fetchone()[0]
+        conn.commit()
+        
+        cursor.close()
+        conn.close()
+        
+        return attempts
+
+    @staticmethod
+    def lock_user(user_id, lock_duration_minutes=15):
+        locked_until = datetime.now() + timedelta(minutes=lock_duration_minutes)
+        
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            UPDATE tbl_users 
+            SET locked_until = %s 
+            WHERE id = %s
+        """, (locked_until, user_id))
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+    @staticmethod
+    def reset_login_attempts(user_id):
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            UPDATE tbl_users 
+            SET failed_attempts = 0, locked_until = NULL 
+            WHERE id = %s
+        """, (user_id,))
+        
+        conn.commit()
         cursor.close()
         conn.close()
