@@ -187,7 +187,7 @@ def processar_emails_imap():
                     "subject": msg.subject,
                     "category_id": 1,
                     "user_id": user_id,
-                    "priority_id": 2,
+                    "priority_id": 3,
                     "status": "open",
                     "sla": None
                 }
@@ -275,7 +275,7 @@ def process_new_ticket_email(msg, user_id):
         "subject": msg.subject,
         "category_id": 1,
         "user_id": user_id,
-        "priority_id": 2
+        "priority_id": 3
     }
 
     ticket_id = TicketModel.create(
