@@ -117,3 +117,21 @@ class UserController:
             "success": True,
             "message": "Usuário inativado."
         }
+    
+    @staticmethod
+    def get_user(user_id):
+        try:
+            # Assumindo que tem um método get_by_id no UserModel
+            user = UserModel.get_by_id(user_id)
+            if not user:
+                return {"success": False, "message": "Usuário não encontrado."}, 404
+            
+            # Adapte os índices/chaves de acordo com o retorno da sua base de dados
+            return {
+                "id": user[0],
+                "nome": user[1],
+                "email": user[2],
+                "solicitante": user[3] # Exemplo
+            }, 200
+        except Exception as e:
+            return {"success": False, "message": f"Erro: {str(e)}"}, 500

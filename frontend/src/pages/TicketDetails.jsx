@@ -278,6 +278,7 @@ const TicketDetails = () => {
         },
         body: JSON.stringify({
           message: trimmedMessage
+          // A propriedade 'signature' foi intencionalmente omitida
         })
       });
 

@@ -8,6 +8,7 @@ from clients.client_routes import client_bp
 from tickets.ticket_routes import ticket_bp
 from tickets.categories.categories_routes import category_bp
 from tickets.priorities.priorities_routes import priority_bp
+from tickets.messages.message_routes import message_bp
 from services.email_service import iniciar_daemon_email
 from flask_cors import CORS
 
@@ -42,7 +43,7 @@ def create_app():
     app.register_blueprint(ticket_bp)
     app.register_blueprint(category_bp) 
     app.register_blueprint(priority_bp) 
-
+    app.register_blueprint(message_bp)
     # Health Check
     @app.route("/", methods=["GET"])
     def home():

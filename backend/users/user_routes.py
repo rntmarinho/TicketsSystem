@@ -66,3 +66,10 @@ def delete_user(user_id):
     )
 
     return jsonify(response)
+
+# Rota para obter detalhes de um usuário específico (requer autenticação)
+@user_bp.route("/<int:user_id>", methods=["GET"])
+@jwt_required()
+def get_user(user_id):
+    response, status = UserController.get_user(user_id)
+    return jsonify(response), status

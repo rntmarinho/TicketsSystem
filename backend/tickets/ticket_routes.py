@@ -1,8 +1,7 @@
 from flask import Blueprint, request, jsonify
-from flask_jwt_extended import jwt_required
+from flask_jwt_extended import jwt_required, get_jwt_identity
 from tickets.ticket_controller import TicketController
-# Se você tiver um controller específico para mensagens, importe-o aqui. 
-# Caso contrário, vamos mapear diretamente para o model ou criar a lógica no TicketController.
+from services.email_service import send_email_notification
 from tickets.messages.message_model import MessageModel 
 
 # Blueprint para rotas de tickets
@@ -69,22 +68,38 @@ def list_messages(ticket_id):
 @ticket_bp.route("/<int:ticket_id>/messages", methods=["POST"])
 @jwt_required()
 def create_message(ticket_id):
-    # Verifica se o ticket existe antes de criar a mensagem
     data = request.get_json()
-    # Validação básica para garantir que o campo 'message' esteja presente
+    
+    # 1. Extrair o ID numérico do utilizador autenticado a partir do token
+    current_user_id = get_jwt_identity()
+
     if not data or "message" not in data:
         return jsonify({"success": False, "message": "O campo 'message' é obrigatório"}), 400
     
     payload = {
         "ticket_id": ticket_id,
         "message": data.get("message"),
-        "signature": data.get("signature", "Sistema"), 
+        "signature": current_user_id, # <-- 2. Agora enviamos o ID numérico, evitando o erro na BD
         "private": data.get("private", False)
     }
 
     try:
         message_id = MessageModel.create(payload)
-        # Retorna os detalhes da mensagem criada, incluindo o ID gerado
+
+        # 3. Se a mensagem não for privada, envia o e-mail de notificação
+        if not payload["private"]:
+            ticket_response, status_code = TicketController.get_ticket(ticket_id)
+            
+            if status_code == 200:
+                ticket_data = ticket_response
+                # Ajuste para garantir que o serviço de e-mail recebe o ID correto
+                ticket_data["user_id"] = ticket_data.get("user")
+                
+                send_email_notification(
+                    ticket=ticket_data,
+                    autor=current_user_id,
+                    conteudo=payload["message"]
+                )
            
         return jsonify({
             "id": message_id,
@@ -114,3 +129,4 @@ def handle_ticket_by_id(ticket_id):
     elif request.method == "DELETE":
         response = TicketController.delete_ticket(ticket_id)
         return jsonify(response)
+    

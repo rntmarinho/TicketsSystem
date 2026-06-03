@@ -5,6 +5,7 @@ import { LayoutDashboard,
   BarChart3, 
   Building2, 
   BarChart, 
+  Scale,
   Tag, 
   UserRoundPen, 
   CircleAlert } from 'lucide-react';
@@ -62,6 +63,10 @@ const Sidebar = () => {
           <BarChart size={20} /> Relatórios
         </Link>
         
+        <Link to="/LGPD" className={isActive("/LGPD")}>
+          <Scale  size={20} /> LGPD
+        </Link>
+
       </nav>
       </div>
     </div>

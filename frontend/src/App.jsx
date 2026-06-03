@@ -16,6 +16,7 @@ import ManageCategories from './pages/ManageCategories';
 import Profile from './pages/Profile';
 import Priorities from './pages/Priority';
 import Clients from './pages/Clients';
+import LGPD from './pages/LGPD';
 
 import './App.css';
 
@@ -84,6 +85,7 @@ function App() {
                   <Route path="/prioridades" element={<Priorities />} />
                   <Route path="/perfil" element={<Profile />} />
                   <Route path="/clientes" element={<Clients />} />
+                  <Route path="/LGPD" element={<LGPD />} />
                   <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
               </main>
