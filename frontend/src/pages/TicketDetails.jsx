@@ -14,7 +14,7 @@ import {
   MessageSquare,
   RefreshCw
 } from 'lucide-react';
-
+import TicketAnexos from './TicketAnexos';
 import { apiFetch } from '../services/api';
 import './styles/TicketDetails.css';
 
@@ -508,6 +508,10 @@ const TicketDetails = () => {
               ))}
             </div>
           </section>
+          <TicketAnexos
+      ticketId={Number(id)}
+      ticketFechado={isClosed}
+    />
         </main>
 
         <aside className="sidebar-info">

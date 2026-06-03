@@ -98,15 +98,38 @@ class UserController:
         return result
 
     @staticmethod
+    @staticmethod
     def update_user(user_id, data):
+        # 1. Recupera o usuário atual para não perder dados que o frontend não enviou
+        current_user = UserModel.get_by_id(user_id)
+        if not current_user:
+            return {"success": False, "message": "Usuário não encontrado."}, 404
 
-        UserModel.update(user_id, data)
+        # 2. Mescla os dados recebidos (suportando 'nome') com os dados do banco
+        payload = {
+            "name": data.get("nome", data.get("name", current_user[1])),
+            "email": data.get("email", current_user[2]),
+            "client_id": data.get("client_id", current_user[3]),
+            "access_type": data.get("access_type", current_user[4])
+        }
+
+        # 3. Executa a atualização dos dados principais
+        UserModel.update(user_id, payload)
+
+        # 4. Verifica se o frontend enviou uma nova senha
+        new_password = data.get("senha", data.get("password", "")).strip()
+        if new_password:
+            password_hash = bcrypt.hashpw(
+                new_password.encode("utf-8"),
+                bcrypt.gensalt()
+            ).decode("utf-8")
+            UserModel.update_password(user_id, password_hash)
 
         return {
             "success": True,
-            "message": "Usuário atualizado."
+            "message": "Perfil atualizado com sucesso."
         }
-
+    
     # O método delete_user não remove o registro do usuário do banco de dados, mas sim inativa o usuário, alterando seu status para "inativo". Isso é feito para manter um histórico dos usuários e evitar problemas de integridade referencial em outras partes do sistema que possam estar associadas a esse usuário.
     @staticmethod
     def delete_user(user_id):

@@ -5,13 +5,17 @@ import {
   Shield,
   Lock,
   Save,
-  Camera
+  Camera,
+  PenTool // Novo ícone importado para a assinatura
 } from 'lucide-react';
-import { apiFetch } from '../services/api'; // Importação do apiFetch adicionada
+import { apiFetch } from '../services/api';
 import './styles/Profile.css';
 
 const Profile = () => {
   const [user, setUser] = useState(null);
+  
+  // Novo estado para armazenar o arquivo físico da assinatura
+  const [signatureFile, setSignatureFile] = useState(null);
 
   const [formData, setFormData] = useState({
     nome: '',
@@ -39,7 +43,6 @@ const Profile = () => {
 
   const loadUserData = async (userId) => {
     try {
-      // Correção: apiFetch sem prefixo /api
       const response = await apiFetch(`/users/${userId}`);
       const data = await response.json();
 
@@ -62,10 +65,18 @@ const Profile = () => {
     });
   };
 
+  // Nova função para capturar a seleção do arquivo
+  const handleFileChange = (e) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setSignatureFile(e.target.files[0]);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     try {
+      // 1ª Etapa: Atualização dos dados em formato JSON
       const payload = {
         nome: formData.nome,
         email: formData.email
@@ -75,7 +86,6 @@ const Profile = () => {
         payload.senha = formData.senha;
       }
 
-      // Correção: apiFetch sem prefixo /api
       const response = await apiFetch(
         `/users/${user.id}`,
         {
@@ -88,7 +98,36 @@ const Profile = () => {
       );
 
       if (!response.ok) {
-        throw new Error('Erro ao atualizar perfil');
+        throw new Error('Erro ao atualizar dados de texto do perfil');
+      }
+
+      // 2ª Etapa: Envio isolado do arquivo binário da assinatura (se existir)
+      if (signatureFile) {
+        const signatureData = new FormData();
+        signatureData.append('signature', signatureFile);
+
+        // Recupera o token de autenticação diretamente do armazenamento local
+        const token = localStorage.getItem('token'); 
+        
+        // Utilização da API nativa 'fetch' para contornar os cabeçalhos fixos do api.js
+        const signatureResponse = await fetch(
+          `http://127.0.0.1:5000/users/${user.id}/signature`,
+          {
+            method: 'PATCH',
+            headers: {
+              'Authorization': `Bearer ${token}`
+              // A omissão estrita do 'Content-Type' é o que permite ao navegador
+              // processar a imagem adequadamente.
+            },
+            body: signatureData
+          }
+        );
+
+        if (!signatureResponse.ok) {
+          const errorPayload = await signatureResponse.json();
+          throw new Error(errorPayload.message || 'Erro sistêmico ao realizar upload do arquivo de assinatura.');
+        }
+      
       }
 
       alert('Perfil atualizado com sucesso!');
@@ -106,14 +145,18 @@ const Profile = () => {
 
       setUser(updatedUser);
 
+      // Limpa os campos de senha e o arquivo selecionado para evitar reenvios acidentais
       setFormData({
         ...formData,
         senha: ''
       });
+      setSignatureFile(null);
+      // Reseta visualmente o input de arquivo caso seja necessário
+      document.getElementById('signatureInput').value = '';
 
     } catch (error) {
       console.error(error);
-      alert('Erro ao atualizar perfil.');
+      alert('Erro ao atualizar perfil. Tente novamente.');
     }
   };
 
@@ -187,6 +230,24 @@ const Profile = () => {
               value={formData.senha}
               onChange={handleChange}
             />
+          </div>
+
+          {/* NOVO CAMPO: Área para seleção da Assinatura Gráfica */}
+          <div className="form-group">
+            <label>
+              <PenTool size={16} />
+              Assinatura (Imagem)
+            </label>
+            <input
+              id="signatureInput"
+              type="file"
+              accept="image/png, image/jpeg, image/jpg"
+              onChange={handleFileChange}
+              className="file-input"
+            />
+            <small style={{ color: '#666', marginTop: '4px', display: 'block' }}>
+              Selecione uma imagem (.png, .jpg) caso deseje atualizar sua assinatura digital.
+            </small>
           </div>
 
           <button

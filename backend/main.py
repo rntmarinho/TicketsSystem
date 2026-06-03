@@ -10,6 +10,7 @@ from tickets.categories.categories_routes import category_bp
 from tickets.priorities.priorities_routes import priority_bp
 from tickets.messages.message_routes import message_bp
 from services.email_service import iniciar_daemon_email
+from tickets.anexos.anexo_routes import anexo_bp
 from flask_cors import CORS
 
 # Carrega as variáveis de ambiente do arquivo .env
@@ -44,6 +45,7 @@ def create_app():
     app.register_blueprint(category_bp) 
     app.register_blueprint(priority_bp) 
     app.register_blueprint(message_bp)
+    app.register_blueprint(anexo_bp)
     # Health Check
     @app.route("/", methods=["GET"])
     def home():

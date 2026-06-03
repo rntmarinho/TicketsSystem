@@ -178,3 +178,26 @@ class UserModel:
 
         cursor.close()
         conn.close()
+
+    @staticmethod
+    def update_signature(user_id, signature_bytes):
+        """
+        Persiste o fluxo binário correspondente à assinatura do usuário
+        na respectiva tupla do banco de dados relacional.
+        """
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            UPDATE tbl_users
+            SET signature = %s
+            WHERE id = %s
+        """, (
+            signature_bytes,
+            user_id
+        ))
+
+        conn.commit()
+
+        cursor.close()
+        conn.close()

@@ -73,3 +73,29 @@ def delete_user(user_id):
 def get_user(user_id):
     response, status = UserController.get_user(user_id)
     return jsonify(response), status
+
+@user_bp.route("/<int:user_id>/signature", methods=["PATCH"])
+@jwt_required()
+def upload_signature(user_id):
+    # Validação da presença do arquivo no escopo da requisição
+    if 'signature' not in request.files:
+        return jsonify({"success": False, "message": "Nenhum artefato de assinatura foi submetido."}), 400
+    
+    file = request.files['signature']
+    
+    if file.filename == '':
+        return jsonify({"success": False, "message": "Arquivo nulo ou ausente."}), 400
+
+    try:
+        # Extração do fluxo binário do artefato
+        signature_bytes = file.read()
+        
+        # Invocação direta ao modelo para persistência
+        # Nota: Pode ser devidamente encapsulado no UserController para maior abstração
+        from users.user_model import UserModel
+        UserModel.update_signature(user_id, signature_bytes)
+        
+        return jsonify({"success": True, "message": "Assinatura registrada com êxito na base de dados."}), 200
+
+    except Exception as e:
+        return jsonify({"success": False, "message": f"Falha sistêmica durante o processamento do artefato: {str(e)}"}), 500

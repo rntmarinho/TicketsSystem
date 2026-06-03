@@ -1,8 +1,9 @@
 from flask import Blueprint, request, jsonify
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt 
+from database.connect_database import get_db_connection 
 from tickets.ticket_controller import TicketController
 from services.email_service import send_email_notification
-from tickets.messages.message_model import MessageModel 
+from tickets.messages.message_model import MessageModel
 
 # Blueprint para rotas de tickets
 ticket_bp = Blueprint(
@@ -70,8 +71,10 @@ def list_messages(ticket_id):
 def create_message(ticket_id):
     data = request.get_json()
     
-    # 1. Extrair o ID numérico do utilizador autenticado a partir do token
-    current_user_id = get_jwt_identity()
+    # 1. Extrair ID (convertendo para Inteiro) e Nome do token JWT
+    current_user_id = int(get_jwt_identity())
+    claims = get_jwt()
+    author_name = claims.get("name", "Sistema") # Pega o nome real do técnico/cliente
 
     if not data or "message" not in data:
         return jsonify({"success": False, "message": "O campo 'message' é obrigatório"}), 400
@@ -79,27 +82,38 @@ def create_message(ticket_id):
     payload = {
         "ticket_id": ticket_id,
         "message": data.get("message"),
-        "signature": current_user_id, # <-- 2. Agora enviamos o ID numérico, evitando o erro na BD
+        "signature": current_user_id, # Agora é garantidamente um número Inteiro
         "private": data.get("private", False)
     }
 
     try:
+        # Persistência da mensagem no banco
         message_id = MessageModel.create(payload)
 
-        # 3. Se a mensagem não for privada, envia o e-mail de notificação
+        # 2. Interceção condicional para notificações externas
         if not payload["private"]:
             ticket_response, status_code = TicketController.get_ticket(ticket_id)
             
             if status_code == 200:
                 ticket_data = ticket_response
-                # Ajuste para garantir que o serviço de e-mail recebe o ID correto
-                ticket_data["user_id"] = ticket_data.get("user")
                 
-                send_email_notification(
-                    ticket=ticket_data,
-                    autor=current_user_id,
-                    conteudo=payload["message"]
-                )
+                # Correção Crítica: Obter o user_id real (numérico) do dono do chamado
+                conn = get_db_connection()
+                cursor = conn.cursor()
+                cursor.execute("SELECT user_id FROM tbl_tickets WHERE id = %s", (ticket_id,))
+                owner_row = cursor.fetchone()
+                cursor.close()
+                conn.close()
+                
+                if owner_row:
+                    ticket_data["user_id"] = owner_row[0]
+                    
+                    # Dispara o e-mail passando o nome real do autor para ficar bonito na notificação
+                    send_email_notification(
+                        ticket=ticket_data,
+                        autor=author_name, 
+                        conteudo=payload["message"]
+                    )
            
         return jsonify({
             "id": message_id,
