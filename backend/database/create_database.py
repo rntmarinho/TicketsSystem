@@ -238,6 +238,17 @@ def create_tables():
             usuario_upload INTEGER
             REFERENCES tbl_users(id)
 
+            -- Configurações
+            CREATE TABLE IF NOT EXISTS tbl_user_settings (
+                id SERIAL PRIMARY KEY,                
+                user_id INTEGER NOT NULL UNIQUE
+                REFERENCES tbl_users(id)
+                ON DELETE CASCADE,
+                email_notifications BOOLEAN DEFAULT TRUE,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+            
+
         );
 
         """

@@ -82,7 +82,7 @@ def create_message(ticket_id):
     payload = {
         "ticket_id": ticket_id,
         "message": data.get("message"),
-        "signature": current_user_id, # Agora é garantidamente um número Inteiro
+        "sender": current_user_id, # Agora é garantidamente um número Inteiro
         "private": data.get("private", False)
     }
 
@@ -119,7 +119,7 @@ def create_message(ticket_id):
             "id": message_id,
             "ticket_id": ticket_id,
             "message": payload["message"],
-            "signature": payload["signature"],
+            "sender": payload["sender"],
             "private": payload["private"]
         }), 201
         

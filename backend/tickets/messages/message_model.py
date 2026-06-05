@@ -4,7 +4,6 @@ class MessageModel:
 
     @staticmethod
     def create(data):
-        # [Código original existente mantido...]
         conn = get_db_connection()
         cursor = conn.cursor()
 
@@ -12,22 +11,22 @@ class MessageModel:
             INSERT INTO tbl_messages (
                 ticket_id,
                 message,
+                sender,
                 private
             )
             VALUES (%s, %s, %s, %s)
             RETURNING id
         """, (
             data["ticket_id"],
-            data["message"],    
+            data["message"],
+            data.get("sender"),
             data.get("private", False)
         ))
 
         message_id = cursor.fetchone()[0]
-
         conn.commit()
         cursor.close()
         conn.close()
-
         return message_id
 
     @staticmethod
@@ -36,24 +35,33 @@ class MessageModel:
         cursor = conn.cursor()
 
         cursor.execute("""
-            SELECT id, ticket_id, message, signature, private
-            FROM tbl_messages
-            WHERE ticket_id = %s
-            ORDER BY id ASC
+            SELECT
+                m.id,
+                m.ticket_id,
+                m.message,
+                m.sender,
+                m.private,
+                m.creation,
+                u.name AS author_name
+            FROM tbl_messages m
+            LEFT JOIN tbl_users u ON u.id = m.sender
+            WHERE m.ticket_id = %s
+            ORDER BY m.creation ASC
         """, (ticket_id,))
 
         rows = cursor.fetchall()
-
         cursor.close()
         conn.close()
 
-        messages = []
-        for row in rows:
-            messages.append({
-                "id": row[0],
-                "ticket_id": row[1],
-                "message": row[2],                
-                "private": row[4]
-            })
-
-        return messages
+        return [
+            {
+                "id":          row[0],
+                "ticket_id":   row[1],
+                "message":     row[2],
+                "sender":      row[3],
+                "private":     row[4],
+                "creation":    str(row[5]) if row[5] else None,
+                "author_name": row[6] or "Sistema",
+            }
+            for row in rows
+        ]
