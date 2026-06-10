@@ -1,9 +1,9 @@
-import { useEffect, useState, useMemo, useRef } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import {
   BarChart3, Users, Tag, AlertCircle, CheckCircle2,
   Clock, TrendingUp, Activity, Award, Zap, Filter,
   ChevronDown, Download, RefreshCw, ArrowUp, ArrowDown,
-  FileText, FileSpreadsheet, X, Check, Circle
+  FileText, FileSpreadsheet, X, Check, Circle, Building2
 } from 'lucide-react';
 import { apiFetch } from '../services/api';
 import './styles/Reports.css';
@@ -39,38 +39,11 @@ const COR_CAT    = ['#6366f1', '#ec4899', '#14b8a6', '#f97316', '#8b5cf6', '#06b
 const COR_PRIO   = { alta: '#ef4444', media: '#f59e0b', baixa: '#22c55e' };
 const COR_STATUS = { aberto: '#3b82f6', 'em atendimento': '#f59e0b', fechado: '#22c55e' };
 
-/* Normaliza os campos vindos da API para nomes internos consistentes */
-const fmtDate = (val, opts = { day: '2-digit', month: '2-digit', year: 'numeric' }) => {
+/* Formata data ISO string para exibição */
+const fmtDate = (val) => {
   if (!val) return '—';
-  const d = val instanceof Date ? val : new Date(String(val).replace(' GMT', ''));
-  return isNaN(d.getTime()) ? '—' : d.toLocaleDateString('pt-BR', opts);
-};
-
-const safeDate = (val) => {
-  if (!val) return null;
-  // A API pode retornar datas com sufixo " GMT" — removemos para evitar NaN
-  const clean = typeof val === 'string' ? val.replace(' GMT', '') : val;
-  const d = new Date(clean);
-  return isNaN(d.getTime()) ? null : d;
-};
-
-const normalizeTicket = (t) => {
-  const statusMap = {
-    open: 'aberto', aberto: 'aberto',
-    in_progress: 'em atendimento', andamento: 'em atendimento', 'em atendimento': 'em atendimento',
-    closed: 'fechado', fechado: 'fechado',
-  };
-  const rawStatus = (t.status || '').toLowerCase();
-  return {
-    id:               t.id,
-    assunto:          t.subject   || t.assunto   || '—',
-    status:           statusMap[rawStatus] || rawStatus,
-    data_criacao:     safeDate(t.creation  || t.data_criacao),
-    sla:              t.sla,
-    categoria_nome:   t.category  || t.categoria_nome || t.categoria || 'Sem Categoria',
-    prioridade:       (t.priority || t.prioridade || '').toLowerCase(),
-    solicitante_nome: t.user      || t.solicitante_nome || 'Desconhecido',
-  };
+  const d = new Date(val);
+  return isNaN(d.getTime()) ? '—' : d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
 };
 
 /* ─────────────────────────────────────────────
@@ -88,10 +61,8 @@ const exportCSV = (tickets, metricas, periodo) => {
     ['Abertos', metricas.abertos],
     ['Em Atendimento', metricas.atendimento],
     ['Fechados', metricas.fechados],
-    ['Alta Prioridade', metricas.alta],
-    ['Média Prioridade', metricas.media],
-    ['Baixa Prioridade', metricas.baixa],
-    ['Taxa de Resolução (%)', metricas.taxaResolucao],
+    ...(metricas.prioridades || []).map(p => [`Prioridade: ${p.nome}`, p.qtd]),
+    ['Taxa de Resolução (%)', metricas.taxa_resolucao],
     [],
     ['=== CHAMADOS DETALHADOS ==='],
     ['ID', 'Assunto', 'Solicitante', 'Categoria', 'Prioridade', 'Status', 'Data Criação'],
@@ -184,10 +155,8 @@ const exportPDF = (tickets, metricas, periodo) => {
     <div class="kpi"><label>Resolvidos</label><strong style="color:#22c55e">${metricas.fechados}</strong></div>
   </div>
   <div class="kpi-row" style="margin-top:12px">
-    <div class="kpi"><label>Alta Prioridade</label><strong style="color:#ef4444">${metricas.alta}</strong></div>
-    <div class="kpi"><label>Média Prioridade</label><strong style="color:#f59e0b">${metricas.media}</strong></div>
-    <div class="kpi"><label>Baixa Prioridade</label><strong style="color:#22c55e">${metricas.baixa}</strong></div>
-    <div class="kpi"><label>Taxa de Resolução</label><strong style="color:#6366f1">${metricas.taxaResolucao}%</strong></div>
+    ${(metricas.prioridades || []).map(p => `<div class="kpi"><label>Prioridade: ${p.nome}</label><strong style="color:${p.color}">${p.qtd}</strong></div>`).join('')}
+    <div class="kpi"><label>Taxa de Resolução</label><strong style="color:#6366f1">${metricas.taxa_resolucao}%</strong></div>
   </div>
 
   <div class="sec">Por Categoria</div>
@@ -231,7 +200,8 @@ const exportPDF = (tickets, metricas, periodo) => {
     <thead><tr><th>ID</th><th>Assunto</th><th>Solicitante</th><th>Categoria</th><th>Prioridade</th><th>Status</th><th>Data</th></tr></thead>
     <tbody>
       ${tickets.slice(0, 50).map(t => {
-        const corP = COR_PRIO[t.prioridade] || '#94a3b8';
+        const pEntry = (metricas.prioridades || []).find(p => p.nome === t.prioridade);
+        const corP = pEntry?.color || '#94a3b8';
         const corS = COR_STATUS[t.status] || '#94a3b8';
         return `<tr>
           <td><strong style="color:#6366f1">#${t.id}</strong></td>
@@ -389,21 +359,28 @@ const HBar = ({ label, value, max, color }) => {
    COMPONENTE PRINCIPAL
 ───────────────────────────────────────────── */
 
+/* Métricas vazias usadas como estado inicial e fallback */
+const METRICAS_VAZIAS = {
+  total: 0, abertos: 0, atendimento: 0, fechados: 0,
+  taxa_resolucao: '0.0', pendentes: 0,
+  prioridades: [], clientes: [],
+  categorias: [], usuarios: [], por_dia: [], tickets: [],
+};
+
 const Reports = () => {
-  const [tickets, setTickets]       = useState([]);
+  const [m, setM]                   = useState(METRICAS_VAZIAS);
   const [loading, setLoading]       = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [tab, setTab]               = useState('geral');
   const [periodo, setPeriodo]       = useState('todos');
 
   /* ── fetch ── */
-  const fetchData = () => {
+  const fetchData = (p = periodo) => {
     setRefreshing(true);
-    apiFetch('/tickets/')
+    apiFetch(`/reports/summary?periodo=${p}`)
       .then(r => r.json())
       .then(data => {
-        const normalized = (Array.isArray(data) ? data : []).map(normalizeTicket);
-        setTickets(normalized);
+        setM({ ...METRICAS_VAZIAS, ...data });
         setLoading(false);
         setRefreshing(false);
       })
@@ -414,74 +391,38 @@ const Reports = () => {
       });
   };
 
-  useEffect(() => { fetchData(); }, []);
+  /* Busca inicial e re-fetch automático quando o período muda */
+  useEffect(() => { fetchData(periodo); }, [periodo]);
 
-  /* ── filtro de período ── */
-  const filtrados = useMemo(() => {
-    if (periodo === 'todos') return tickets;
-    const ms = { '7d': 7, '30d': 30, '90d': 90 }[periodo] * 86400000;
-    const agora = Date.now();
-    return tickets.filter(t => t.data_criacao && agora - t.data_criacao.getTime() <= ms);
-  }, [tickets, periodo]);
-
-  /* ── métricas calculadas ── */
-  const m = useMemo(() => {
-    const total      = filtrados.length;
-    const abertos    = filtrados.filter(x => x.status === 'aberto').length;
-    const atendimento= filtrados.filter(x => x.status === 'em atendimento').length;
-    const fechados   = filtrados.filter(x => x.status === 'fechado').length;
-    const alta       = filtrados.filter(x => x.prioridade === 'alta').length;
-    const media      = filtrados.filter(x => x.prioridade === 'media').length;
-    const baixa      = filtrados.filter(x => x.prioridade === 'baixa').length;
-    const taxaResolucao = total > 0 ? ((fechados / total) * 100).toFixed(1) : '0.0';
-    const pendentes  = abertos + atendimento;
-
-    /* categorias */
-    const catMap = {};
-    filtrados.forEach(x => {
-      const k = x.categoria_nome || x.categoria || 'Sem Categoria';
-      catMap[k] = (catMap[k] || 0) + 1;
-    });
-    const categorias = Object.entries(catMap)
-      .map(([nome, qtd]) => ({ nome, qtd }))
-      .sort((a, b) => b.qtd - a.qtd);
-
-    /* usuários */
-    const userMap = {};
-    filtrados.forEach(x => {
-      const k = x.solicitante_nome || 'Desconhecido';
-      if (!userMap[k]) userMap[k] = { total: 0, fechados: 0 };
-      userMap[k].total++;
-      if (x.status === 'fechado') userMap[k].fechados++;
-    });
-    const usuarios = Object.entries(userMap)
-      .map(([nome, d]) => ({
-        nome, ...d,
-        taxa: d.total > 0 ? ((d.fechados / d.total) * 100).toFixed(0) : '0',
-      }))
-      .sort((a, b) => b.total - a.total);
-
-    /* evolução 14 dias */
-    const hoje = new Date();
-    const dias14 = Array.from({ length: 14 }, (_, i) => {
-      const d = new Date(hoje);
-      d.setDate(d.getDate() - (13 - i));
-      return d;
-    });
-    const porDia = dias14.map(d => ({
-      label: d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
-      count: filtrados.filter(x => x.data_criacao && x.data_criacao.toDateString() === d.toDateString()).length,
-    }));
-    const maxDia = Math.max(...porDia.map(d => d.count), 1);
-
-    return { total, abertos, atendimento, fechados, alta, media, baixa,
-      taxaResolucao, pendentes, categorias, usuarios, porDia, maxDia };
-  }, [filtrados]);
+  /* maxDia para escala do gráfico de barras */
+  const maxDia = Math.max(...(m.por_dia || []).map(d => d.count), 1);
 
   /* ── export handler ── */
   const handleExport = fmt => {
-    if (fmt === 'csv') exportCSV(filtrados, m, periodo);
-    if (fmt === 'pdf') exportPDF(filtrados, m, periodo);
+    /* Adapta a estrutura do backend para as funções de exportação */
+    const ticketsExport = m.tickets.map(t => ({
+      id:               t.id,
+      assunto:          t.assunto,
+      solicitante_nome: t.solicitante,
+      categoria_nome:   t.categoria,
+      prioridade:       t.prioridade,
+      status:           t.status,
+      data_criacao:     t.data_criacao ? new Date(t.data_criacao) : null,
+    }));
+    const metricasExport = {
+      total:          m.total,
+      abertos:        m.abertos,
+      atendimento:    m.atendimento,
+      fechados:       m.fechados,
+      prioridades:    m.prioridades,
+      taxa_resolucao: m.taxa_resolucao,
+      categorias:     m.categorias,
+      usuarios:       m.usuarios,
+      clientes:       m.clientes,
+      por_dia:        m.por_dia,
+    };
+    if (fmt === 'csv') exportCSV(ticketsExport, metricasExport, periodo);
+    if (fmt === 'pdf') exportPDF(ticketsExport, metricasExport, periodo);
   };
 
   /* ── tabs ── */
@@ -490,6 +431,7 @@ const Reports = () => {
     { id: 'tempo',      label: 'Evolução Temporal',   icon: Activity   },
     { id: 'categorias', label: 'Categorias',          icon: Tag        },
     { id: 'equipe',     label: 'Equipe',              icon: Users      },
+    { id: 'clientes',   label: 'Clientes',            icon: Building2  },
   ];
 
   /* ── loading ── */
@@ -522,7 +464,7 @@ const Reports = () => {
             <ChevronDown size={13} />
           </div>
 
-          <button className="rp-btn rp-btn--primary" onClick={fetchData} disabled={refreshing}>
+          <button className="rp-btn rp-btn--primary" onClick={() => fetchData(periodo)} disabled={refreshing}>
             <RefreshCw size={15} className={refreshing ? 'spinning' : ''} />
             Atualizar
           </button>
@@ -566,7 +508,7 @@ const Reports = () => {
             <div className="rp-card">
               <h3 className="rp-card-title"><Award size={16} /> Taxa de Resolução</h3>
               <div className="donut-wrap">
-                <Donut pct={parseFloat(m.taxaResolucao)} color="#22c55e" size={110} />
+                <Donut pct={parseFloat(m.taxa_resolucao)} color="#22c55e" size={110} />
               </div>
               <div className="donut-legend">
                 <span><Circle size={10} fill="#22c55e" color="#22c55e" /> Fechados: <strong>{m.fechados}</strong></span>
@@ -604,24 +546,16 @@ const Reports = () => {
             <div className="rp-card">
               <h3 className="rp-card-title"><AlertCircle size={16} /> Por Prioridade</h3>
               <div className="prio-bubbles">
-                {[
-                  { label: 'Alta',  val: m.alta,  cor: COR_PRIO.alta  },
-                  { label: 'Média', val: m.media, cor: COR_PRIO.media },
-                  { label: 'Baixa', val: m.baixa, cor: COR_PRIO.baixa },
-                ].map(p => (
-                  <div key={p.label} className="prio-bubble" style={{ '--bc': p.cor }}>
-                    <strong style={{ color: p.cor }}>{p.val}</strong>
-                    <span>{p.label}</span>
+                {(m.prioridades || []).map(p => (
+                  <div key={p.nome} className="prio-bubble" style={{ '--bc': p.color }}>
+                    <strong style={{ color: p.color }}>{p.qtd}</strong>
+                    <span>{p.nome}</span>
                   </div>
                 ))}
               </div>
               <div className="prio-hbars">
-                {[
-                  { label: 'Alta',  val: m.alta,  cor: COR_PRIO.alta  },
-                  { label: 'Média', val: m.media, cor: COR_PRIO.media },
-                  { label: 'Baixa', val: m.baixa, cor: COR_PRIO.baixa },
-                ].map(p => (
-                  <HBar key={p.label} label={p.label} value={p.val} max={m.total} color={p.cor} />
+                {(m.prioridades || []).map(p => (
+                  <HBar key={p.nome} label={p.nome} value={p.qtd} max={m.total} color={p.color} />
                 ))}
               </div>
             </div>
@@ -630,7 +564,7 @@ const Reports = () => {
           {/* Tabela de chamados recentes */}
           <div className="rp-card rp-card--full">
             <h3 className="rp-card-title"><Clock size={16} /> Chamados Mais Recentes</h3>
-            {filtrados.length === 0 ? (
+            {m.tickets.length === 0 ? (
               <div className="rp-empty">Nenhum chamado no período selecionado.</div>
             ) : (
               <div className="table-scroll">
@@ -642,16 +576,17 @@ const Reports = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {filtrados.slice(0, 10).map(t => (
+                    {m.tickets.slice(0, 10).map(t => (
                       <tr key={t.id}>
                         <td className="td-id">#{t.id}</td>
                         <td className="td-subject">{t.assunto}</td>
-                        <td>{t.solicitante_nome || '—'}</td>
+                        <td>{t.solicitante}</td>
                         <td>
-                          <span className="pill" style={{
-                            background: (COR_PRIO[t.prioridade] || '#94a3b8') + '20',
-                            color: COR_PRIO[t.prioridade] || '#94a3b8',
-                          }}>{t.prioridade}</span>
+                          {(() => {
+                            const pEntry = (m.prioridades || []).find(p => p.nome === t.prioridade);
+                            const cor = pEntry?.color || '#94a3b8';
+                            return <span className="pill" style={{ background: cor + '20', color: cor }}>{t.prioridade}</span>;
+                          })()}
                         </td>
                         <td>
                           <span className={`pill pill-${t.status?.replace(/\s+/g, '-')}`}>{t.status}</span>
@@ -677,12 +612,12 @@ const Reports = () => {
           <div className="rp-card rp-card--full">
             <h3 className="rp-card-title"><TrendingUp size={16} /> Chamados por Dia — últimos 14 dias</h3>
             <div className="barchart">
-              {m.porDia.map((d, i) => (
+              {m.por_dia.map((d, i) => (
                 <div key={i} className="barchart-col">
                   <div className="barchart-bar-wrap">
                     <div
                       className="barchart-bar"
-                      style={{ height: `${(d.count / m.maxDia) * 100}%` }}
+                      style={{ height: `${(d.count / maxDia) * 100}%` }}
                       title={`${d.label}: ${d.count}`}
                     >
                       {d.count > 0 && <span className="barchart-val">{d.count}</span>}
@@ -697,9 +632,9 @@ const Reports = () => {
           {/* Cards de estatísticas */}
           <div className="rp-row-3">
             {(() => {
-              const pico = [...m.porDia].sort((a, b) => b.count - a.count)[0];
-              const media = (m.porDia.reduce((a, d) => a + d.count, 0) / 14).toFixed(1);
-              const semChamados = m.porDia.filter(d => d.count === 0).length;
+              const pico = [...m.por_dia].sort((a, b) => b.count - a.count)[0];
+              const media = (m.por_dia.reduce((a, d) => a + d.count, 0) / 14).toFixed(1);
+              const semChamados = m.por_dia.filter(d => d.count === 0).length;
               return (
                 <>
                   <div className="rp-card stat-card">
@@ -734,18 +669,18 @@ const Reports = () => {
                   <tr><th>Data</th><th>Total</th><th>Distribuição visual</th></tr>
                 </thead>
                 <tbody>
-                  {m.porDia.filter(d => d.count > 0).map((d, i) => (
+                  {m.por_dia.filter(d => d.count > 0).map((d, i) => (
                     <tr key={i}>
                       <td className="td-date">{d.label}</td>
                       <td><strong>{d.count}</strong></td>
                       <td>
                         <div className="inline-bar-track">
-                          <div className="inline-bar-fill" style={{ width: `${(d.count / m.maxDia) * 100}%` }} />
+                          <div className="inline-bar-fill" style={{ width: `${(d.count / maxDia) * 100}%` }} />
                         </div>
                       </td>
                     </tr>
                   ))}
-                  {m.porDia.every(d => d.count === 0) && (
+                  {m.por_dia.every(d => d.count === 0) && (
                     <tr><td colSpan={3} className="rp-empty">Nenhum chamado no período.</td></tr>
                   )}
                 </tbody>
@@ -822,7 +757,7 @@ const Reports = () => {
                 </thead>
                 <tbody>
                   {m.categorias.map((c, i) => {
-                    const ct = filtrados.filter(t => (t.categoria_nome || t.categoria || 'Sem Categoria') === c.nome);
+                    const ct = m.tickets.filter(t => t.categoria === c.nome);
                     const ab = ct.filter(t => t.status === 'aberto').length;
                     const at = ct.filter(t => t.status === 'em atendimento').length;
                     const fc = ct.filter(t => t.status === 'fechado').length;
@@ -897,7 +832,7 @@ const Reports = () => {
                 </thead>
                 <tbody>
                   {m.usuarios.map((u, i) => {
-                    const ut = filtrados.filter(t => (t.solicitante_nome || 'Desconhecido') === u.nome);
+                    const ut = m.tickets.filter(t => t.solicitante === u.nome);
                     const ab = ut.filter(t => t.status === 'aberto').length;
                     const at = ut.filter(t => t.status === 'em atendimento').length;
                     const taxaNum = parseFloat(u.taxa);
@@ -959,6 +894,88 @@ const Reports = () => {
               {m.usuarios.length === 0 && <div className="rp-empty">Sem dados no período.</div>}
             </div>
           </div>
+        </div>
+      )}
+
+      {/* ════════════════════════════════════════
+          ABA: CLIENTES
+      ════════════════════════════════════════ */}
+      {tab === 'clientes' && (
+        <div className="rp-fade">
+
+          {/* KPIs */}
+          <div className="kpi-grid">
+            <KpiCard
+              title="Clientes Ativos" value={m.clientes?.length ?? 0}
+              sub="com chamados no período" icon={Building2} color="#6366f1"
+            />
+            <KpiCard
+              title="Maior Volume"
+              value={(m.clientes || [])[0]?.nome || '—'}
+              sub={`${(m.clientes || [])[0]?.total || 0} chamados`}
+              icon={Award} color="#f59e0b"
+            />
+            <KpiCard
+              title="Melhor Resolução"
+              value={[...(m.clientes || [])].sort((a, b) => parseFloat(b.taxa) - parseFloat(a.taxa))[0]?.nome || '—'}
+              sub={`${[...(m.clientes || [])].sort((a, b) => parseFloat(b.taxa) - parseFloat(a.taxa))[0]?.taxa || 0}% de taxa`}
+              icon={TrendingUp} color="#22c55e"
+            />
+            <KpiCard
+              title="Média por Cliente"
+              value={(m.clientes?.length ?? 0) > 0 ? (m.total / m.clientes.length).toFixed(1) : 0}
+              sub="chamados por cliente" icon={BarChart3} color="#06b6d4"
+            />
+          </div>
+
+          {/* Tabela de clientes */}
+          <div className="rp-card rp-card--full">
+            <h3 className="rp-card-title"><Building2 size={16} /> Chamados por Cliente</h3>
+            <div className="table-scroll">
+              <table className="rp-table">
+                <thead>
+                  <tr>
+                    <th>#</th><th>Cliente</th><th>CNPJ</th><th>Total</th>
+                    <th>Abertos</th><th>Em Atend.</th><th>Fechados</th><th>Taxa</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(m.clientes || []).map((c, i) => {
+                    const taxaNum = parseFloat(c.taxa);
+                    const cor = taxaNum >= 70 ? '#22c55e' : taxaNum >= 40 ? '#f59e0b' : '#ef4444';
+                    return (
+                      <tr key={c.nome}>
+                        <td><span className="rank-badge" style={{ background: COR_CAT[i % COR_CAT.length] }}>{i + 1}</span></td>
+                        <td>
+                          <div className="user-cell">
+                            <div className="avatar" style={{ background: COR_CAT[i % COR_CAT.length] }}>
+                              {c.nome.charAt(0).toUpperCase()}
+                            </div>
+                            <strong>{c.nome}</strong>
+                          </div>
+                        </td>
+                        <td className="td-date">{c.cnpj}</td>
+                        <td><strong>{c.total}</strong></td>
+                        <td><span className="pill pill-aberto">{c.abertos}</span></td>
+                        <td><span className="pill pill-em-atendimento">{c.atendimento}</span></td>
+                        <td><span className="pill pill-fechado">{c.fechados}</span></td>
+                        <td>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <div className="bar-track" style={{ flex: 1, minWidth: 80 }}>
+                              <div className="bar-fill" style={{ width: `${c.taxa}%`, background: cor }} />
+                            </div>
+                            <strong style={{ color: cor, minWidth: 36 }}>{c.taxa}%</strong>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+            {(m.clientes?.length ?? 0) === 0 && <div className="rp-empty">Nenhum dado de clientes no período.</div>}
+          </div>
+
         </div>
       )}
 
