@@ -115,6 +115,15 @@ const Login = ({ setAuth }) => {
               : 'Entrar'}
           </button>
 
+          <div style={{ textAlign: 'center', marginTop: '1rem' }}>
+            <a
+              href="/forgot-password"
+              style={{ color: '#555', fontSize: '0.875rem', textDecoration: 'underline' }}
+            >
+              Esqueci minha senha
+            </a>
+          </div>
+
         </form>
 
       </div>

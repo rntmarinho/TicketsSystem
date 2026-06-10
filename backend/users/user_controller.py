@@ -1,4 +1,6 @@
 import bcrypt
+import secrets
+import string
 from flask_jwt_extended import create_access_token
 from users.user_model import UserModel
 
@@ -176,3 +178,54 @@ class UserController:
             }, 200
         except Exception as e:
             return {"success": False, "message": f"Erro: {str(e)}"}, 500
+        
+
+    @staticmethod
+    def reset_password(email):
+        user = UserModel.get_by_email(email)
+
+        if not user:
+            # Retorna sucesso genérico para não revelar se o e-mail existe
+            return {
+                "success": True,
+                "message": "Se o e-mail estiver cadastrado, você receberá a nova senha em breve."
+            }, 200
+
+        user_id = user[0]
+        user_name = user[1]
+
+        # Gera senha aleatória de 10 caracteres
+        alphabet = string.ascii_letters + string.digits
+        nova_senha = ''.join(secrets.choice(alphabet) for _ in range(10))
+
+        password_hash = bcrypt.hashpw(
+            nova_senha.encode("utf-8"),
+            bcrypt.gensalt()
+        ).decode("utf-8")
+
+        UserModel.update_password(user_id, password_hash)
+
+        # Envia a nova senha por e-mail
+        from services.email_service import send_password_reset_email
+        send_password_reset_email(email, user_name, nova_senha)
+
+        return {
+            "success": True,
+            "message": "Se o e-mail estiver cadastrado, você receberá a nova senha em breve."
+        }, 200
+
+    @staticmethod
+    def update_situation(user_id, situation):
+        if not situation:
+            return {"success": False, "message": "O parâmetro 'situation' é mandatório."}, 400
+        try:
+            if situation == 'A':
+                UserModel.activate(user_id)
+            elif situation == 'I':
+                UserModel.delete(user_id)
+            else:
+                return {"success": False, "message": "Situação inválida."}, 400
+            return {"success": True, "message": "Situação atualizada."}, 200
+        except Exception as e:
+            return {"success": False, "message": str(e)}, 500
+            

@@ -40,3 +40,11 @@ export async function updateClientSituation(id, situation) {
   });
   return await response.json();
 }
+
+export async function activateClient(id) {
+  const response = await apiFetch(`/clients/${id}/situation`, {
+    method: 'PATCH',
+    body: JSON.stringify({ situation: 'A' })
+  });
+  return await response.json();
+}

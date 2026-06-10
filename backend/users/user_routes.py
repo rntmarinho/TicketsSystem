@@ -20,6 +20,18 @@ def create_user():
 
     return jsonify(response), status
 
+# Rota para redefinição de senha (sem autenticação)
+@user_bp.route("/reset-password", methods=["POST"])
+def reset_password():
+
+    data = request.get_json()
+
+    response, status = UserController.reset_password(
+        data.get("email", "")
+    )
+
+    return jsonify(response), status
+
 # Rota para login de usuário
 @user_bp.route("/login", methods=["POST"])
 def login():
@@ -67,6 +79,7 @@ def delete_user(user_id):
 
     return jsonify(response)
 
+
 # Rota para obter detalhes de um usuário específico (requer autenticação)
 @user_bp.route("/<int:user_id>", methods=["GET"])
 @jwt_required()
@@ -99,3 +112,17 @@ def upload_signature(user_id):
 
     except Exception as e:
         return jsonify({"success": False, "message": f"Falha sistêmica durante o processamento do artefato: {str(e)}"}), 500
+    
+# Adicione este bloco junto às demais rotas
+@user_bp.route("/<int:user_id>/situation", methods=["PATCH"])
+@jwt_required()
+def update_situation(user_id):
+    data = request.get_json()
+    
+    response, status_code = UserController.update_situation(
+        user_id,
+        data.get("situation")
+    )
+
+    return jsonify(response), status_code
+

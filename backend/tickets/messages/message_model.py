@@ -30,6 +30,16 @@ class MessageModel:
         return message_id
 
     @staticmethod
+    def delete_by_ticket_id(ticket_id):
+        """Remove todas as mensagens de um chamado (usado na fusão)."""
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM tbl_messages WHERE ticket_id = %s", (ticket_id,))
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+    @staticmethod
     def get_by_ticket_id(ticket_id):
         conn = get_db_connection()
         cursor = conn.cursor()

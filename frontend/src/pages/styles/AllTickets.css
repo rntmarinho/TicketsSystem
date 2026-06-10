@@ -2,13 +2,15 @@
    ALL TICKETS
 ───────────────────────────────────────────── */
 
+/*
+  O wrapper .content em App.css já fornece padding: 40px.
+  .at-container não repete esse espaçamento — apenas organiza
+  as seções internas com flex + gap.
+*/
 .at-container {
-  padding: 24px;
   display: flex;
   flex-direction: column;
   gap: 20px;
-  background: #f8fafc;
-  min-height: 100vh;
 }
 
 /* ─────────────────────────────────────────────
@@ -18,7 +20,7 @@
 .at-topbar {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
   gap: 20px;
   flex-wrap: wrap;
 }
@@ -39,7 +41,7 @@
 .at-subtitle {
   margin: 4px 0 0;
   color: #64748b;
-  font-size: 0.95rem;
+  font-size: 0.92rem;
 }
 
 .at-controls {
@@ -55,61 +57,59 @@
 
 .at-search {
   position: relative;
-  width: 350px;
+  width: 340px;
 }
 
 .at-search input {
   width: 100%;
-  height: 44px;
-  padding: 0 42px;
+  height: 42px;
+  padding: 0 38px 0 40px;
   border-radius: 12px;
   border: 1px solid #dbe3ee;
   background: #fff;
-  font-size: 0.95rem;
-  transition: 0.2s;
+  font-size: 0.93rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .at-search input:focus {
   outline: none;
   border-color: #21967d;
-  box-shadow: 0 0 0 4px rgba(33, 150, 125, 0.12);
+  box-shadow: 0 0 0 3px rgba(33, 150, 125, 0.12);
 }
 
 .at-search-icon {
   position: absolute;
   top: 50%;
-  left: 14px;
+  left: 13px;
   transform: translateY(-50%);
-  color: #64748b;
+  color: #94a3b8;
+  pointer-events: none;
 }
 
 .at-clear-search {
   position: absolute;
   top: 50%;
-  right: 12px;
+  right: 11px;
   transform: translateY(-50%);
   border: none;
   background: transparent;
   cursor: pointer;
-  color: #64748b;
+  color: #94a3b8;
   display: flex;
   align-items: center;
+  padding: 2px;
+}
+
+.at-clear-search:hover {
+  color: #334155;
 }
 
 /* ─────────────────────────────────────────────
    BUTTONS
 ───────────────────────────────────────────── */
 
-.at-btn-filters,
-.at-btn-view,
-.at-clear-all {
-  border: none;
-  cursor: pointer;
-  transition: 0.2s;
-}
-
 .at-btn-filters {
-  height: 44px;
+  height: 42px;
   padding: 0 16px;
   border-radius: 12px;
   background: #fff;
@@ -119,6 +119,10 @@
   gap: 8px;
   color: #334155;
   font-weight: 600;
+  font-size: 0.93rem;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  white-space: nowrap;
 }
 
 .at-btn-filters:hover {
@@ -128,10 +132,7 @@
 .at-btn-filters.open {
   border-color: #21967d;
   color: #21967d;
-}
-
-.at-btn-filters.has-active {
-  background: #eff6ff;
+  background: #f0fdf9;
 }
 
 .at-filter-count {
@@ -140,33 +141,48 @@
   border-radius: 999px;
   background: #21967d;
   color: white;
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   display: flex;
   align-items: center;
   justify-content: center;
+  font-weight: 700;
 }
 
 .at-btn-view {
   background: #21967d;
   color: white;
-  padding: 8px 14px;
-  border-radius: 10px;
+  padding: 7px 14px;
+  border-radius: 9px;
   text-decoration: none;
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   font-weight: 600;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  border: none;
+  transition: background 0.15s, transform 0.15s;
+  white-space: nowrap;
 }
 
 .at-btn-view:hover {
-  background: #21967d;
+  background: #187a65;
+  transform: translateY(-1px);
 }
 
 .at-clear-all {
   background: transparent;
+  border: none;
   color: #dc2626;
   font-weight: 600;
+  font-size: 0.88rem;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 8px;
+  transition: background 0.15s;
+}
+
+.at-clear-all:hover {
+  background: #fef2f2;
 }
 
 /* ─────────────────────────────────────────────
@@ -180,50 +196,56 @@
   border: 1px solid #e2e8f0;
   display: flex;
   flex-direction: column;
-  gap: 22px;
+  gap: 20px;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.05);
 }
 
 .at-filter-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 18px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
 }
 
 .at-filter-row2 {
-  display: flex;
-  gap: 18px;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
 }
 
 .at-filter-group {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 7px;
 }
 
 .at-filter-group label {
-  font-size: 0.85rem;
+  font-size: 0.83rem;
   font-weight: 600;
-  color: #334155;
+  color: #475569;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
 }
 
 .at-filter-group select,
 .at-filter-group input {
-  height: 42px;
+  height: 40px;
   border-radius: 10px;
   border: 1px solid #dbe3ee;
   padding: 0 12px;
-  font-size: 0.95rem;
+  font-size: 0.93rem;
   background: white;
+  color: #0f172a;
+  transition: border-color 0.15s;
 }
 
 .at-filter-group select:focus,
 .at-filter-group input:focus {
   outline: none;
   border-color: #21967d;
+  box-shadow: 0 0 0 3px rgba(33, 150, 125, 0.1);
 }
 
 /* ─────────────────────────────────────────────
@@ -233,18 +255,20 @@
 .at-chips {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 10px;
 }
 
 .at-chip {
   display: flex;
   align-items: center;
-  gap: 8px;
-  background: #e0f2fe;
+  gap: 7px;
+  background: #f0fdf9;
   color: #21967d;
-  padding: 8px 12px;
+  border: 1px solid #a7f3d0;
+  padding: 6px 12px;
   border-radius: 999px;
-  font-size: 0.85rem;
+  font-size: 0.84rem;
   font-weight: 600;
 }
 
@@ -255,6 +279,7 @@
   display: flex;
   align-items: center;
   color: inherit;
+  padding: 0;
 }
 
 /* ─────────────────────────────────────────────
@@ -263,41 +288,51 @@
 
 .at-card {
   background: white;
-  border-radius: 20px;
+  border-radius: 18px;
   border: 1px solid #e2e8f0;
   overflow-x: auto;
-  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.04);
+  overflow-y: visible;
+  -webkit-overflow-scrolling: touch;
+  box-shadow: 0 2px 16px rgba(15, 23, 42, 0.05);
 }
 
 .at-table {
   width: 100%;
   border-collapse: collapse;
+  min-width: 860px; /* garante scroll horizontal antes de esmagar as colunas */
 }
 
 .at-th {
   text-align: left;
-  padding: 16px;
+  padding: 14px 16px;
   background: #f8fafc;
-  font-size: 0.82rem;
+  font-size: 0.78rem;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
+  font-weight: 700;
   color: #64748b;
   border-bottom: 1px solid #e2e8f0;
+  white-space: nowrap;
 }
 
 .at-td {
-  padding: 16px;
+  padding: 14px 16px;
   border-bottom: 1px solid #f1f5f9;
   vertical-align: middle;
   color: #0f172a;
+  font-size: 0.92rem;
 }
 
 .at-row {
-  transition: 0.15s;
+  transition: background 0.12s;
 }
 
 .at-row:hover {
   background: #f8fafc;
+}
+
+.at-row:last-child .at-td {
+  border-bottom: none;
 }
 
 /* ─────────────────────────────────────────────
@@ -307,66 +342,51 @@
 .at-id {
   font-weight: 700;
   color: #21967d;
+  white-space: nowrap;
 }
 
 .at-subject {
-  min-width: 260px;
+  min-width: 220px;
 }
 
 .at-assunto {
   display: block;
   font-weight: 600;
-  margin-bottom: 6px;
+  margin-bottom: 5px;
+  line-height: 1.4;
 }
 
 .at-cat-tag {
   display: inline-flex;
   align-items: center;
-  padding: 4px 10px;
+  padding: 3px 10px;
   background: #f1f5f9;
   border-radius: 999px;
   font-size: 0.75rem;
   color: #475569;
+  font-weight: 500;
 }
 
 .at-user-cell {
   display: flex;
   align-items: center;
   gap: 10px;
+  white-space: nowrap;
 }
-
-.at-avatar {
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  background: #21967d;
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-}
-
 
 /* ─────────────────────────────────────────────
-    DATAS 
+   DATAS
 ───────────────────────────────────────────── */
-.at-date {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: #64748b;
-}
 
 .at-date-wrapper {
   display: flex;
   align-items: center;
   gap: 6px;
   color: #64748b;
-  white-space: nowrap; /* Impede a quebra de linha entre o ícone e o texto */
+  white-space: nowrap;
+  font-size: 0.88rem;
 }
 
-/* Identificador visual para violação ou aproximação do limite do SLA */
 .at-date-wrapper.sla-overdue {
   color: #dc2626;
   font-weight: 700;
@@ -379,25 +399,11 @@
 .at-badge {
   display: inline-flex;
   align-items: center;
-  padding: 6px 12px;
+  padding: 5px 12px;
   border-radius: 999px;
   font-size: 0.8rem;
   font-weight: 700;
-}
-
-.at-priority-dot {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-weight: 600;
-  color: #334155;
-}
-
-.at-priority-dot .dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: var(--c);
+  white-space: nowrap;
 }
 
 /* ─────────────────────────────────────────────
@@ -406,20 +412,26 @@
 
 .at-group-row td {
   padding: 0;
-  background: #f8fafc;
+  background: #f1f5f9;
+  border-bottom: 1px solid #e2e8f0;
 }
 
 .at-group-toggle {
   width: 100%;
   border: none;
   background: transparent;
-  padding: 14px 18px;
+  padding: 12px 18px;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   cursor: pointer;
   font-weight: 700;
   color: #0f172a;
+  font-size: 0.9rem;
+}
+
+.at-group-toggle:hover {
+  background: rgba(0,0,0,0.03);
 }
 
 .at-group-label {
@@ -429,36 +441,47 @@
 
 .at-group-count {
   background: #dbeafe;
-  color: #21967d;
-  padding: 4px 10px;
+  color: #1d4ed8;
+  padding: 3px 10px;
   border-radius: 999px;
-  font-size: 0.75rem;
+  font-size: 0.76rem;
+  font-weight: 700;
 }
 
 /* ─────────────────────────────────────────────
    EMPTY / LOADING
 ───────────────────────────────────────────── */
 
-.at-empty,
-.at-loading {
+.at-empty {
   padding: 60px 20px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 14px;
-  color: #64748b;
+  gap: 12px;
+  color: #94a3b8;
   text-align: center;
+  font-size: 0.95rem;
 }
 
-.at-empty p,
 .at-loading {
+  padding: 80px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
   font-size: 1rem;
 }
 
 /* ─────────────────────────────────────────────
    RESPONSIVE
 ───────────────────────────────────────────── */
+
+@media (max-width: 1024px) {
+  .at-filter-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
 
 @media (max-width: 900px) {
   .at-topbar {
@@ -480,21 +503,21 @@
     justify-content: center;
   }
 
-  .at-table {
-    min-width: 900px;
+  .at-filter-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .at-filter-row2 {
+    grid-template-columns: 1fr;
   }
 }
 
 @media (max-width: 600px) {
-  .at-container {
-    padding: 16px;
-  }
-
   .at-h1 {
     font-size: 1.4rem;
   }
 
   .at-card {
-    border-radius: 16px;
+    border-radius: 14px;
   }
 }

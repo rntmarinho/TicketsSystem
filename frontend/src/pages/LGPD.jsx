@@ -1,99 +1,165 @@
 import React from 'react';
+import {
+  ShieldCheck,
+  Database,
+  Lock,
+  UserCheck,
+  Mail,
+  FileText,
+  AlertTriangle,
+  Scale
+} from 'lucide-react';
+
+import './styles/LGPD.css';
 
 const LGPD = () => {
   return (
-    <div style={{ padding: 24, fontFamily: 'Arial, sans-serif', maxWidth: 900, margin: '0 auto' }}>
-      <h1>Política de Privacidade e Adequação à LGPD </h1>
-  
+    <div className="lgpd-page">
+      <div className="lgpd-container">
 
-      <section>
-        <h2>1. Quem somos</h2>
-        <p>
-          Somos a equipe responsável pelo sistema TicketSystem. Esta página descreve como
-          coletamos, usamos, armazenamos e protegemos os dados pessoais, em conformidade com a
-          Lei Geral de Proteção de Dados (Lei nº 13.709/2018 - LGPD).
-        </p>
-      </section>
+        <div className="lgpd-header">
+          <div className="lgpd-badge">
+            <ShieldCheck size={18} />
+            Adequação LGPD
+          </div>
 
-      <section>
-        <h2>2. Dados que coletamos</h2>
-        <ul>
-          <li>Dados de identificação: nome, e-mail, telefone;</li>
-          <li>Dados de uso: informações do dispositivo, IP, registros de acesso e erros;</li>
-          <li>Dados de atendimento: conteúdo das solicitações e interações com o sistema.</li>
-        </ul>
-      </section>
+          <h1>Política de Privacidade</h1>
 
-      <section>
-        <h2>3. Finalidades do tratamento</h2>
-        <p>Utilizamos os dados para:</p>
-        <ul>
-          <li>prestar e aprimorar os serviços do TicketSystem;</li>
-          <li>comunicar atualizações, notificações e suporte;</li>
-          <li>cumprir obrigações legais e proteger nossos direitos.</li>
-        </ul>
-      </section>
+          <p>
+            Transparência, segurança e proteção dos seus dados pessoais
+            em conformidade com a Lei Geral de Proteção de Dados.
+          </p>
+        </div>
 
-      <section>
-        <h2>4. Base legal</h2>
-        <p>
-          Tratamos dados com base em consentimento, execução de contrato, cumprimento de
-          obrigação legal, exercício regular de direitos e legítimo interesse, conforme aplicável.
-        </p>
-      </section>
+        <div className="lgpd-grid">
 
-      <section>
-        <h2>5. Compartilhamento de dados</h2>
-        <p>
-          Podemos compartilhar dados com prestadores de serviço que atuam em nosso nome
-          (hospedagem, pagamento, suporte) e quando exigido por autoridade competente.
-        </p>
-      </section>
+          <section className="lgpd-card">
+            <div className="card-icon">
+              <FileText size={22} />
+            </div>
 
-      <section>
-        <h2>6. Segurança</h2>
-        <p>
-          Adotamos medidas técnicas e organizacionais para proteger os dados pessoais contra
-          acesso não autorizado, vazamento, alteração ou destruição indevida.
-        </p>
-      </section>
+            <h2>1. Quem somos</h2>
 
-      <section>
-        <h2>7. Armazenamento e eliminação</h2>
-        <p>
-          Os dados são armazenados pelo tempo necessário às finalidades descritas e/ou conforme
-          obrigações legais. Após esse período, os dados serão eliminados ou anonimizados.
-        </p>
-      </section>
+            <p>
+              Somos a equipe responsável pelo sistema TicketSystem.
+              Esta página descreve como coletamos, utilizamos,
+              armazenamos e protegemos dados pessoais.
+            </p>
+          </section>
 
-      <section>
-        <h2>8. Direitos dos titulares</h2>
-        <p>
-          Você tem o direito de acessar, corrigir, portar, eliminar, limitar o tratamento e
-          revogar o consentimento, quando aplicável. Para exercer seus direitos, entre em contato
-          conosco através do e-mail abaixo.
-        </p>
-      </section>
+          <section className="lgpd-card">
+            <div className="card-icon">
+              <Database size={22} />
+            </div>
 
-      <section>
-        <h2>9. Contato</h2>
-        <p>
-          Para dúvidas, solicitações ou reclamações relacionadas a dados pessoais, envie um e-mail
-          para: <strong>privacidade@ticketsystem.local</strong>
-        </p>
-      </section>
+            <h2>2. Dados coletados</h2>
 
-      <section>
-        <h2>10. Alterações nesta política</h2>
-        <p>
-          Podemos atualizar esta página para refletir mudanças na legislação ou em nossas práticas.
-          Recomendamos a revisão periódica desta página.
-        </p>
-      </section>
+            <ul>
+              <li>Nome, e-mail e telefone;</li>
+              <li>Endereço IP e logs de acesso;</li>
+              <li>Informações de dispositivos;</li>
+              <li>Histórico de atendimentos e chamados.</li>
+            </ul>
+          </section>
 
-      <footer style={{ marginTop: 24, fontSize: 13, color: '#555' }}>
-        <p>Última atualização: 2026</p>
-      </footer>
+          <section className="lgpd-card">
+            <div className="card-icon">
+              <UserCheck size={22} />
+            </div>
+
+            <h2>3. Finalidade do tratamento</h2>
+
+            <ul>
+              <li>Prestação dos serviços;</li>
+              <li>Suporte técnico;</li>
+              <li>Melhoria contínua da plataforma;</li>
+              <li>Comunicação com usuários.</li>
+            </ul>
+          </section>
+
+          <section className="lgpd-card">
+            <div className="card-icon">
+              <Scale size={22} />
+            </div>
+
+            <h2>4. Base legal</h2>
+
+            <p>
+              O tratamento dos dados ocorre conforme as hipóteses
+              previstas na LGPD, incluindo consentimento,
+              execução contratual e obrigação legal.
+            </p>
+          </section>
+
+          <section className="lgpd-card">
+            <div className="card-icon">
+              <Lock size={22} />
+            </div>
+
+            <h2>5. Segurança</h2>
+
+            <p>
+              Utilizamos medidas técnicas e organizacionais para
+              proteger os dados contra acessos não autorizados,
+              perda, alteração ou vazamentos.
+            </p>
+          </section>
+
+          <section className="lgpd-card">
+            <div className="card-icon">
+              <AlertTriangle size={22} />
+            </div>
+
+            <h2>6. Compartilhamento</h2>
+
+            <p>
+              Dados podem ser compartilhados apenas quando
+              necessário para prestação dos serviços ou
+              cumprimento de exigências legais.
+            </p>
+          </section>
+
+          <section className="lgpd-card full-width">
+            <div className="card-icon">
+              <ShieldCheck size={22} />
+            </div>
+
+            <h2>7. Direitos do titular</h2>
+
+            <div className="rights-grid">
+              <div className="right-item">Acesso aos dados</div>
+              <div className="right-item">Correção</div>
+              <div className="right-item">Portabilidade</div>
+              <div className="right-item">Anonimização</div>
+              <div className="right-item">Revogação do consentimento</div>
+              <div className="right-item">Exclusão de dados</div>
+            </div>
+          </section>
+
+          <section className="lgpd-card full-width contact-card">
+            <div className="card-icon">
+              <Mail size={22} />
+            </div>
+
+            <h2>8. Contato</h2>
+
+            <p>
+              Em caso de dúvidas ou solicitações relacionadas aos seus dados:
+            </p>
+
+            <a href="mailto:renatareismarinho@gmail.com">
+              renatareismarinho@gmail.com
+            </a>
+          </section>
+
+        </div>
+
+        <footer className="lgpd-footer">
+          <p>© 2026 TicketSystem • Todos os direitos reservados</p>
+          <span>Última atualização: Junho de 2026</span>
+        </footer>
+
+      </div>
     </div>
   );
 };

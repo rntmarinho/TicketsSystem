@@ -16,7 +16,7 @@ const CreateUser = () => {
     name: '',
     email: '',
     password: '',
-    access_type: 'comum',
+    access_type: 'client',
     client_id: '' // Inicializado vazio para forçar a seleção
   });
 
@@ -44,7 +44,7 @@ const CreateUser = () => {
       client_id: parseInt(formData.client_id) // Conversão rigorosa para inteiro
     };
 
-    if (payload.access_type === 'comum') {
+    if (payload.access_type === 'client') {
       payload.password = 'NO_LOGIN_USER';
     } else {
       payload.password = formData.password;
@@ -131,7 +131,7 @@ const CreateUser = () => {
             </div>
           </div>
 
-          {formData.access_type !== 'comum' && (
+          {formData.access_type !== 'client' && (
             <div className="form-row">
               <div className="form-group" style={{ width: '50%' }}>
                 <label>Senha de Acesso</label>
@@ -139,7 +139,7 @@ const CreateUser = () => {
                   type="password" 
                   value={formData.password} 
                   onChange={e => setFormData({...formData, password: e.target.value})} 
-                  required={formData.access_type !== 'comum'} 
+                  required={formData.access_type !== 'client'} 
                 />
               </div>
             </div>

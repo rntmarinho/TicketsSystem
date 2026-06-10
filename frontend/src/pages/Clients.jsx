@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 // Certifique-se de que a função updateClientSituation foi adicionada ao clientService.js
-import { getClients, createClient, updateClient, updateClientSituation } from '../services/clientService';
+import { getClients, createClient, updateClient, updateClientSituation, activateClient } from '../services/clientService';
 import './styles/Clients.css';
 
 const Clients = () => {
@@ -42,6 +42,15 @@ const Clients = () => {
       ...prevState,
       [name]: value
     }));
+  };
+  const handleActivateClient = async (clientId) => {
+    try {
+      await activateClient(clientId);
+      fetchClientsList();
+    } catch (err) {
+      setError('Erro ao ativar o cliente.');
+      console.error(err);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -247,8 +256,13 @@ const Clients = () => {
                               Inativar
                             </button>
                           ) : (
-                            <span className="status-badge inactive">INATIVO</span>
-                          )}
+                               <button
+                                  onClick={() => handleActivateClient(client.id)}
+                                  className="clients-activate-btn"
+                                  title="Ativar este cliente"
+                                   >Ativar</button>
+                             )}
+                         
                         </td>
                       </tr>
                     );

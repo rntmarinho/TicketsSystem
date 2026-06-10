@@ -93,6 +93,72 @@ class TicketController:
         }
     
     @staticmethod
+    def merge_tickets(parent_id, child_id, author_id=None):
+        """
+        Funde child_id no parent_id:
+        1. Copia o histórico do filho como uma mensagem de sistema no pai.
+        2. Exclui as mensagens do filho.
+        3. Exclui o chamado filho.
+        """
+        from tickets.messages.message_model import MessageModel
+
+        parent = TicketModel.get_by_id(parent_id)
+        child  = TicketModel.get_by_id(child_id)
+
+        if not parent:
+            return {"success": False, "message": "Chamado pai não encontrado."}, 404
+        if not child:
+            return {"success": False, "message": "Chamado a fundir não encontrado."}, 404
+        if parent_id == child_id:
+            return {"success": False, "message": "Não é possível fundir um chamado consigo mesmo."}, 400
+
+        child_id_val   = child[0]
+        child_subject  = child[1]
+        child_status   = child[2]
+        child_creation = str(child[3]) if child[3] else "—"
+        child_category = child[5] or "—"
+        child_priority = child[6] or "—"
+        child_user     = child[7] or "—"
+
+        child_messages = MessageModel.get_by_ticket_id(child_id)
+
+        lines = [
+            f"[CHAMADO FUNDIDO] #{child_id_val} — {child_subject}",
+            "",
+            f"Solicitante : {child_user}",
+            f"Categoria   : {child_category}",
+            f"Prioridade  : {child_priority}",
+            f"Status      : {child_status}",
+            f"Abertura    : {child_creation}",
+            "",
+            "--- Histórico de mensagens ---",
+        ]
+
+        if child_messages:
+            for msg in child_messages:
+                autor    = msg.get("author_name") or "Sistema"
+                data_msg = msg.get("creation") or "—"
+                texto    = msg.get("message") or ""
+                lines.append(f"\n[{autor} — {data_msg}]\n{texto}")
+        else:
+            lines.append("(nenhuma mensagem registrada)")
+
+        MessageModel.create({
+            "ticket_id": parent_id,
+            "message":   "\n".join(lines),
+            "sender":    author_id,
+            "private":   False
+        })
+
+        MessageModel.delete_by_ticket_id(child_id)
+        TicketModel.delete(child_id)
+
+        return {
+            "success": True,
+            "message": f"Chamado #{child_id} fundido com sucesso no chamado #{parent_id}."
+        }, 200
+
+    @staticmethod
     def update_ticket(ticket_id, data):
         # 1. Verifica a existência prévia do registro referenciado
         if not TicketModel.exists(ticket_id):

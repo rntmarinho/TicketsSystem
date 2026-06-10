@@ -81,7 +81,7 @@
 
 /* Encapsulamento responsivo para a tabela estrutural */
 .table-responsive {
-  overflow-x: auto;
+  overflow-x: visible;
   background: #ffffff;
   border-radius: 10px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.06);
@@ -90,7 +90,7 @@
 .custom-table {
   width: 100%;
   border-collapse: collapse;
-  white-space: nowrap;
+
 }
 
 .custom-table th {
@@ -244,4 +244,33 @@
   background-color: #f8f9fa;
   color: #6c757d;
   border: 1px solid #dee2e6;
+}
+
+@media (max-width: 768px) {
+  .dashboard-container {
+    padding: 16px;
+  }
+
+  .stats-cards {
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+
+  .table-responsive {
+    overflow-x: auto;
+  }
+
+  .custom-table {
+    min-width: 600px;
+  }
+
+  .dashboard-header h1 {
+    font-size: 1.4rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .stats-cards {
+    grid-template-columns: 1fr;
+  }
 }

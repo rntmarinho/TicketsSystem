@@ -126,6 +126,26 @@ def create_message(ticket_id):
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
     
+# Rota para fundir dois chamados
+@ticket_bp.route("/<int:parent_id>/merge", methods=["POST"])
+@jwt_required()
+def merge_tickets(parent_id):
+    data = request.get_json()
+
+    child_id = data.get("merge_ticket_id")
+    if not child_id:
+        return jsonify({"success": False, "message": "Campo 'merge_ticket_id' é obrigatório."}), 400
+
+    author_id = int(get_jwt_identity())
+
+    response, status = TicketController.merge_tickets(
+        parent_id=parent_id,
+        child_id=int(child_id),
+        author_id=author_id
+    )
+    return jsonify(response), status
+
+
 # Rota para lidar com operações GET, PUT e DELETE em um ticket específico
 @ticket_bp.route("/<int:ticket_id>", methods=["GET", "PUT", "DELETE"])
 @jwt_required()

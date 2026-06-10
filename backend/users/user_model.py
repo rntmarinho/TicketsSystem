@@ -182,6 +182,23 @@ class UserModel:
         conn.close()
 
     @staticmethod
+    def activate(user_id):
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            UPDATE tbl_users
+            SET situation = 'A'
+            WHERE id = %s
+        """, (user_id,))
+
+        conn.commit()
+
+        cursor.close()
+        conn.close()
+
+    @staticmethod
     def update_signature(user_id, signature_bytes):
         """
         Persiste o fluxo binário correspondente à assinatura do usuário

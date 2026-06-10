@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
-import { LogOut } from 'lucide-react';
+import { LogOut, Menu } from 'lucide-react';
 
 // Componentes e Páginas
 import Sidebar from './components/Sidebar';
@@ -18,6 +18,7 @@ import Priorities from './pages/Priority';
 import Clients from './pages/Clients';
 import Settings from './pages/Settings';
 import LGPD from './pages/LGPD';
+import ForgotPassword from './pages/ForgotPassword';
 
 import './App.css';
 
@@ -40,6 +41,7 @@ const PublicRoute = ({ isAuthenticated, children }) => {
 function App() {
   const navigate = useNavigate();
   const [isAuthenticated, setIsAuthenticated] = useState(!!localStorage.getItem('user'));
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const handleLogout = () => {
     localStorage.removeItem('user');
@@ -50,13 +52,22 @@ function App() {
   return (
     <Routes>
       {/* Rota de Login Protegida contra utilizadores já autenticados */}
-      <Route 
-        path="/login" 
+      <Route
+        path="/login"
         element={
           <PublicRoute isAuthenticated={isAuthenticated}>
             <Login setAuth={setIsAuthenticated} />
           </PublicRoute>
-        } 
+        }
+      />
+
+      <Route
+        path="/forgot-password"
+        element={
+          <PublicRoute isAuthenticated={isAuthenticated}>
+            <ForgotPassword />
+          </PublicRoute>
+        }
       />
 
       {/* Escopo de Rotas Privadas encapsuladas pela ProtectedRoute */}
@@ -65,10 +76,17 @@ function App() {
         element={
           <ProtectedRoute isAuthenticated={isAuthenticated}>
             <div className="app-layout">
-              <Sidebar />
+              <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
               <main className="content">
-                
+
                 <div className="top-bar">
+                  <button
+                    className="hamburger-btn"
+                    onClick={() => setSidebarOpen(true)}
+                    aria-label="Abrir menu"
+                  >
+                    <Menu size={22} />
+                  </button>
                   <button className="logout-btn-top" onClick={handleLogout}>
                     <LogOut size={18} /> Sair
                   </button>

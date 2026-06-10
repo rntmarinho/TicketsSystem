@@ -45,3 +45,19 @@
   font-size: 0.9rem;
   margin-top: 10px;
 }
+
+@media (max-width: 480px) {
+  .login-card {
+    padding: 2rem 1.5rem;
+    border-radius: 0;
+    box-shadow: none;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .login-container {
+    align-items: stretch;
+  }
+}

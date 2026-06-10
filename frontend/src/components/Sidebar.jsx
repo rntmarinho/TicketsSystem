@@ -1,80 +1,86 @@
-import { LayoutDashboard, 
-  Ticket, 
-  Users, 
-  PlusCircle, 
-  BarChart3, 
-  Building2, 
-  BarChart, 
+import { LayoutDashboard,
+  Ticket,
+  Users,
+  PlusCircle,
+  Building2,
+  BarChart,
   Scale,
   Settings,
-  Tag, 
-  UserRoundPen, 
-  CircleAlert } from 'lucide-react';
+  Tag,
+  CircleAlert,
+  X } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import './Sidebar.css';
 
-const Sidebar = () => {
+const Sidebar = ({ isOpen, onClose }) => {
   const location = useLocation();
 
-  // Função simples para verificar se a rota está ativa e aplicar a classe CSS
   const isActive = (path) => location.pathname === path ? "nav-item active" : "nav-item";
 
+  const handleNavClick = () => {
+    if (onClose) onClose();
+  };
+
   return (
-    
-    <div className="sidebar">
-      <img src="/public/consominas.jpg" alt="Logo" className="logo" /> 
+    <>
+      {/* Overlay escuro no mobile quando sidebar está aberta */}
+      {isOpen && (
+        <div className="sidebar-overlay" onClick={onClose} />
+      )}
 
-      <br/>      
-      
-      <div>
-      <nav>
-        <Link to="/perfil" className={isActive("/perfil")}>
-          <UserRoundPen size={20} /> Perfil
-        </Link>
+      <div className={`sidebar${isOpen ? ' sidebar--open' : ''}`}>
 
-        <Link to="/" className={isActive("/")}>
-          <LayoutDashboard size={20} /> Painel Inicial
-        </Link>
-        
-        <Link to="/novo-chamado" className={isActive("/novo-chamado")}>
-          <PlusCircle size={20} /> Abrir Chamado
-        </Link>
-        
-        <Link to="/tickets" className={isActive("/tickets")}>
-          <Ticket size={20} /> Todos os Chamados
-        </Link>
+        <div className="sidebar-top">
+          <img src="/consominas.jpg" alt="Logo" className="logo" />
+          <button className="sidebar-close-btn" onClick={onClose} aria-label="Fechar menu">
+            <X size={22} />
+          </button>
+        </div>
 
-        <Link to="/users" className={isActive("/users")}>
-          <Users size={20} /> Usuários
-        </Link>
+        <nav>
+          <Link to="/" className={isActive("/")} onClick={handleNavClick}>
+            <LayoutDashboard size={20} /> Painel Inicial
+          </Link>
 
-         <Link to="/clientes" className={isActive("/clientes")}>
-          <Building2 size={20} /> Clientes
-        </Link>             
+          <Link to="/novo-chamado" className={isActive("/novo-chamado")} onClick={handleNavClick}>
+            <PlusCircle size={20} /> Abrir Chamado
+          </Link>
 
-        <Link to="/categorias" className={isActive("/categorias")}>
-          <Tag size={20} /> Categorias
-        </Link>
+          <Link to="/tickets" className={isActive("/tickets")} onClick={handleNavClick}>
+            <Ticket size={20} /> Todos os Chamados
+          </Link>
 
-        <Link to="/prioridades" className={isActive("/prioridades")}>
-          <CircleAlert size={20} /> Prioridade
-        </Link>
+          <Link to="/users" className={isActive("/users")} onClick={handleNavClick}>
+            <Users size={20} /> Usuários
+          </Link>
 
-        <Link to="/relatorios" className={isActive("/relatorios")}>
-          <BarChart size={20} /> Relatórios
-        </Link>
+          <Link to="/clientes" className={isActive("/clientes")} onClick={handleNavClick}>
+            <Building2 size={20} /> Clientes
+          </Link>
 
-        <Link to="/configuracoes" className={isActive("/configuracoes")}>
-          <Settings size={20} /> Configurações
-        </Link>
-        
-        <Link to="/LGPD" className={isActive("/LGPD")}>
-          <Scale  size={20} /> LGPD
-        </Link>        
+          <Link to="/categorias" className={isActive("/categorias")} onClick={handleNavClick}>
+            <Tag size={20} /> Categorias
+          </Link>
 
-      </nav>
+          <Link to="/prioridades" className={isActive("/prioridades")} onClick={handleNavClick}>
+            <CircleAlert size={20} /> Prioridade
+          </Link>
+
+          <Link to="/relatorios" className={isActive("/relatorios")} onClick={handleNavClick}>
+            <BarChart size={20} /> Relatórios
+          </Link>
+
+          <Link to="/configuracoes" className={isActive("/configuracoes")} onClick={handleNavClick}>
+            <Settings size={20} /> Configurações
+          </Link>
+
+          <Link to="/LGPD" className={isActive("/LGPD")} onClick={handleNavClick}>
+            <Scale size={20} /> LGPD
+          </Link>
+        </nav>
+
       </div>
-    </div>
+    </>
   );
 };
 

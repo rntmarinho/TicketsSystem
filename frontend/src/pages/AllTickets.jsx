@@ -215,14 +215,15 @@ const AllTickets = () => {
               onChange={e => setSearch(e.target.value)}
             />
             {search && <button className="at-clear-search" onClick={() => setSearch('')}><X size={14} /></button>}
-          </div>
-          <button
+          </div>         
+          
+        </div>
+        <button
             className={`at-btn-filters ${filtersOpen ? 'open' : ''}`}
             onClick={() => setFiltersOpen(!filtersOpen)}
           >
             <SlidersHorizontal size={16} /> Parâmetros
           </button>
-        </div>
       </div>
 
       {activeFilters > 0 && (

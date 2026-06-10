@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react';
 import { UserPlus, User, Pencil, Mail, Shield, Search, X, Building2 } from 'lucide-react';
-import { apiFetch } from '../services/api'; 
-import { deleteUser } from '../services/userService'; 
-// Importação do serviço para obter a lista consolidada de clientes
-import { getClients } from '../services/clientService'; 
+import { apiFetch } from '../services/api';
+import { deleteUser, activateUser } from '../services/userService';
+import { getClients } from '../services/clientService';
 import './styles/Users.css';
 
 const Users = () => {
@@ -20,7 +19,6 @@ const Users = () => {
     access_type: ''
   });
 
-  // Carrega tanto utilizadores quanto clientes na inicialização
   useEffect(() => {
     loadUsers();
     loadClients();
@@ -48,7 +46,7 @@ const Users = () => {
       name: user.name || '',
       email: user.email || '',
       client_id: user.client_id || '',
-      access_type: user.access_type || 'comum'
+      access_type: user.access_type || 'client'  // valor padrão alinhado ao banco
     });
     setIsModalOpen(true);
   };
@@ -60,10 +58,7 @@ const Users = () => {
   };
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleUpdateUser = async (e) => {
@@ -74,7 +69,7 @@ const Users = () => {
         name: formData.name,
         email: formData.email,
         access_type: formData.access_type,
-        client_id: parseInt(formData.client_id) // Garante a submissão como Inteiro
+        client_id: parseInt(formData.client_id)
       };
 
       const response = await apiFetch(`/users/${selectedUser.id}`, {
@@ -94,12 +89,22 @@ const Users = () => {
   };
 
   const handleInactivateUser = async (userId) => {
-    if(!window.confirm("Deseja realmente inativar este usuário?")) return;
+    if (!window.confirm("Deseja realmente inativar este usuário?")) return;
     try {
       await deleteUser(userId);
       loadUsers();
     } catch (err) {
       alert('Erro ao inativar usuário.');
+    }
+  };
+
+  const handleActivateUser = async (userId) => {
+    if (!window.confirm("Deseja realmente ativar este usuário?")) return;
+    try {
+      await activateUser(userId);
+      loadUsers();
+    } catch (err) {
+      alert('Erro ao ativar usuário.');
     }
   };
 
@@ -147,38 +152,40 @@ const Users = () => {
             {filteredUsers.length > 0 ? (
               filteredUsers.map(user => {
                 const isInactive = user.situation === 'I';
-                
-                // Realiza a correspondência do ID para exibir a Razão Social na tabela
                 const linkedClient = clientsList.find(c => c.id === user.client_id);
                 const clientDisplayName = linkedClient ? linkedClient.razao : `Cliente #${user.client_id}`;
 
                 return (
-                  <tr key={user.id} style={{ opacity: isInactive ? 0.6 : 1, backgroundColor: isInactive ? '#f9f9f9' : 'transparent' }}>
+                  <tr
+                    key={user.id}
+                    style={{
+                      opacity: isInactive ? 0.6 : 1,
+                      backgroundColor: isInactive ? '#f9f9f9' : 'transparent'
+                    }}
+                  >
                     <td>
                       <div className="user-info">
-                        <div className="user-avatar">
-                          <User size={16} />
-                        </div>
+                        <div className="user-avatar"><User size={16} /></div>
                         <span>{user.name}</span>
                       </div>
                     </td>
                     <td>
                       <div className="user-email">
-                        <Mail size={15} />
-                        {user.email}
+                        <Mail size={15} /> {user.email}
                       </div>
                     </td>
                     <td>
                       {user.client_id ? (
                         <span className="badge cliente-badge" title={linkedClient?.cnpj}>
-                          <Building2 size={14}/> {clientDisplayName}
+                          <Building2 size={14} /> {clientDisplayName}
                         </span>
                       ) : '-'}
                     </td>
                     <td>
-                      <span className={`badge ${user.access_type === 'comum' ? 'comum' : 'tecnico'}`}>
+                      {/* Badge alinhada aos valores reais do banco: 'client' | 'technician' */}
+                      <span className={`badge ${user.access_type === 'client' ? 'client' : 'technician'}`}>
                         <Shield size={14} />
-                        {user.access_type === 'comum' ? 'Comum' : 'Técnico'}
+                        {user.access_type === 'client' ? 'client' : 'technician'}
                       </span>
                     </td>
                     <td>
@@ -187,11 +194,17 @@ const Users = () => {
                           <Pencil size={16} /> Editar
                         </button>
                         {!isInactive ? (
-                          <button className="btn-delete" onClick={() => handleInactivateUser(user.id)} style={{ padding: '0.4rem 0.8rem', backgroundColor: '#e74c3c', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
+                          <button
+                            className="btn-delete"
+                            onClick={() => handleInactivateUser(user.id)}
+                            style={{ padding: '0.4rem 0.8rem', backgroundColor: '#e74c3c', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+                          >
                             Inativar
                           </button>
                         ) : (
-                          <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#e74c3c', alignSelf: 'center' }}>INATIVO</span>
+                          <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#e74c3c', alignSelf: 'center' }}>
+                            INATIVO
+                          </span>
                         )}
                       </div>
                     </td>
@@ -200,9 +213,7 @@ const Users = () => {
               })
             ) : (
               <tr>
-                <td colSpan="5" className="empty-state">
-                  Nenhum usuário encontrado.
-                </td>
+                <td colSpan="5" className="empty-state">Nenhum usuário encontrado.</td>
               </tr>
             )}
           </tbody>
@@ -233,33 +244,37 @@ const Users = () => {
 
               <div className="form-group">
                 <label>Perfil do Usuário</label>
+                {/* Valores alinhados ao CHECK constraint do banco */}
                 <select name="access_type" value={formData.access_type} onChange={handleChange}>
-                  <option value="comum">Comum (Solicitante)</option>
-                  <option value="tecnico">Técnico (Suporte)</option>
+                  <option value="client">Comum (Solicitante)</option>
+                  <option value="technician">Técnico (Suporte)</option>
                 </select>
               </div>
 
               <div className="form-group">
                 <label>Cliente Vinculado</label>
-                <select 
-                  name="client_id" 
-                  value={formData.client_id} 
-                  onChange={handleChange} 
-                  required
-                >
+                <select name="client_id" value={formData.client_id} onChange={handleChange} required>
                   <option value="" disabled>Selecione um cliente...</option>
-                  {clientsList.map(client => (
-                    // Exibe o cliente no select se ele estiver ativo OU se ele já for o cliente atual do usuário (para não quebrar edições legadas)
+                  {clientsList.map(client =>
                     (client.situation !== 'I' || client.id === parseInt(formData.client_id)) && (
                       <option key={client.id} value={client.id}>
                         {client.razao} ({client.cnpj}) {client.situation === 'I' ? '[INATIVO]' : ''}
                       </option>
                     )
-                  ))}
+                  )}
                 </select>
               </div>
 
               <div className="modal-actions">
+                {selectedUser.situation == 'I' && (
+                  <button
+                            className="btn-delete"
+                            onClick={() => handleActivateUser(selectedUser.id)}
+                            style={{ padding: '0.4rem 0.8rem', backgroundColor: '#e74c3c', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+                          >
+                            Ativar
+                          </button>
+                )}
                 <button type="button" className="btn-cancel" onClick={closeModal}>Cancelar</button>
                 <button type="submit" className="btn-save">Salvar Alterações</button>
               </div>

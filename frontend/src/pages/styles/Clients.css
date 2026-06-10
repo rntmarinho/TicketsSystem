@@ -268,3 +268,48 @@
   font-weight: 500;
   padding: 3rem !important;
 }
+
+.clients-activate-btn {
+  background-color: #2ecc71;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 0.4rem 0.8rem;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+.clients-activate-btn:hover {
+  background-color: #27ae60;
+}
+
+@media (max-width: 768px) {
+  .clients-container {
+    padding: 1rem;
+  }
+
+  .clients-complex-form {
+    grid-template-columns: 1fr;
+  }
+
+  .form-actions {
+    grid-column: 1;
+  }
+
+  .clients-form-section {
+    padding: 1.25rem;
+  }
+
+  .table-responsive {
+    overflow-x: auto;
+  }
+}
+
+@media (max-width: 480px) {
+  .clients-header h2 {
+    font-size: 1.4rem;
+  }
+
+  .action-buttons-cell {
+    flex-wrap: wrap;
+  }
+}

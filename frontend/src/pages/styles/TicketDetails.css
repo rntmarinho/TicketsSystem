@@ -414,6 +414,237 @@
   color: #111827;
 }
 
+/* ─── Botão Fundir ───────────────────────────────────────────────── */
+
+.btn-merge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 11px 16px;
+  margin-top: 10px;
+  border: 1.5px dashed #6366f1;
+  border-radius: 10px;
+  background: transparent;
+  color: #6366f1;
+  font-weight: 600;
+  font-size: 0.92rem;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.btn-merge:hover {
+  background: #ede9fe;
+}
+
+/* ─── Modal de Fusão ─────────────────────────────────────────────── */
+
+.merge-modal {
+  background: white;
+  border-radius: 20px;
+  width: 100%;
+  max-width: 560px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.22);
+}
+
+.merge-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 24px 24px 16px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.merge-modal-header h2 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  font-size: 1.2rem;
+  color: #111827;
+}
+
+.merge-modal-header p {
+  margin-top: 6px;
+  font-size: 0.88rem;
+  color: #6b7280;
+  line-height: 1.5;
+}
+
+.btn-modal-close {
+  flex-shrink: 0;
+  background: #f3f4f6;
+  border: none;
+  border-radius: 8px;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #6b7280;
+  transition: background 0.15s;
+}
+
+.btn-modal-close:hover {
+  background: #e5e7eb;
+}
+
+.merge-search-wrap {
+  position: relative;
+  padding: 14px 24px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.merge-search-icon {
+  position: absolute;
+  left: 38px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9ca3af;
+}
+
+.merge-search-wrap input {
+  width: 100%;
+  height: 42px;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  padding: 0 14px 0 36px;
+  font-size: 0.94rem;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.15s;
+}
+
+.merge-search-wrap input:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+}
+
+.merge-list {
+  overflow-y: auto;
+  flex: 1;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.merge-empty {
+  text-align: center;
+  color: #9ca3af;
+  padding: 24px;
+  font-size: 0.94rem;
+}
+
+.merge-item {
+  width: 100%;
+  text-align: left;
+  background: #f8fafc;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: auto auto;
+  column-gap: 10px;
+}
+
+.merge-item:hover {
+  border-color: #a5b4fc;
+  background: #f5f3ff;
+}
+
+.merge-item--selected {
+  border-color: #6366f1;
+  background: #eef2ff;
+}
+
+.merge-item-id {
+  grid-row: 1 / 3;
+  align-self: center;
+  font-weight: 700;
+  color: #6366f1;
+  font-size: 0.95rem;
+  min-width: 36px;
+}
+
+.merge-item-subject {
+  font-weight: 600;
+  color: #111827;
+  font-size: 0.92rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.merge-item-meta {
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+.merge-confirm-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 16px 24px;
+  border-top: 1px solid #e5e7eb;
+  background: #fafafa;
+  font-size: 0.9rem;
+  color: #374151;
+  flex-wrap: wrap;
+}
+
+.btn-merge-confirm {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  background: #6366f1;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+
+.btn-merge-confirm:hover {
+  background: #4f46e5;
+}
+
+.btn-merge-confirm:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+  .merge-modal {
+    max-height: 95vh;
+    border-radius: 16px;
+  }
+
+  .merge-confirm-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .btn-merge-confirm {
+    justify-content: center;
+  }
+}
+
 @media (max-width: 1024px) {
   .ticket-summary {
     grid-template-columns: repeat(2, minmax(180px, 1fr));
