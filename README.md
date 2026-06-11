@@ -14,7 +14,7 @@ Sistema web de gerenciamento de chamados internos — abertura, acompanhamento e
 
 ### Passo a passo
 
-1. Baixe o instalador: **`TicketsSystem_Setup.exe`**
+1. Baixe o instalador: **[TicketsSystem_Setup.exe](https://github.com/rntmarinho/TicketsSystem/blob/main/TicketsSystem_Setup.exe)**
 2. Execute como **Administrador** (clique com o botão direito → *Executar como administrador*)
 3. Siga as instruções na tela — o processo leva alguns minutos pois baixa as dependências automaticamente
 4. Ao final, configure o arquivo de variáveis de ambiente (veja seção abaixo)
