@@ -10,7 +10,7 @@ Sistema web de gerenciamento de chamados internos — abertura, acompanhamento e
 
 - Windows 10 ou superior
 - Conexão com a internet (durante a instalação)
-- PostgreSQL instalado e em execução
+- [PostgreSQL](https://www.postgresql.org/download/windows/) instalado e em execução
 
 ### Passo a passo
 
