@@ -11,3 +11,6 @@ psycopg2-binary>=2.9.9
 
 # Gerenciamento de Variáveis de Ambiente
 python-dotenv>=1.0.1
+
+
+imap_tools>=0.7.0
