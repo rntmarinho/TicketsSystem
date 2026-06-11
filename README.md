@@ -133,4 +133,4 @@ Painel de Controle → Programas → **Tickets System** → Desinstalar. Os serv
 
 ## 📄 Licença
 
-Uso interno — Consominas.
+Uso livre.
