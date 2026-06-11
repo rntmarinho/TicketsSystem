@@ -11,7 +11,7 @@ def create_default_client():
         SELECT id
         FROM tbl_clients
         WHERE cnpj = %s
-    """, ("00000000000000",))
+    """, ("00000000000001",))
 
     client = cursor.fetchone()
 
@@ -34,8 +34,8 @@ def create_default_client():
         """, (
             "00000000000000",
             "Administrador do Sistema",
-            "admin@sistema.local",
-            "(00) 00000-0000"
+            "renatareismarinho@gmail.com",
+            "(31) 99521-2116"
         ))
 
         client_id = cursor.fetchone()[0]
