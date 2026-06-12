@@ -27,11 +27,15 @@ def run_setup():
     Seguro para rodar múltiplas vezes (todas as operações usam IF NOT EXISTS).
     """
     print("Executando setup inicial do banco de dados...")
-    create_database()
-    create_tables()
-    client_id = create_default_client()
-    create_admin_user(client_id)
-    print("Setup concluído.")
+    try:
+        create_database()
+        create_tables()
+        client_id = create_default_client()
+        if client_id is not None:
+            create_admin_user(client_id)
+        print("Setup concluído.")
+    except Exception as e:
+        print(f"Aviso: setup inicial falhou: {e}. O sistema iniciará assim mesmo.")
 
 
 def create_app():

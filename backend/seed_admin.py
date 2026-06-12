@@ -5,13 +5,16 @@ from database.connect_database import get_db_connection
 def create_default_client():
 
     conn = get_db_connection()
+    if conn is None:
+        print("Aviso: não foi possível conectar ao banco para criar cliente padrão.")
+        return None
     cursor = conn.cursor()
 
     cursor.execute("""
         SELECT id
         FROM tbl_clients
         WHERE cnpj = %s
-    """, ("00000000000001",))
+    """, ("00000000000000",))
 
     client = cursor.fetchone()
 
@@ -53,6 +56,9 @@ def create_default_client():
 def create_admin_user(client_id):
 
     conn = get_db_connection()
+    if conn is None:
+        print("Aviso: não foi possível conectar ao banco para criar usuário admin.")
+        return
     cursor = conn.cursor()
 
     cursor.execute("""
