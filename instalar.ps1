@@ -61,11 +61,8 @@ if (Test-Path $envFile) {
         $dbPassword = Read-Host "Senha do PostgreSQL"
     }
 
-    # JWT
-    $jwtKey = [System.Web.Security.Membership]::GeneratePassword(48, 8) 2>$null
-    if (-not $jwtKey) {
-        $jwtKey = -join ((65..90) + (97..122) + (48..57) | Get-Random -Count 48 | ForEach-Object {[char]$_})
-    }
+    # JWT — gera chave aleatória de 48 caracteres
+    $jwtKey = -join ((65..90) + (97..122) + (48..57) | Get-Random -Count 48 | ForEach-Object { [char]$_ })
 
     # E-mail
     Write-Host ""
