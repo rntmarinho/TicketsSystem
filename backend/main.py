@@ -14,9 +14,24 @@ from tickets.anexos.anexo_routes import anexo_bp
 from settings.settings_routes import settings_bp
 from reports.report_routes import reports_bp
 from flask_cors import CORS
+from database.create_database import create_database, create_tables
+from seed_admin import create_default_client, create_admin_user
 
 # Carrega as variáveis de ambiente do arquivo .env
 load_dotenv()
+
+
+def run_setup():
+    """
+    Executa a criação do banco, tabelas e dados iniciais na inicialização.
+    Seguro para rodar múltiplas vezes (todas as operações usam IF NOT EXISTS).
+    """
+    print("Executando setup inicial do banco de dados...")
+    create_database()
+    create_tables()
+    client_id = create_default_client()
+    create_admin_user(client_id)
+    print("Setup concluído.")
 
 
 def create_app():
@@ -70,6 +85,9 @@ def create_app():
 
     return app
 
+
+# Executa setup antes de criar a aplicação Flask
+run_setup()
 
 app = create_app()
 

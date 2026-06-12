@@ -19,9 +19,9 @@ DB_PORT = os.getenv("DB_PORT")
 def create_database():
 
     try:
-        # Conecta ao banco "helpdesk_db" para criar o novo banco de dados
+        # Conecta ao banco padrão "postgres" para criar o banco da aplicação
         conn = psycopg2.connect(
-            dbname="helpdesk_db",
+            dbname="postgres",
             user=DB_USER,
             password=DB_PASSWORD,
             host=DB_HOST,
@@ -238,20 +238,20 @@ def create_tables():
             usuario_upload INTEGER
             REFERENCES tbl_users(id)
 
-            -- Configurações
-            CREATE TABLE IF NOT EXISTS tbl_user_settings (
-                id             SERIAL       PRIMARY KEY,
-                email_user     VARCHAR(255) NOT NULL,
-                email_password VARCHAR(255) NOT NULL,
-                smtp_host      VARCHAR(255) NOT NULL,
-                smtp_port      INTEGER      NOT NULL DEFAULT 587,
-                imap_host      VARCHAR(255) NOT NULL,
-                imap_port      INTEGER      NOT NULL DEFAULT 993,
-                check_interval INTEGER      NOT NULL DEFAULT 100,
-                updated_at     TIMESTAMP    NOT NULL DEFAULT NOW()
-            );
-            
+        );
 
+        -- CONFIGURAÇÕES
+
+        CREATE TABLE IF NOT EXISTS tbl_user_settings (
+            id             SERIAL       PRIMARY KEY,
+            email_user     VARCHAR(255) NOT NULL,
+            email_password VARCHAR(255) NOT NULL,
+            smtp_host      VARCHAR(255) NOT NULL,
+            smtp_port      INTEGER      NOT NULL DEFAULT 587,
+            imap_host      VARCHAR(255) NOT NULL,
+            imap_port      INTEGER      NOT NULL DEFAULT 993,
+            check_interval INTEGER      NOT NULL DEFAULT 100,
+            updated_at     TIMESTAMP    NOT NULL DEFAULT NOW()
         );
 
         """

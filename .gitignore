@@ -1,0 +1,37 @@
+# ── Variáveis de ambiente (contém senhas!) ────────────────────────────────────
+.env
+backend/.env
+backend/database/.env
+
+# ── Python ────────────────────────────────────────────────────────────────────
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+env/
+
+# ── Node / Frontend ───────────────────────────────────────────────────────────
+node_modules/
+frontend/dist/
+frontend/.env
+
+# ── Uploads e anexos gerados em runtime ──────────────────────────────────────
+backend/public/anexos/*
+!backend/public/anexos/.gitkeep
+
+# ── IDEs e editores ───────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# ── Instalador gerado ─────────────────────────────────────────────────────────
+*.exe

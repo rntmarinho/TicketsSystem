@@ -1,4 +1,4 @@
-# 🎫 Tickets System
+# 🎫 Sistema de Chamados
 
 Sistema web de gerenciamento de chamados internos — abertura, acompanhamento e resolução de tickets com controle de usuários, categorias, prioridades e relatórios.
 
@@ -9,59 +9,82 @@ Sistema web de gerenciamento de chamados internos — abertura, acompanhamento e
 ### Requisitos
 
 - Windows 10 ou superior
-- Conexão com a internet (durante a instalação)
-- [PostgreSQL](https://www.postgresql.org/download/windows/) instalado e em execução
+- [Docker Desktop](https://www.docker.com/products/docker-desktop) instalado e em execução
+- Conexão com a internet (apenas na primeira instalação, para baixar as imagens)
 
 ### Passo a passo
 
-1. Baixe o instalador: **[TicketsSystem_Setup.exe](https://github.com/rntmarinho/TicketsSystem/blob/main/TicketsSystem_Setup.exe)**
-2. Execute como **Administrador** (clique com o botão direito → *Executar como administrador*)
-3. Siga as instruções na tela — o processo leva alguns minutos pois baixa as dependências automaticamente
-4. Ao final, configure o arquivo de variáveis de ambiente (veja seção abaixo)
-5. Acesse o sistema em **http://localhost:3000**
+1. Clone o repositório ou copie a pasta do projeto para a máquina
+2. Abra o **PowerShell** na pasta do projeto
+3. Execute o instalador:
 
-> O instalador cuida automaticamente de: Git, Python, Node.js, dependências, build do frontend e registro dos serviços Windows.
+```powershell
+.\instalar.ps1
+```
+
+> Caso o Windows bloqueie a execução, clique com o botão direito no arquivo → **Executar com PowerShell**, ou rode antes:
+> ```powershell
+> Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+> ```
+
+4. Responda as perguntas de configuração (banco de dados, e-mail)
+5. Aguarde — o instalador constrói as imagens e sobe o sistema automaticamente
+6. Acesse **http://localhost**
+
+O instalador cuida automaticamente de: criação do banco de dados, tabelas, usuário administrador inicial e inicialização de todos os serviços.
 
 ---
 
-## ⚙️ Configuração do banco de dados
+## ⚙️ Configuração manual (alternativa ao instalador)
 
-Após a instalação, edite o arquivo:
+Se preferir configurar manualmente, copie o arquivo de exemplo e edite com seus dados:
 
+```bash
+cp .env.example .env
 ```
-C:\TicketsSystem\app\backend\.env
-```
 
-Preencha com as informações do seu banco PostgreSQL:
+Principais variáveis:
 
 ```env
-DB_HOST=localhost
-DB_PORT=5432
-DB_NAME=ticketsystem
-DB_USER=seu_usuario
+DB_NAME=helpdeskWS
+DB_USER=postgres
 DB_PASSWORD=sua_senha
 
-SECRET_KEY=troque_por_uma_chave_segura
-JWT_SECRET_KEY=troque_por_outra_chave_segura
+JWT_SECRET_KEY=chave_longa_e_aleatoria
+
+EMAIL_HOST=imap.seuservidor.com.br
+EMAIL_USER=suporte@seudominio.com.br
+EMAIL_PASSWORD=sua_senha_email
+
+SMTP_HOST=smtp.seuservidor.com.br
+SMTP_USER=suporte@seudominio.com.br
+SMTP_PASS=sua_senha_email
 ```
 
-Após salvar o arquivo, reinicie o serviço de backend:
+Após configurar o `.env`, suba o sistema:
 
-1. Abra o **Gerenciador de Serviços** (`Win + R` → `services.msc`)
-2. Localize **Tickets System - Backend**
-3. Clique com o botão direito → **Reiniciar**
+```bash
+docker-compose up --build -d
+```
 
 ---
 
 ## 🚀 Acessando o sistema
 
-Abra o navegador e acesse:
+| Serviço   | Endereço                  |
+|-----------|---------------------------|
+| Frontend  | http://localhost          |
+| Backend   | http://localhost:5000     |
+| Banco     | localhost:5432            |
 
-```
-http://localhost:3000
-```
+**Login inicial:**
 
-Na primeira vez, faça login com as credenciais criadas durante a configuração do banco de dados.
+| Campo  | Valor                  |
+|--------|------------------------|
+| E-mail | admin@sistema.local    |
+| Senha  | Admin@123              |
+
+> ⚠️ Altere a senha do administrador após o primeiro acesso.
 
 ---
 
@@ -73,44 +96,72 @@ Na primeira vez, faça login com as credenciais criadas durante a configuração
 | **Novo Chamado** | Abertura de ticket com categoria, prioridade e descrição |
 | **Todos os Chamados** | Lista completa com filtros e busca |
 | **Detalhes do Chamado** | Acompanhamento, comentários e atualização de status |
-| **Usuários** | Cadastro e gerenciamento de usuários do sistema |
+| **Usuários** | Cadastro e gerenciamento de usuários |
 | **Clientes** | Cadastro de clientes vinculados aos chamados |
-| **Categorias** | Gerenciamento de categorias de chamados |
-| **Prioridades** | Configuração de níveis de prioridade |
+| **Categorias** | Gerenciamento de categorias |
+| **Prioridades** | Configuração de níveis de prioridade e SLA |
 | **Relatórios** | Exportação e visualização de métricas |
-| **Configurações** | Preferências do sistema |
-| **LGPD** | Termos e política de privacidade |
+| **Configurações** | Preferências do sistema (e-mail, SMTP) |
 
 ---
 
-## 🔧 Serviços Windows
+## 🐳 Arquitetura Docker
 
-O sistema roda como dois serviços Windows iniciados automaticamente com o Windows:
+O sistema roda em 3 containers orquestrados pelo Docker Compose:
 
-| Serviço | Descrição | Porta |
-|---|---|---|
-| `TicketsBackend` | API Flask (Python) | 5000 |
-| `TicketsFrontend` | Interface web estática | 3000 |
+| Container           | Tecnologia       | Porta |
+|---------------------|------------------|-------|
+| `tickets_backend`   | Python / Flask   | 5000  |
+| `tickets_frontend`  | React + Nginx    | 80    |
+| `tickets_db`        | PostgreSQL 16    | 5432  |
 
-Para gerenciar os serviços: `Win + R` → `services.msc`
+O backend executa automaticamente na inicialização:
+- Criação do banco de dados (se não existir)
+- Criação das tabelas (se não existirem)
+- Carga do usuário e cliente administrador padrão
 
 ---
 
-## 🗂️ Estrutura de arquivos instalados
+## 🗂️ Estrutura do projeto
 
 ```
-C:\TicketsSystem\
-├── app\
-│   ├── backend\       → Código da API (Python/Flask)
-│   │   └── .env       → ⚠️ Configurações do banco de dados
-│   └── frontend\      → Código-fonte do frontend
-├── venv\              → Ambiente virtual Python
-├── nssm\              → Gerenciador de serviços
-└── logs\
-    ├── backend-stdout.log
-    ├── backend-stderr.log
-    ├── frontend-stdout.log
-    └── frontend-stderr.log
+TicketsSystem/
+├── backend/
+│   ├── Dockerfile
+│   ├── main.py            → Ponto de entrada da API
+│   ├── requirements.txt
+│   ├── seed_admin.py      → Dados iniciais (admin)
+│   ├── database/
+│   │   └── create_database.py  → Criação do banco e tabelas
+│   └── public/anexos/     → Arquivos enviados pelos usuários
+├── frontend/
+│   ├── Dockerfile
+│   └── src/
+├── docker-compose.yml     → Orquestração dos serviços
+├── instalar.ps1           → Instalador interativo
+├── .env.example           → Modelo de configuração
+└── .gitignore
+```
+
+---
+
+## 🔧 Comandos úteis
+
+```bash
+# Subir o sistema
+docker-compose up -d
+
+# Parar o sistema
+docker-compose down
+
+# Ver logs em tempo real
+docker-compose logs -f
+
+# Ver logs de um serviço específico
+docker-compose logs -f backend
+
+# Reconstruir após mudanças no código
+docker-compose up --build -d
 ```
 
 ---
@@ -118,16 +169,19 @@ C:\TicketsSystem\
 ## ❓ Solução de problemas
 
 **O sistema não abre no navegador**
-Verifique se os serviços `TicketsBackend` e `TicketsFrontend` estão em execução em `services.msc`.
+Verifique se os containers estão rodando: `docker-compose ps`
 
 **Erro de conexão com o banco de dados**
-Confira as credenciais no arquivo `C:\TicketsSystem\app\backend\.env` e certifique-se de que o PostgreSQL está rodando.
+Confira as credenciais no `.env` e veja os logs: `docker-compose logs db`
 
-**Como ver os logs**
-Os logs ficam em `C:\TicketsSystem\logs\`. Abra com qualquer editor de texto.
+**Backend não inicia / erro no setup**
+Veja os logs: `docker-compose logs backend`
 
-**Como desinstalar**
-Painel de Controle → Programas → **Tickets System** → Desinstalar. Os serviços serão removidos automaticamente.
+**Como reinstalar do zero (apaga todos os dados)**
+```bash
+docker-compose down -v   # o -v remove também os volumes (banco de dados)
+docker-compose up --build -d
+```
 
 ---
 
