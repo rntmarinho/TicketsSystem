@@ -3,7 +3,7 @@
 #  Requer: Docker Desktop instalado e em execução
 # ============================================================
 
-$ErrorActionPreference = "Stop"
+$ErrorActionPreference = "Continue"
 
 Write-Host ""
 Write-Host "============================================" -ForegroundColor Cyan
