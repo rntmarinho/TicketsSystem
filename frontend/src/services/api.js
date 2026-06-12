@@ -1,6 +1,6 @@
-// Constante que define o endereço absoluto da API backend. 
-// Para a implantação em produção, sugere-se migrar este valor para variáveis de ambiente.
-const API_BASE_URL = 'http://127.0.0.1:5000';
+// Em produção (Docker), o Nginx proxia /api → backend:5000.
+// Em desenvolvimento (npm run dev), o vite.config.js proxia /api → localhost:5000.
+const API_BASE_URL = '/api';
 
 export async function apiFetch(endpoint, options = {}) {
 
