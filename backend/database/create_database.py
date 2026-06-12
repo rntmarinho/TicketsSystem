@@ -153,6 +153,10 @@ def create_tables():
             NOT NULL DEFAULT 'A'
             CHECK (situation IN ('A', 'I')),
 
+            failed_attempts INTEGER NOT NULL DEFAULT 0,
+
+            locked_until TIMESTAMP,
+
             signature BYTEA,
 
             picture BYTEA
