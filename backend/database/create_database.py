@@ -213,6 +213,8 @@ def create_tables():
 
             private BOOLEAN DEFAULT FALSE,
 
+            sender INTEGER REFERENCES tbl_users(id),
+
             creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 
         );
