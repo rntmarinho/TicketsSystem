@@ -345,7 +345,7 @@ def process_new_ticket_email(msg, user_id):
         "subject":     msg.subject,
         "category_id": 1,
         "user_id":     user_id,
-        "priority_id": 3,    
+        "priority_id": 1,    
         "description": msg.text or msg.html or ""
     }
 
