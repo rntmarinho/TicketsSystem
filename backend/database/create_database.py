@@ -189,9 +189,14 @@ def create_tables():
 
             creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
-            sla DATE
+            sla DATE,
+
+            close_time TIMESTAMP
 
         );
+
+        -- Garante a coluna close_time em bancos já existentes (criados antes desta versão)
+        ALTER TABLE tbl_tickets ADD COLUMN IF NOT EXISTS close_time TIMESTAMP;
 
 
 
@@ -212,8 +217,6 @@ def create_tables():
             REFERENCES tbl_users(id),
 
             private BOOLEAN DEFAULT FALSE,
-
-            sender INTEGER REFERENCES tbl_users(id),
 
             creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 
