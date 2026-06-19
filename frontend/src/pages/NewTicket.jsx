@@ -127,9 +127,19 @@ const NewTicket = () => {
               <label>Classificação Categórica</label>
               <div className="input-with-icon">
                 <Tag size={18} />
-                <select 
+                <select
                   value={formData.category_id}
-                  onChange={e => setFormData({...formData, category_id: Number(e.target.value)})}
+                  onChange={e => {
+                    const selectedId = Number(e.target.value);
+                    // Calcula a prioridade automaticamente a partir da prioridade
+                    // base vinculada à categoria escolhida (definida em "Gerenciar Categorias").
+                    const selectedCategory = categories.find(cat => cat.id === selectedId);
+                    setFormData(prev => ({
+                      ...prev,
+                      category_id: selectedId,
+                      priority_id: selectedCategory?.priority_id ?? prev.priority_id
+                    }));
+                  }}
                   required
                 >
                   <option value="">Selecione uma categoria...</option>
