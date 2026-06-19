@@ -109,18 +109,20 @@ def start_email_service():
         "Serviço de e-mail iniciado."
     )
 
-# Ponto de entrada da aplicação
+# Inicia o serviço de e-mail aqui (fora do bloco "__main__") para que ele também
+# seja disparado quando a aplicação é executada via Gunicorn (gunicorn main:app),
+# e não apenas quando rodada diretamente com "python main.py".
+email_enabled = os.getenv(
+    "EMAIL_SERVICE_ENABLED",
+    "true"
+).lower() == "true"
+
+if email_enabled:
+    start_email_service()
+
+# Ponto de entrada da aplicação (uso local, fora do Docker)
 if __name__ == "__main__":
 
-    email_enabled = os.getenv(
-        "EMAIL_SERVICE_ENABLED",
-        "true"
-    ).lower() == "true"
-
-    if email_enabled:
-
-        start_email_service()
-        
 # Inicia o servidor Flask com as configurações definidas nas variáveis de ambiente
     app.run(
         host="0.0.0.0",

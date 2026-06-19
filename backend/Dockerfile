@@ -21,6 +21,9 @@ COPY . .
 EXPOSE 5000
 
 # Comando de inicialização em produção via Gunicorn
-# -w 4 = 4 workers (processos)
+# -w 1 = 1 worker (processo) — necessário porque o serviço de e-mail roda em
+#        uma thread dentro do processo da aplicação; com mais de 1 worker,
+#        cada processo abriria sua própria conexão IMAP, duplicando o robô.
+# --threads 4 = concorrência para requisições HTTP dentro do único worker
 # -b 0.0.0.0:5000 = escuta em todas as interfaces na porta 5000
-CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:5000", "main:app"]
+CMD ["gunicorn", "-w", "1", "--threads", "4", "-b", "0.0.0.0:5000", "main:app"]
