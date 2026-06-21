@@ -187,6 +187,8 @@
 .messages-section textarea,
 .sidebar-info select {
   width: 100%;
+  box-sizing: border-box; /* <-- Adicione esta linha */
+  max-width: 100%;        /* <-- Adicione esta linha por segurança */
   border: 1px solid #d1d5db;
   border-radius: 14px;
   padding: 14px 16px;
@@ -257,6 +259,8 @@
 .message-composer textarea {
   min-height: 140px;
   resize: vertical;
+  box-sizing: border-box; /* <-- Resolve o cálculo do espaçamento interno */
+  max-width: 100%;        /* <-- Impede que a caixa passe do limite do container */
 }
 
 .message-composer-footer {
