@@ -213,7 +213,7 @@ def create_tables():
 
             message TEXT NOT NULL,
 
-            signature INTEGER
+            sender INTEGER
             REFERENCES tbl_users(id),
 
             private BOOLEAN DEFAULT FALSE,
