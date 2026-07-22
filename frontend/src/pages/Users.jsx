@@ -16,7 +16,8 @@ const Users = () => {
     name: '',
     email: '',
     client_id: '',
-    access_type: ''
+    access_type: '',
+    senha: ''
   });
 
   useEffect(() => {
@@ -46,7 +47,8 @@ const Users = () => {
       name: user.name || '',
       email: user.email || '',
       client_id: user.client_id || '',
-      access_type: user.access_type || 'client'  // valor padrão alinhado ao banco
+      access_type: user.access_type || 'client',  // valor padrão alinhado ao banco
+      senha: ''
     });
     setIsModalOpen(true);
   };
@@ -54,7 +56,7 @@ const Users = () => {
   const closeModal = () => {
     setSelectedUser(null);
     setIsModalOpen(false);
-    setFormData({ name: '', email: '', client_id: '', access_type: '' });
+    setFormData({ name: '', email: '', client_id: '', access_type: '', senha: '' });
   };
 
   const handleChange = (e) => {
@@ -71,6 +73,10 @@ const Users = () => {
         access_type: formData.access_type,
         client_id: parseInt(formData.client_id)
       };
+
+      if (formData.senha.trim()) {
+        payload.senha = formData.senha.trim();
+      }
 
       const response = await apiFetch(`/users/${selectedUser.id}`, {
         method: 'PUT',
@@ -251,6 +257,18 @@ const Users = () => {
                   <option value="admin">Administrador</option>
                   <option value="viewer">Visualizador (Gantt/Calendário/Relatórios)</option>
                 </select>
+              </div>
+
+              <div className="form-group">
+                <label>Redefinir Senha</label>
+                <input
+                  type="password"
+                  name="senha"
+                  value={formData.senha}
+                  onChange={handleChange}
+                  placeholder="Deixe em branco para não alterar"
+                  autoComplete="new-password"
+                />
               </div>
 
               <div className="form-group">
