@@ -8,8 +8,8 @@
   --border: #e5e7eb;
   --text: #111827;
   --muted: #6b7280;
-  --primary: #2563eb;
-  --primary-hover: #1d4ed8;
+  --primary: #e83338;
+  --primary-hover: #c92a2f;
   --danger: #dc2626;
   --danger-hover: #b91c1c;
   --shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
@@ -136,12 +136,12 @@
 }
 
 .btn-icon.edit {
-  background: #eff6ff;
-  color: #2563eb;
+  background: #fdecec;
+  color: #e83338;
 }
 
 .btn-icon.edit:hover {
-  background: #dbeafe;
+  background: #fbd5d6;
 }
 
 .btn-icon.delete {
@@ -305,7 +305,7 @@
 .form-group input[type="text"]:focus,
 .form-group input[type="number"]:focus {
   border-color: var(--primary);
-  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15);
+  box-shadow: 0 0 0 4px rgba(232, 51, 56, 0.15);
 }
 
 /* =========================================================

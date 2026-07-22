@@ -72,8 +72,8 @@
 }
 
 .kanban-column--over {
-  border-color: #2563eb;
-  background: #eff6ff;
+  border-color: #e83338;
+  background: #fdecec;
 }
 
 .kanban-column-header {

@@ -1,27 +1,28 @@
 .sidebar {
   width: 260px;
   min-width: 260px;
-  background: #001435;
-  color: white;
+  background: #ffffff;
+  color: #100614;
   padding: 20px;
   display: flex;
   flex-direction: column;
   min-height: 100vh;
   flex-shrink: 0;
+  border-right: 1px solid #e5e4e7;
 }
 
 .sidebar-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
 }
 
 .sidebar-close-btn {
   display: none;
   background: transparent;
   border: none;
-  color: white;
+  color: #100614;
   cursor: pointer;
   padding: 4px;
   border-radius: 6px;
@@ -29,11 +30,11 @@
 }
 
 .sidebar-close-btn:hover {
-  background: rgba(255, 255, 255, 0.15);
+  background: #f5f5f5;
 }
 
 .logo {
-  max-width: 140px;
+  max-width: 180px;
   height: auto;
 }
 
@@ -41,19 +42,19 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  color: rgba(255, 255, 255, 0.85);
+  color: #4b4b52;
   text-decoration: none;
   padding: 12px;
   border-radius: 8px;
   margin-bottom: 5px;
   font-size: 0.95rem;
-  transition: background 0.15s;
+  transition: background 0.15s, color 0.15s;
 }
 
 .nav-item.active,
 .nav-item:hover {
-  background: rgba(255, 255, 255, 0.18);
-  color: white;
+  background: rgba(232, 51, 56, 0.08);
+  color: #e83338;
 }
 
 /* Overlay escuro quando sidebar está aberta no mobile */

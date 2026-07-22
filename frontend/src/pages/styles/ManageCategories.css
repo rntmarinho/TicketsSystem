@@ -40,8 +40,8 @@
 .add-category-form input:focus,
 .add-category-form select:focus {
   outline: none;
-  border-color: #2563eb;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+  border-color: #e83338;
+  box-shadow: 0 0 0 3px rgba(232, 51, 56, 0.15);
 }
 
 /* Botão Adicionar */
@@ -50,7 +50,7 @@
   align-items: center;
   gap: 8px;
   padding: 12px 20px;
-  background: #2563eb;
+  background: #e83338;
   color: #ffffff;
   border: none;
   border-radius: 10px;
@@ -60,7 +60,7 @@
 }
 
 .add-category-form button:hover {
-  background: #1d4ed8;
+  background: #c92a2f;
   transform: translateY(-1px);
 }
 

@@ -35,7 +35,7 @@ const Sidebar = ({ isOpen, onClose, role }) => {
       <div className={`sidebar${isOpen ? ' sidebar--open' : ''}`}>
 
         <div className="sidebar-top">
-          <img src="/consominas.jpg" alt="Logo" className="logo" />
+          <img src="/consominas-logo.png" alt="Grupo Consominas" className="logo" />
           <button className="sidebar-close-btn" onClick={onClose} aria-label="Fechar menu">
             <X size={22} />
           </button>

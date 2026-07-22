@@ -242,11 +242,11 @@
 }
 
 .ta-btn-download {
-  background: #dbeafe;
-  color: #1d4ed8;
+  background: #e6f5f2;
+  color: #0d977d;
 }
 
-.ta-btn-download:hover { background: #bfdbfe; }
+.ta-btn-download:hover { background: #cdebe4; }
 
 .ta-btn-delete {
   background: #fee2e2;
