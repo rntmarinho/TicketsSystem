@@ -105,6 +105,10 @@
   border-left-color: #e83338;
 }
 
+.nb-item--info {
+  border-left-color: #3b82f6;
+}
+
 .nb-item-subject {
   font-size: 0.85rem;
   font-weight: 600;

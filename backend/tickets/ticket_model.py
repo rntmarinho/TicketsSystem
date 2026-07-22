@@ -171,7 +171,9 @@ class TicketModel:
                 pr.name,
                 t.type,
                 t.start_date,
-                t.close_time
+                t.close_time,
+                lm.last_message_at,
+                lm.last_message_is_client
             FROM tbl_tickets t
             LEFT JOIN tbl_categories c
                 ON c.id = t.category_id
@@ -183,6 +185,16 @@ class TicketModel:
                 ON a.id = t.assigned_to
             LEFT JOIN tbl_projects pr
                 ON pr.id = t.project_id
+            LEFT JOIN LATERAL (
+                SELECT
+                    m.creation AS last_message_at,
+                    (mu.access_type = 'client') AS last_message_is_client
+                FROM tbl_messages m
+                LEFT JOIN tbl_users mu ON mu.id = m.sender
+                WHERE m.ticket_id = t.id AND m.private = FALSE
+                ORDER BY m.creation DESC
+                LIMIT 1
+            ) lm ON TRUE
         """
 
         conditions = []

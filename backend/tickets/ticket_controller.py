@@ -58,7 +58,9 @@ class TicketController:
                 "project": ticket[12],
                 "type": ticket[13],
                 "start_date": ticket[14],
-                "close_time": ticket[15]
+                "close_time": ticket[15],
+                "last_message_at": ticket[16],
+                "last_message_is_client": ticket[17]
             })
 
         return result

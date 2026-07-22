@@ -108,7 +108,7 @@ function App() {
                   </button>
 
                   <div className="top-bar-actions">
-                    {(role === 'admin' || role === 'technician') && <NotificationBell />}
+                    {(role === 'admin' || role === 'technician' || role === 'client') && <NotificationBell />}
                     <button className="logout-btn-top" onClick={handleLogout}>
                       <LogOut size={18} /> Sair
                     </button>
