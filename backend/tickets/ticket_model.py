@@ -281,6 +281,33 @@ class TicketModel:
         conn.close()
 
     @staticmethod
+    def update_general_fields(ticket_id, data):
+        """Atualiza os campos gerais do chamado (assunto, categoria,
+        prioridade, solicitante, projeto) editáveis pela tela de detalhe —
+        só altera os campos de fato presentes no payload recebido."""
+        colunas = ("subject", "category_id", "priority_id", "user_id", "project_id")
+        presentes = [c for c in colunas if c in data]
+
+        if not presentes:
+            return
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        set_clause = ", ".join(f"{c} = %s" for c in presentes)
+        valores = [data[c] for c in presentes]
+        valores.append(ticket_id)
+
+        cursor.execute(
+            f"UPDATE tbl_tickets SET {set_clause} WHERE id = %s",
+            tuple(valores)
+        )
+
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+    @staticmethod
     def get_by_email_message_id(message_id):
         """Localiza o chamado cujo Message-ID âncora bate com o informado
         (usado pra casar In-Reply-To/References de um e-mail de resposta)."""

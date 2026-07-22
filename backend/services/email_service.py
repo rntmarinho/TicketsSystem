@@ -323,6 +323,34 @@ def _default_client_id():
     return row[0] if row else None
 
 
+def _default_project_id():
+    """Garante a existência do projeto 'Chamados Suporte' — todo chamado
+    aberto automaticamente por e-mail entra nele, pra não ficar solto sem
+    projeto (diferente de chamado aberto pela tela, que fica sem projeto
+    por padrão, a menos que o usuário escolha um)."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT id FROM tbl_projects WHERE name = %s", ("Chamados Suporte",))
+    row = cursor.fetchone()
+
+    if row:
+        project_id = row[0]
+    else:
+        cursor.execute("""
+            INSERT INTO tbl_projects (name, description)
+            VALUES (%s, %s)
+            RETURNING id
+        """, ("Chamados Suporte", "Chamados abertos automaticamente por e-mail."))
+        project_id = cursor.fetchone()[0]
+        conn.commit()
+
+    cursor.close()
+    conn.close()
+
+    return project_id
+
+
 def get_or_create_user_by_email(email_addr, display_name=None):
     """
     Busca o usuário pelo e-mail do remetente; se não existir (remetente
@@ -494,7 +522,8 @@ def process_new_ticket_email(msg, user_id):
         "category_id": 1,
         "user_id":     user_id,
         "priority_id": 1,
-        "description": msg.text or msg.html or ""
+        "description": msg.text or msg.html or "",
+        "project_id":  _default_project_id()
     }
 
     ticket_id = TicketModel.create(ticket_data)

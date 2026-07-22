@@ -40,6 +40,7 @@ const emptyFormData = {
   sla: '',
   start_date: '',
   project: '',
+  project_id: '',
   type: 'chamado'
 };
 
@@ -92,6 +93,7 @@ const TicketDetails = () => {
   const [users, setUsers] = useState([]);
   const [categories, setCategories] = useState([]);
   const [priorities, setPriorities] = useState([]);
+  const [projects, setProjects] = useState([]);
   const [messages, setMessages] = useState([]);
 
   const [newMessage, setNewMessage] = useState('');
@@ -175,6 +177,7 @@ const TicketDetails = () => {
         userData,
         categoryData,
         priorityData,
+        projectData,
         messageData
       ] = await Promise.all([
         requestJson(`/tickets/${id}`),
@@ -184,6 +187,7 @@ const TicketDetails = () => {
         requestJson('/users/').catch(() => []),
         requestJson('/categories/'),
         requestJson('/priorities/'),
+        requestJson('/projects/').catch(() => []),
         requestJson(`/tickets/${id}/messages`)
       ]);
 
@@ -199,6 +203,10 @@ const TicketDetails = () => {
         ? priorityData
         : priorityData?.data || [];
 
+      const projectsData = Array.isArray(projectData)
+        ? projectData
+        : projectData?.data || [];
+
       const messagesData = Array.isArray(messageData)
         ? messageData
         : messageData?.data || [];
@@ -206,6 +214,7 @@ const TicketDetails = () => {
       setUsers(usersData);
       setCategories(categoriesData);
       setPriorities(prioritiesData);
+      setProjects(projectsData);
       setMessages(messagesData);
 
       const matchedCategory = categoriesData.find(
@@ -245,6 +254,7 @@ const TicketDetails = () => {
         sla: ticketData.sla || '',
         start_date: ticketData.start_date || '',
         project: ticketData.project || '',
+        project_id: ticketData.project_id || '',
         type: ticketData.type || 'chamado'
       });
     } catch (err) {
@@ -311,6 +321,10 @@ const TicketDetails = () => {
       formData.assigned_to === ''
         ? null
         : Number(formData.assigned_to),
+    project_id:
+      formData.project_id === ''
+        ? null
+        : Number(formData.project_id),
     creation: formData.creation || null,
     sla: formData.sla || null,
     start_date: formData.start_date || null
@@ -1076,6 +1090,39 @@ const TicketDetails = () => {
                   value={category.id}
                 >
                   {category.name}
+                </option>
+              ))}
+            </select>
+
+          </div>
+
+          <div className="info-group">
+
+            <label>
+              <Briefcase size={16} />
+              Projeto
+            </label>
+
+            <select
+              value={formData.project_id}
+              disabled={isReadOnly}
+              onChange={e =>
+                handleFieldChange(
+                  'project_id',
+                  normalizeId(e.target.value)
+                )
+              }
+            >
+              <option value="">
+                Nenhum
+              </option>
+
+              {projects.map(project => (
+                <option
+                  key={project.id}
+                  value={project.id}
+                >
+                  {project.name}
                 </option>
               ))}
             </select>

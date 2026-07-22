@@ -202,8 +202,7 @@ class TicketController:
                 sla=data.get("sla")
             )
 
-        # Caso seu TicketModel possua uma query de atualização geral para os outros campos:
-        # TicketModel.update_general_fields(ticket_id, data)
+        TicketModel.update_general_fields(ticket_id, data)
 
         return {
             "success": True,
