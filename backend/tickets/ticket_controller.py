@@ -51,7 +51,9 @@ class TicketController:
                 "category": ticket[5],
                 "priority": ticket[6],
                 "user": ticket[7],
-                "user_id": ticket[8]
+                "user_id": ticket[8],
+                "assigned_to": ticket[9],
+                "assignee": ticket[10]
             })
 
         return result
@@ -75,7 +77,9 @@ class TicketController:
             "category": ticket[5],
             "priority": ticket[6],
             "user": ticket[7],
-            "user_id": ticket[8]
+            "user_id": ticket[8],
+            "assigned_to": ticket[9],
+            "assignee": ticket[10]
         }, 200
 
     @staticmethod
@@ -174,7 +178,10 @@ class TicketController:
         # de forma dinâmica. Abaixo atualizamos o status e delegamos os demais dados.
         if "status" in data:
             TicketModel.update_status(ticket_id, data["status"])
-            
+
+        if "assigned_to" in data:
+            TicketModel.update_assignee(ticket_id, data["assigned_to"])
+
         # Caso seu TicketModel possua uma query de atualização geral para os outros campos:
         # TicketModel.update_general_fields(ticket_id, data)
 

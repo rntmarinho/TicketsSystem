@@ -102,7 +102,9 @@ class TicketModel:
                 c.name,
                 p.name,
                 u.name,
-                t.user_id
+                t.user_id,
+                t.assigned_to,
+                a.name
             FROM tbl_tickets t
             LEFT JOIN tbl_categories c
                 ON c.id = t.category_id
@@ -110,6 +112,8 @@ class TicketModel:
                 ON p.id = t.priority_id
             LEFT JOIN tbl_users u
                 ON u.id = t.user_id
+            LEFT JOIN tbl_users a
+                ON a.id = t.assigned_to
             WHERE t.id = %s
         """, (ticket_id,))
         #Atribuição direta do resultado da consulta, garantindo a integridade dos dados retornados e a clareza na manipulação do objeto ticket.
@@ -140,7 +144,9 @@ class TicketModel:
                 c.name,
                 p.name,
                 u.name,
-                t.user_id
+                t.user_id,
+                t.assigned_to,
+                a.name
             FROM tbl_tickets t
             LEFT JOIN tbl_categories c
                 ON c.id = t.category_id
@@ -148,6 +154,8 @@ class TicketModel:
                 ON p.id = t.priority_id
             LEFT JOIN tbl_users u
                 ON u.id = t.user_id
+            LEFT JOIN tbl_users a
+                ON a.id = t.assigned_to
         """
 
         if owner_id is not None:
@@ -167,13 +175,32 @@ class TicketModel:
     def update_status(ticket_id, status):
         conn = get_db_connection()
         cursor = conn.cursor()
-        data_atualizacao = datetime.now()
+
+        # close_time só é preenchido quando o status vira 'closed'; mover o
+        # card pra qualquer outra coluna (ex: reabrir) limpa a data de fechamento.
+        close_time = datetime.now() if status == "closed" else None
 
         cursor.execute("""
             UPDATE tbl_tickets
             SET status = %s, close_time = %s
             WHERE id = %s
-        """, (status, data_atualizacao, ticket_id))
+        """, (status, close_time, ticket_id))
+
+        conn.commit()
+
+        cursor.close()
+        conn.close()
+
+    @staticmethod
+    def update_assignee(ticket_id, assigned_to):
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            UPDATE tbl_tickets
+            SET assigned_to = %s
+            WHERE id = %s
+        """, (assigned_to, ticket_id))
 
         conn.commit()
 

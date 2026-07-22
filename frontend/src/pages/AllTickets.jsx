@@ -7,22 +7,10 @@ import {
   Layers, ArrowUpDown
 } from 'lucide-react';
 import { apiFetch } from '../services/api';
+import { STATUS_OPTIONS, getStatusMeta, normalizeStatus } from '../constants/ticketStatus';
 import './styles/AllTickets.css';
 
 /* ─── Definições Auxiliares ────────────────────────────────────────────── */
-
-// Função aprimorada para lidar com divergências de status provenientes do backend
-const getStatusMeta = (status) => {
-  if (!status) return { label: 'Desconhecido', bg: '#f3f4f6', color: '#374151' };
-  const s = status.toLowerCase();
-  
-  if (s === 'open' || s === 'aberto') return { label: 'Aberto', bg: '#dbeafe', color: '#1d4ed8' };
-  if (s === 'in_progress' || s === 'andamento' || s === 'em atendimento') return { label: 'Em Atendimento', bg: '#fef3c7', color: '#b45309' };
-  if (s === 'pending' || s === 'pendente') return { label: 'Pendente', bg: '#eaf2f8', color: '#2980b9' };
-  if (s === 'closed' || s === 'fechado') return { label: 'Fechado', bg: '#dcfce7', color: '#15803d' };
-  
-  return { label: status, bg: '#f3f4f6', color: '#374151' };
-};
 
 // Formatação cronológica com correção de fuso horário (remoção da assinatura GMT)
 const fmtDate = (val) => {
@@ -96,10 +84,7 @@ const AllTickets = () => {
     }
     
     if (fStatus) {
-      list = list.filter(t => {
-        const s = t.status ? t.status.toLowerCase() : '';
-        return s === fStatus || (fStatus === 'in_progress' && s === 'em atendimento');
-      });
+      list = list.filter(t => normalizeStatus(t.status) === fStatus);
     }
     if (fCategory) list = list.filter(t => t.category === fCategory);
     if (fPriority) list = list.filter(t => t.priority === fPriority);
@@ -242,9 +227,9 @@ const AllTickets = () => {
               <label>Status</label>
               <select value={fStatus} onChange={e => setFStatus(e.target.value)}>
                 <option value="">Global</option>
-                <option value="open">Aberto</option>
-                <option value="in_progress">Em Atendimento</option>
-                <option value="closed">Fechado</option>
+                {STATUS_OPTIONS.map(o => (
+                  <option key={o.value} value={o.value}>{o.label}</option>
+                ))}
               </select>
             </div>
             <div className="at-filter-group">

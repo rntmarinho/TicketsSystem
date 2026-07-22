@@ -20,14 +20,8 @@ import {
 
 import TicketAnexos from './TicketAnexos';
 import { apiFetch } from '../services/api';
+import { STATUS_OPTIONS, normalizeStatus } from '../constants/ticketStatus';
 import './styles/TicketDetails.css';
-
-const STATUS_OPTIONS = [
-  { value: 'open', label: 'Aberto' },
-  { value: 'in_progress', label: 'Em atendimento' },
-  { value: 'pending', label: 'Pendente' },
-  { value: 'closed', label: 'Fechado' }
-];
 
 const emptyFormData = {
   subject: '',
@@ -36,6 +30,7 @@ const emptyFormData = {
   category_id: '',
   priority_id: '',
   user_id: '',
+  assigned_to: '',
   creation: '',
   sla: ''
 };
@@ -206,24 +201,7 @@ const TicketDetails = () => {
         u => u.name === ticketData.user
       );
 
-      let backendStatus = (
-        ticketData.status || 'open'
-      ).toLowerCase();
-
-      if (backendStatus === 'aberto') {
-        backendStatus = 'open';
-      }
-
-      if (backendStatus === 'fechado') {
-        backendStatus = 'closed';
-      }
-
-      if (
-        backendStatus === 'em atendimento' ||
-        backendStatus === 'andamento'
-      ) {
-        backendStatus = 'in_progress';
-      }
+      const backendStatus = normalizeStatus(ticketData.status);
 
       setFormData({
         subject: ticketData.subject || '',
@@ -241,6 +219,7 @@ const TicketDetails = () => {
           ticketData.user_id ||
           matchedUser?.id ||
           '',
+        assigned_to: ticketData.assigned_to || '',
         creation: ticketData.creation || '',
         sla: ticketData.sla || ''
       });
@@ -304,6 +283,10 @@ const TicketDetails = () => {
       formData.user_id === ''
         ? null
         : Number(formData.user_id),
+    assigned_to:
+      formData.assigned_to === ''
+        ? null
+        : Number(formData.assigned_to),
     creation: formData.creation || null,
     sla: formData.sla || null
   });
@@ -912,6 +895,40 @@ const TicketDetails = () => {
                   {user.name}
                 </option>
               ))}
+            </select>
+
+          </div>
+
+          <div className="info-group">
+
+            <label>
+              <User size={16} />
+              Responsável
+            </label>
+
+            <select
+              value={formData.assigned_to}
+              onChange={e =>
+                handleFieldChange(
+                  'assigned_to',
+                  normalizeId(e.target.value)
+                )
+              }
+            >
+              <option value="">
+                Sem responsável
+              </option>
+
+              {users
+                .filter(user => user.access_type === 'admin' || user.access_type === 'technician')
+                .map(user => (
+                  <option
+                    key={user.id}
+                    value={user.id}
+                  >
+                    {user.name}
+                  </option>
+                ))}
             </select>
 
           </div>

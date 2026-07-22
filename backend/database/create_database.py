@@ -198,6 +198,9 @@ def create_tables():
         -- Garante a coluna close_time em bancos já existentes (criados antes desta versão)
         ALTER TABLE tbl_tickets ADD COLUMN IF NOT EXISTS close_time TIMESTAMP;
 
+        -- Responsável (técnico/admin atribuído ao chamado) — usado pelo Kanban
+        ALTER TABLE tbl_tickets ADD COLUMN IF NOT EXISTS assigned_to INTEGER REFERENCES tbl_users(id);
+
         -- Migração RBAC: bancos criados antes desta versão têm o CHECK antigo
         -- (só 'client'/'technician'). Recria o constraint para aceitar 'admin'.
         ALTER TABLE tbl_users DROP CONSTRAINT IF EXISTS tbl_users_access_type_check;

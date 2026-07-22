@@ -11,6 +11,7 @@ import Login from './pages/Login';
 import CreateUser from './pages/CreateUser';
 import Users from './pages/Users';
 import AllTickets from './pages/AllTickets';
+import Kanban from './pages/Kanban';
 import TicketDetails from './pages/TicketDetails';
 import Reports from './pages/Reports';
 import ManageCategories from './pages/ManageCategories';
@@ -126,6 +127,14 @@ function App() {
                     }
                   />
                   <Route path="/tickets" element={<AllTickets />} />
+                  <Route
+                    path="/kanban"
+                    element={
+                      <RoleProtectedRoute role={role} allowed={['admin', 'technician']}>
+                        <Kanban />
+                      </RoleProtectedRoute>
+                    }
+                  />
                   <Route path="/tickets/:id" element={<TicketDetails />} />
                   <Route
                     path="/relatorios"

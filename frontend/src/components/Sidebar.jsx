@@ -8,6 +8,7 @@ import { LayoutDashboard,
   Settings,
   Tag,
   CircleAlert,
+  LayoutGrid,
   X } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import './Sidebar.css';
@@ -51,6 +52,12 @@ const Sidebar = ({ isOpen, onClose, role }) => {
           <Link to="/tickets" className={isActive("/tickets")} onClick={handleNavClick}>
             <Ticket size={20} /> Todos os Chamados
           </Link>
+
+          {isAdminOrTechnician && (
+            <Link to="/kanban" className={isActive("/kanban")} onClick={handleNavClick}>
+              <LayoutGrid size={20} /> Kanban
+            </Link>
+          )}
 
           {isAdminOrTechnician && (
             <Link to="/users" className={isActive("/users")} onClick={handleNavClick}>

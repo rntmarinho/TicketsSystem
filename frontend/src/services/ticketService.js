@@ -42,6 +42,14 @@ export async function updateStatus(id, status) {
   return await response.json();
 }
 
+export async function updateAssignee(id, assignedTo) {
+  const response = await apiFetch(`/tickets/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify({ assigned_to: assignedTo === '' ? null : Number(assignedTo) })
+  });
+  return await response.json();
+}
+
 export async function getMessages(ticketId) {
   const response = await apiFetch(`/tickets/${ticketId}/messages`);
   return await response.json();
