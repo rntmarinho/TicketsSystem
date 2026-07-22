@@ -104,7 +104,8 @@ class TicketModel:
                 u.name,
                 t.user_id,
                 t.assigned_to,
-                a.name
+                a.name,
+                t.email_message_id
             FROM tbl_tickets t
             LEFT JOIN tbl_categories c
                 ON c.id = t.category_id
@@ -204,6 +205,46 @@ class TicketModel:
 
         conn.commit()
 
+        cursor.close()
+        conn.close()
+
+    @staticmethod
+    def get_by_email_message_id(message_id):
+        """Localiza o chamado cujo Message-ID âncora bate com o informado
+        (usado pra casar In-Reply-To/References de um e-mail de resposta)."""
+        if not message_id:
+            return None
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            SELECT id FROM tbl_tickets WHERE email_message_id = %s
+        """, (message_id,))
+
+        row = cursor.fetchone()
+        cursor.close()
+        conn.close()
+
+        return row[0] if row else None
+
+    @staticmethod
+    def set_email_message_id(ticket_id, message_id):
+        """Grava o Message-ID âncora só se o chamado ainda não tiver um —
+        garante que sempre aponte pro primeiro e-mail da thread."""
+        if not message_id:
+            return
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            UPDATE tbl_tickets
+            SET email_message_id = %s
+            WHERE id = %s AND email_message_id IS NULL
+        """, (message_id, ticket_id))
+
+        conn.commit()
         cursor.close()
         conn.close()
 

@@ -18,6 +18,16 @@ def _extensao_valida(filename):
     )
 
 
+def anexos_dir():
+    """
+    Caminho absoluto de backend/public/anexos/ — reaproveitado pela rota de
+    upload (anexo_routes.py) e pelo processamento de anexos recebidos por
+    e-mail (email_service.py), garantindo que ambos gravem na mesma pasta.
+    """
+    base = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    return os.path.join(base, "public", "anexos")
+
+
 class AnexoController:
 
     @staticmethod

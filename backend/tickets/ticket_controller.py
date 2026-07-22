@@ -79,7 +79,8 @@ class TicketController:
             "user": ticket[7],
             "user_id": ticket[8],
             "assigned_to": ticket[9],
-            "assignee": ticket[10]
+            "assignee": ticket[10],
+            "email_message_id": ticket[11]
         }, 200
 
     @staticmethod

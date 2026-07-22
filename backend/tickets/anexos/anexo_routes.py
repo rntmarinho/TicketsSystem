@@ -1,7 +1,7 @@
 import os
 from flask import Blueprint, request, jsonify, send_from_directory
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from tickets.anexos.anexo_controller import AnexoController
+from tickets.anexos.anexo_controller import AnexoController, anexos_dir
 from tickets.ticket_controller import TicketController
 from services.auth_decorators import require_role, get_current_role
 
@@ -9,12 +9,7 @@ anexo_bp = Blueprint("anexo_bp", __name__, url_prefix="/tickets")
 
 
 def _pasta_anexos():
-    """
-    Resolve o caminho absoluto de backend/public/anexos/.
-    A pasta public fica na raiz do backend (mesmo nível de main.py).
-    """
-    base = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    return os.path.join(base, "public", "anexos")
+    return anexos_dir()
 
 
 def _client_bloqueado(ticket_id):

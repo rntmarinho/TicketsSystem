@@ -201,6 +201,11 @@ def create_tables():
         -- Responsável (técnico/admin atribuído ao chamado) — usado pelo Kanban
         ALTER TABLE tbl_tickets ADD COLUMN IF NOT EXISTS assigned_to INTEGER REFERENCES tbl_users(id);
 
+        -- Message-ID âncora da thread de e-mail (primeiro e-mail associado ao
+        -- chamado, seja o e-mail que criou o chamado, seja a primeira notificação
+        -- enviada) — usado pra casar respostas via In-Reply-To/References.
+        ALTER TABLE tbl_tickets ADD COLUMN IF NOT EXISTS email_message_id VARCHAR(255);
+
         -- Migração RBAC: bancos criados antes desta versão têm o CHECK antigo
         -- (só 'client'/'technician'). Recria o constraint para aceitar 'admin'.
         ALTER TABLE tbl_users DROP CONSTRAINT IF EXISTS tbl_users_access_type_check;
