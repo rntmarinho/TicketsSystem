@@ -1,6 +1,7 @@
 import bcrypt
 import secrets
 import string
+from datetime import datetime
 from flask_jwt_extended import create_access_token
 from users.user_model import UserModel
 
@@ -179,6 +180,21 @@ class UserController:
         except Exception as e:
             return {"success": False, "message": f"Erro: {str(e)}"}, 500
         
+
+    @staticmethod
+    def get_me(user_id):
+        user = UserModel.get_by_id(user_id)
+        if not user:
+            return {"success": False, "message": "Usuário não encontrado."}, 404
+
+        return {
+            "id": user[0],
+            "name": user[1],
+            "email": user[2],
+            "client_id": user[3],
+            "access_type": user[4],
+            "situation": user[5]
+        }, 200
 
     @staticmethod
     def reset_password(email):

@@ -147,7 +147,7 @@ def create_tables():
 
             access_type VARCHAR(20)
             NOT NULL
-            CHECK (access_type IN ('client', 'technician')),
+            CHECK (access_type IN ('admin', 'technician', 'client')),
 
             situation VARCHAR(1)
             NOT NULL DEFAULT 'A'
@@ -197,6 +197,17 @@ def create_tables():
 
         -- Garante a coluna close_time em bancos já existentes (criados antes desta versão)
         ALTER TABLE tbl_tickets ADD COLUMN IF NOT EXISTS close_time TIMESTAMP;
+
+        -- Migração RBAC: bancos criados antes desta versão têm o CHECK antigo
+        -- (só 'client'/'technician'). Recria o constraint para aceitar 'admin'.
+        ALTER TABLE tbl_users DROP CONSTRAINT IF EXISTS tbl_users_access_type_check;
+        ALTER TABLE tbl_users ADD CONSTRAINT tbl_users_access_type_check
+            CHECK (access_type IN ('admin', 'technician', 'client'));
+
+        -- Promove o usuário administrador padrão para o papel 'admin' de verdade
+        -- (bancos antigos o criaram como 'technician', sem distinção de papel).
+        UPDATE tbl_users SET access_type = 'admin'
+        WHERE email = 'admin@sistema.local' AND access_type != 'admin';
 
 
 

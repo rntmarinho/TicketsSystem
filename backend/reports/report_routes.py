@@ -1,12 +1,12 @@
 from flask import Blueprint, request, jsonify
-from flask_jwt_extended import jwt_required
+from services.auth_decorators import require_role
 from reports.report_controller import ReportController
 
 reports_bp = Blueprint("reports_bp", __name__, url_prefix="/reports")
 
 
 @reports_bp.route("/summary", methods=["GET"])
-@jwt_required()
+@require_role("admin", "technician")
 def get_summary():
     """
     GET /reports/summary?periodo=todos|7d|30d|90d

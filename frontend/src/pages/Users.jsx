@@ -182,10 +182,10 @@ const Users = () => {
                       ) : '-'}
                     </td>
                     <td>
-                      {/* Badge alinhada aos valores reais do banco: 'client' | 'technician' */}
-                      <span className={`badge ${user.access_type === 'client' ? 'client' : 'technician'}`}>
+                      {/* Badge alinhada aos valores reais do banco: 'client' | 'technician' | 'admin' */}
+                      <span className={`badge ${user.access_type}`}>
                         <Shield size={14} />
-                        {user.access_type === 'client' ? 'client' : 'technician'}
+                        {user.access_type}
                       </span>
                     </td>
                     <td>
@@ -248,6 +248,7 @@ const Users = () => {
                 <select name="access_type" value={formData.access_type} onChange={handleChange}>
                   <option value="client">Comum (Solicitante)</option>
                   <option value="technician">Técnico (Suporte)</option>
+                  <option value="admin">Administrador</option>
                 </select>
               </div>
 

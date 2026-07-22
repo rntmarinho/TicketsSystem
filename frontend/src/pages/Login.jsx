@@ -3,10 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { LogIn } from 'lucide-react';
 
 import { login } from '../services/authService';
+import { useAuth } from '../context/AuthContext';
 
 import './styles/Login.css';
 
-const Login = ({ setAuth }) => {
+const Login = () => {
+  const { login: setSession } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [erro, setErro] = useState('');
@@ -25,17 +27,7 @@ const Login = ({ setAuth }) => {
 
       // Validação defensiva assegurando a integridade do objeto 'data'
       if (data && data.success) {
-        localStorage.setItem(
-          'token',
-          data.token
-        );
-
-        localStorage.setItem(
-          'user',
-          JSON.stringify(data.user)
-        );
-
-        setAuth(true);
+        setSession(data.token, data.user);
 
         navigate('/');
       } else {

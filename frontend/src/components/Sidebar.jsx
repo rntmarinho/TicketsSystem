@@ -12,10 +12,12 @@ import { LayoutDashboard,
 import { Link, useLocation } from 'react-router-dom';
 import './Sidebar.css';
 
-const Sidebar = ({ isOpen, onClose }) => {
+const Sidebar = ({ isOpen, onClose, role }) => {
   const location = useLocation();
 
   const isActive = (path) => location.pathname === path ? "nav-item active" : "nav-item";
+  const isAdmin = role === 'admin';
+  const isAdminOrTechnician = role === 'admin' || role === 'technician';
 
   const handleNavClick = () => {
     if (onClose) onClose();
@@ -50,29 +52,41 @@ const Sidebar = ({ isOpen, onClose }) => {
             <Ticket size={20} /> Todos os Chamados
           </Link>
 
-          <Link to="/users" className={isActive("/users")} onClick={handleNavClick}>
-            <Users size={20} /> Usuários
-          </Link>
+          {isAdminOrTechnician && (
+            <Link to="/users" className={isActive("/users")} onClick={handleNavClick}>
+              <Users size={20} /> Usuários
+            </Link>
+          )}
 
-          <Link to="/clientes" className={isActive("/clientes")} onClick={handleNavClick}>
-            <Building2 size={20} /> Clientes
-          </Link>
+          {isAdmin && (
+            <Link to="/clientes" className={isActive("/clientes")} onClick={handleNavClick}>
+              <Building2 size={20} /> Clientes
+            </Link>
+          )}
 
-          <Link to="/categorias" className={isActive("/categorias")} onClick={handleNavClick}>
-            <Tag size={20} /> Categorias
-          </Link>
+          {isAdmin && (
+            <Link to="/categorias" className={isActive("/categorias")} onClick={handleNavClick}>
+              <Tag size={20} /> Categorias
+            </Link>
+          )}
 
-          <Link to="/prioridades" className={isActive("/prioridades")} onClick={handleNavClick}>
-            <CircleAlert size={20} /> Prioridade
-          </Link>
+          {isAdmin && (
+            <Link to="/prioridades" className={isActive("/prioridades")} onClick={handleNavClick}>
+              <CircleAlert size={20} /> Prioridade
+            </Link>
+          )}
 
-          <Link to="/relatorios" className={isActive("/relatorios")} onClick={handleNavClick}>
-            <BarChart size={20} /> Relatórios
-          </Link>
+          {isAdminOrTechnician && (
+            <Link to="/relatorios" className={isActive("/relatorios")} onClick={handleNavClick}>
+              <BarChart size={20} /> Relatórios
+            </Link>
+          )}
 
-          <Link to="/configuracoes" className={isActive("/configuracoes")} onClick={handleNavClick}>
-            <Settings size={20} /> Configurações
-          </Link>
+          {isAdmin && (
+            <Link to="/configuracoes" className={isActive("/configuracoes")} onClick={handleNavClick}>
+              <Settings size={20} /> Configurações
+            </Link>
+          )}
 
           <Link to="/LGPD" className={isActive("/LGPD")} onClick={handleNavClick}>
             <Scale size={20} /> LGPD

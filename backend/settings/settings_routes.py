@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from flask_jwt_extended import jwt_required
+from services.auth_decorators import require_role
 from settings.settings_controller import SettingsController
 
 # Instanciação do blueprint com mapeamento do prefixo /settings
@@ -10,7 +10,7 @@ settings_bp = Blueprint(
 )
 
 @settings_bp.route("/email", methods=["GET"])
-@jwt_required()
+@require_role("admin")
 def get_email_settings():
     """
     Endpoint destinado à aquisição das credenciais e metadados de rede de correio.
@@ -19,7 +19,7 @@ def get_email_settings():
     return jsonify(response), status
 
 @settings_bp.route("/email", methods=["PUT"])
-@jwt_required()
+@require_role("admin")
 def update_email_settings():
     """
     Endpoint estruturado para a modificação integral dos parâmetros de rede de e-mail.

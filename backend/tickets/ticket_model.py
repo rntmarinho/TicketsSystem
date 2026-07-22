@@ -101,7 +101,8 @@ class TicketModel:
                 t.sla,
                 c.name,
                 p.name,
-                u.name
+                u.name,
+                t.user_id
             FROM tbl_tickets t
             LEFT JOIN tbl_categories c
                 ON c.id = t.category_id
@@ -121,11 +122,15 @@ class TicketModel:
 
     #Método de consulta que recupera a lista completa de chamados, ordenada por data de criação, e enriquecida com as informações correlatas de categoria, prioridade e usuário, proporcionando uma visão abrangente e contextualizada dos registros.
     @staticmethod
-    def get_all():
+    def get_all(owner_id=None):
+        """
+        owner_id: quando informado, restringe o resultado aos chamados abertos
+        por esse usuário (usado para isolar o papel 'client' aos próprios chamados).
+        """
         conn = get_db_connection()
         cursor = conn.cursor()
 
-        cursor.execute("""
+        base_query = """
             SELECT
                 t.id,
                 t.subject,
@@ -134,7 +139,8 @@ class TicketModel:
                 t.sla,
                 c.name,
                 p.name,
-                u.name
+                u.name,
+                t.user_id
             FROM tbl_tickets t
             LEFT JOIN tbl_categories c
                 ON c.id = t.category_id
@@ -142,8 +148,12 @@ class TicketModel:
                 ON p.id = t.priority_id
             LEFT JOIN tbl_users u
                 ON u.id = t.user_id
-            ORDER BY t.creation DESC
-        """)
+        """
+
+        if owner_id is not None:
+            cursor.execute(base_query + " WHERE t.user_id = %s ORDER BY t.creation DESC", (owner_id,))
+        else:
+            cursor.execute(base_query + " ORDER BY t.creation DESC")
 
         tickets = cursor.fetchall()
 

@@ -1,6 +1,7 @@
-import { useState } from 'react';
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { LogOut, Menu } from 'lucide-react';
+import { useState } from 'react';
+import { useAuth } from './context/AuthContext';
 
 // Componentes e Páginas
 import Sidebar from './components/Sidebar';
@@ -38,16 +39,29 @@ const PublicRoute = ({ isAuthenticated, children }) => {
   return children;
 };
 
+// Guarda por papel: bloqueia telas administrativas para quem não tem o
+// access_type necessário (ex.: 'client' não deve alcançar /users, /clientes etc,
+// mesmo digitando a URL direto).
+const RoleProtectedRoute = ({ role, allowed, children }) => {
+  if (!allowed.includes(role)) {
+    return <Navigate to="/" replace />;
+  }
+  return children;
+};
+
 function App() {
   const navigate = useNavigate();
-  const [isAuthenticated, setIsAuthenticated] = useState(!!localStorage.getItem('user'));
+  const { isAuthenticated, role, loading, logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const handleLogout = () => {
-    localStorage.removeItem('user');
-    setIsAuthenticated(false);
+    logout();
     navigate('/login');
   };
+
+  if (loading) {
+    return null;
+  }
 
   return (
     <Routes>
@@ -56,7 +70,7 @@ function App() {
         path="/login"
         element={
           <PublicRoute isAuthenticated={isAuthenticated}>
-            <Login setAuth={setIsAuthenticated} />
+            <Login />
           </PublicRoute>
         }
       />
@@ -76,7 +90,7 @@ function App() {
         element={
           <ProtectedRoute isAuthenticated={isAuthenticated}>
             <div className="app-layout">
-              <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+              <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} role={role} />
               <main className="content">
 
                 <div className="top-bar">
@@ -95,17 +109,66 @@ function App() {
                 <Routes>
                   <Route path="/" element={<Dashboard />} />
                   <Route path="/novo-chamado" element={<NewTicket />} />
-                  <Route path="/users" element={<Users />} />
-                  <Route path="/users/novo" element={<CreateUser />} />
+                  <Route
+                    path="/users"
+                    element={
+                      <RoleProtectedRoute role={role} allowed={['admin', 'technician']}>
+                        <Users />
+                      </RoleProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/users/novo"
+                    element={
+                      <RoleProtectedRoute role={role} allowed={['admin']}>
+                        <CreateUser />
+                      </RoleProtectedRoute>
+                    }
+                  />
                   <Route path="/tickets" element={<AllTickets />} />
                   <Route path="/tickets/:id" element={<TicketDetails />} />
-                  <Route path="/relatorios" element={<Reports />} />
-                  <Route path="/categorias" element={<ManageCategories />} />
-                  <Route path="/prioridades" element={<Priorities />} />
+                  <Route
+                    path="/relatorios"
+                    element={
+                      <RoleProtectedRoute role={role} allowed={['admin', 'technician']}>
+                        <Reports />
+                      </RoleProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/categorias"
+                    element={
+                      <RoleProtectedRoute role={role} allowed={['admin']}>
+                        <ManageCategories />
+                      </RoleProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/prioridades"
+                    element={
+                      <RoleProtectedRoute role={role} allowed={['admin']}>
+                        <Priorities />
+                      </RoleProtectedRoute>
+                    }
+                  />
                   <Route path="/perfil" element={<Profile />} />
-                  <Route path="/clientes" element={<Clients />} />
+                  <Route
+                    path="/clientes"
+                    element={
+                      <RoleProtectedRoute role={role} allowed={['admin']}>
+                        <Clients />
+                      </RoleProtectedRoute>
+                    }
+                  />
                   <Route path="/LGPD" element={<LGPD />} />
-                  <Route path="/configuracoes" element={<Settings />} />
+                  <Route
+                    path="/configuracoes"
+                    element={
+                      <RoleProtectedRoute role={role} allowed={['admin']}>
+                        <Settings />
+                      </RoleProtectedRoute>
+                    }
+                  />
                   <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
               </main>

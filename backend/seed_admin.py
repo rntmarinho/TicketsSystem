@@ -94,7 +94,7 @@ def create_admin_user(client_id):
             "admin@sistema.local",
             client_id,
             password_hash,
-            "technician"
+            "admin"
         ))
 
         conn.commit()
