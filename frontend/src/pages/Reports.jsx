@@ -3,7 +3,7 @@ import {
   BarChart3, Users, Tag, AlertCircle, CheckCircle2,
   Clock, TrendingUp, Activity, Award, Zap, Filter,
   ChevronDown, Download, RefreshCw, ArrowUp, ArrowDown,
-  FileText, FileSpreadsheet, X, Check, Circle, Building2
+  FileText, FileSpreadsheet, X, Check, Circle, Building2, Timer
 } from 'lucide-react';
 import { apiFetch } from '../services/api';
 import './styles/Reports.css';
@@ -365,6 +365,18 @@ const METRICAS_VAZIAS = {
   taxa_resolucao: '0.0', pendentes: 0,
   prioridades: [], clientes: [],
   categorias: [], usuarios: [], por_dia: [], tickets: [],
+  tempo_medio_geral_horas: null,
+  tempo_medio_categoria: [], tempo_medio_prioridade: [], tempo_medio_projeto: [],
+};
+
+/* Formata horas decimais em "X dias Y horas" (ou só horas se < 24h) */
+const fmtDuracao = (horas) => {
+  if (horas === null || horas === undefined) return '—';
+  const totalHoras = Math.round(horas);
+  const dias = Math.floor(totalHoras / 24);
+  const resto = totalHoras % 24;
+  if (dias === 0) return `${resto}h`;
+  return `${dias}d ${resto}h`;
 };
 
 const Reports = () => {
@@ -429,6 +441,7 @@ const Reports = () => {
   const TABS = [
     { id: 'geral',      label: 'Visão Geral',        icon: BarChart3  },
     { id: 'tempo',      label: 'Evolução Temporal',   icon: Activity   },
+    { id: 'resolucao',  label: 'Tempo de Resolução',  icon: Timer      },
     { id: 'categorias', label: 'Categorias',          icon: Tag        },
     { id: 'equipe',     label: 'Equipe',              icon: Users      },
     { id: 'clientes',   label: 'Clientes',            icon: Building2  },
@@ -685,6 +698,87 @@ const Reports = () => {
                   )}
                 </tbody>
               </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ════════════════════════════════════════
+          ABA: TEMPO DE RESOLUÇÃO
+      ════════════════════════════════════════ */}
+      {tab === 'resolucao' && (
+        <div className="rp-fade">
+
+          <div className="kpi-grid">
+            <KpiCard
+              title="Tempo Médio Geral"
+              value={fmtDuracao(m.tempo_medio_geral_horas)}
+              sub="da abertura até o fechamento"
+              icon={Timer} color="#6366f1"
+            />
+            <KpiCard
+              title="Chamados Considerados"
+              value={(m.tempo_medio_categoria || []).reduce((acc, c) => acc + c.qtd, 0)}
+              sub="fechados no período" icon={CheckCircle2} color="#22c55e"
+            />
+          </div>
+
+          <div className="rp-row-3">
+            <div className="rp-card">
+              <h3 className="rp-card-title"><Tag size={16} /> Por Categoria</h3>
+              {(m.tempo_medio_categoria || []).length === 0 ? (
+                <div className="rp-empty">Nenhum chamado fechado no período.</div>
+              ) : (
+                <div className="prio-hbars">
+                  {m.tempo_medio_categoria.map((c, i) => (
+                    <HBar
+                      key={c.nome}
+                      label={`${c.nome} (${fmtDuracao(c.horas)})`}
+                      value={c.horas}
+                      max={Math.max(...m.tempo_medio_categoria.map(x => x.horas), 1)}
+                      color={COR_CAT[i % COR_CAT.length]}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="rp-card">
+              <h3 className="rp-card-title"><AlertCircle size={16} /> Por Prioridade</h3>
+              {(m.tempo_medio_prioridade || []).length === 0 ? (
+                <div className="rp-empty">Nenhum chamado fechado no período.</div>
+              ) : (
+                <div className="prio-hbars">
+                  {m.tempo_medio_prioridade.map((p, i) => (
+                    <HBar
+                      key={p.nome}
+                      label={`${p.nome} (${fmtDuracao(p.horas)})`}
+                      value={p.horas}
+                      max={Math.max(...m.tempo_medio_prioridade.map(x => x.horas), 1)}
+                      color={COR_CAT[(i + 3) % COR_CAT.length]}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="rp-card">
+              <h3 className="rp-card-title"><Building2 size={16} /> Por Projeto</h3>
+              {(m.tempo_medio_projeto || []).length === 0 ? (
+                <div className="rp-empty">Nenhum chamado fechado no período.</div>
+              ) : (
+                <div className="prio-hbars">
+                  {m.tempo_medio_projeto.map((p, i) => (
+                    <HBar
+                      key={p.nome}
+                      label={`${p.nome} (${fmtDuracao(p.horas)})`}
+                      value={p.horas}
+                      max={Math.max(...m.tempo_medio_projeto.map(x => x.horas), 1)}
+                      color={COR_CAT[(i + 5) % COR_CAT.length]}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>

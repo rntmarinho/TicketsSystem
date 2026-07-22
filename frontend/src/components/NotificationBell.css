@@ -1,0 +1,125 @@
+.nb-wrap {
+  position: relative;
+}
+
+.nb-bell {
+  position: relative;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  color: #333;
+  transition: background 0.15s;
+}
+
+.nb-bell:hover {
+  background: #f0f0f0;
+}
+
+.nb-bell--active {
+  color: #e83338;
+  border-color: #f3b8ba;
+}
+
+.nb-count {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: #f59e0b;
+  color: white;
+  font-size: 0.68rem;
+  font-weight: 700;
+  min-width: 17px;
+  height: 17px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 3px;
+}
+
+.nb-count--critical {
+  background: #e83338;
+}
+
+.nb-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 340px;
+  max-width: 90vw;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+  z-index: 50;
+  overflow: hidden;
+}
+
+.nb-dropdown-head {
+  padding: 12px 14px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: #0f172a;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.nb-empty {
+  padding: 20px 14px;
+  color: #64748b;
+  font-size: 0.85rem;
+}
+
+.nb-list {
+  max-height: 320px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.nb-item {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  text-align: left;
+  padding: 10px 14px;
+  border: none;
+  border-bottom: 1px solid #f1f5f9;
+  background: none;
+  cursor: pointer;
+  border-left: 3px solid transparent;
+}
+
+.nb-item:hover {
+  background: #f8fafc;
+}
+
+.nb-item--warning {
+  border-left-color: #f59e0b;
+}
+
+.nb-item--critical {
+  border-left-color: #e83338;
+}
+
+.nb-item-subject {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #0f172a;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nb-item-sla {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.nb-item--critical .nb-item-sla {
+  color: #e83338;
+  font-weight: 600;
+}

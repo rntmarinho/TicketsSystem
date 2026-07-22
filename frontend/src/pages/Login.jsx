@@ -29,7 +29,8 @@ const Login = () => {
       if (data && data.success) {
         setSession(data.token, data.user);
 
-        navigate('/');
+        // 'viewer' não tem acesso ao Painel Inicial (só Gantt/Calendário/Relatórios)
+        navigate(data.user.access_type === 'viewer' ? '/gantt' : '/');
       } else {
         // Encadeamento opcional (?.) atua como contingência para objetos nulos
         setErro(

@@ -26,6 +26,12 @@
   width: 100%;
 }
 
+.top-bar-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 /* ─── Botão hamburger (só visível no mobile) ──────────── */
 
 .hamburger-btn {

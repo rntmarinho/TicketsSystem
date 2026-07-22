@@ -147,7 +147,7 @@ def create_tables():
 
             access_type VARCHAR(20)
             NOT NULL
-            CHECK (access_type IN ('admin', 'technician', 'client')),
+            CHECK (access_type IN ('admin', 'technician', 'client', 'viewer')),
 
             situation VARCHAR(1)
             NOT NULL DEFAULT 'A'
@@ -210,7 +210,7 @@ def create_tables():
 
             creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
-            sla DATE,
+            sla TIMESTAMP,
 
             close_time TIMESTAMP
 
@@ -218,6 +218,16 @@ def create_tables():
 
         -- Garante a coluna close_time em bancos já existentes (criados antes desta versão)
         ALTER TABLE tbl_tickets ADD COLUMN IF NOT EXISTS close_time TIMESTAMP;
+
+        -- Correção de bug: sla era DATE (perdia a hora do prazo, um SLA de 4h e
+        -- de 23h no mesmo dia viravam idênticos). Postgres converte DATE
+        -- existente pra TIMESTAMP à meia-noite automaticamente, sem perder dados.
+        ALTER TABLE tbl_tickets ALTER COLUMN sla TYPE TIMESTAMP;
+
+        -- Data de início (planejamento) — usada pelo Gantt. Chamado usa a
+        -- própria criação como início; tarefa de projeto pode ter início
+        -- planejado diferente, editável na tela de detalhe.
+        ALTER TABLE tbl_tickets ADD COLUMN IF NOT EXISTS start_date TIMESTAMP;
 
         -- Responsável (técnico/admin atribuído ao chamado) — usado pelo Kanban
         ALTER TABLE tbl_tickets ADD COLUMN IF NOT EXISTS assigned_to INTEGER REFERENCES tbl_users(id);
@@ -233,10 +243,11 @@ def create_tables():
         ALTER TABLE tbl_tickets ADD COLUMN IF NOT EXISTS type VARCHAR(20) NOT NULL DEFAULT 'chamado' CHECK (type IN ('chamado', 'tarefa'));
 
         -- Migração RBAC: bancos criados antes desta versão têm o CHECK antigo
-        -- (só 'client'/'technician'). Recria o constraint para aceitar 'admin'.
+        -- (só 'client'/'technician'). Recria o constraint para aceitar 'admin' e,
+        -- mais recentemente, 'viewer' (papel só-leitura de Gantt/Calendário/Relatórios).
         ALTER TABLE tbl_users DROP CONSTRAINT IF EXISTS tbl_users_access_type_check;
         ALTER TABLE tbl_users ADD CONSTRAINT tbl_users_access_type_check
-            CHECK (access_type IN ('admin', 'technician', 'client'));
+            CHECK (access_type IN ('admin', 'technician', 'client', 'viewer'));
 
         -- Promove o usuário administrador padrão para o papel 'admin' de verdade
         -- (bancos antigos o criaram como 'technician', sem distinção de papel).

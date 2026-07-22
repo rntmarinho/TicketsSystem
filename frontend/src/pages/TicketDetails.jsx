@@ -15,11 +15,14 @@ import {
   RefreshCw,
   GitMerge,
   Search,
-  X
+  X,
+  Briefcase,
+  ListTodo
 } from 'lucide-react';
 
 import TicketAnexos from './TicketAnexos';
 import { apiFetch } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import { STATUS_OPTIONS, normalizeStatus } from '../constants/ticketStatus';
 import './styles/TicketDetails.css';
 
@@ -31,8 +34,24 @@ const emptyFormData = {
   priority_id: '',
   user_id: '',
   assigned_to: '',
+  user_name: '',
+  assignee_name: '',
   creation: '',
-  sla: ''
+  sla: '',
+  start_date: '',
+  project: '',
+  type: 'chamado'
+};
+
+/* Converte string de data (ISO ou "Thu, 23 Jul 2026 00:00:00 GMT") pro
+   formato aceito por <input type="datetime-local"> */
+const toDatetimeLocalValue = value => {
+  if (!value) return '';
+  const clean = typeof value === 'string' ? value.replace(' GMT', '') : value;
+  const d = new Date(clean);
+  if (Number.isNaN(d.getTime())) return '';
+  const pad = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 };
 
 const avatarColor = name => {
@@ -59,6 +78,8 @@ const avatarColor = name => {
 const TicketDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { role } = useAuth();
+  const isReadOnly = role === 'viewer';
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -82,11 +103,6 @@ const TicketDetails = () => {
   const [mergeSearch, setMergeSearch] = useState('');
   const [mergeTarget, setMergeTarget] = useState(null);
   const [merging, setMerging] = useState(false);
-
-  const selectedUser = useMemo(
-    () => users.find(u => Number(u.id) === Number(formData.user_id)),
-    [users, formData.user_id]
-  );
 
   const selectedCategory = useMemo(
     () => categories.find(c => Number(c.id) === Number(formData.category_id)),
@@ -162,7 +178,10 @@ const TicketDetails = () => {
         messageData
       ] = await Promise.all([
         requestJson(`/tickets/${id}`),
-        requestJson('/users/'),
+        // 'viewer' não tem acesso a GET /users/ (só admin/technician) — a tela
+        // ainda precisa abrir em modo leitura pra ele, só sem a lista completa
+        // de usuários (usa o nome que já vem pronto em ticketData.user/assignee).
+        requestJson('/users/').catch(() => []),
         requestJson('/categories/'),
         requestJson('/priorities/'),
         requestJson(`/tickets/${id}/messages`)
@@ -220,8 +239,13 @@ const TicketDetails = () => {
           matchedUser?.id ||
           '',
         assigned_to: ticketData.assigned_to || '',
+        user_name: ticketData.user || '',
+        assignee_name: ticketData.assignee || '',
         creation: ticketData.creation || '',
-        sla: ticketData.sla || ''
+        sla: ticketData.sla || '',
+        start_date: ticketData.start_date || '',
+        project: ticketData.project || '',
+        type: ticketData.type || 'chamado'
       });
     } catch (err) {
       console.error(err);
@@ -288,7 +312,8 @@ const TicketDetails = () => {
         ? null
         : Number(formData.assigned_to),
     creation: formData.creation || null,
-    sla: formData.sla || null
+    sla: formData.sla || null,
+    start_date: formData.start_date || null
   });
 
   const handleSave = async () => {
@@ -566,7 +591,13 @@ const TicketDetails = () => {
 
         <div className="header-title">
           <span className="header-eyebrow">
-            TicketSystem
+            {formData.project ? (
+              <>
+                <Briefcase size={13} /> {formData.project} <span className="header-eyebrow-sep">/</span> #{id}
+              </>
+            ) : (
+              <>TicketSystem</>
+            )}
           </span>
 
           <h1>
@@ -577,29 +608,38 @@ const TicketDetails = () => {
             {formData.subject}
           </p>
 
-          <span
-            className={`badge-status-top status-${formData.status}`}
-          >
-            {statusLabel}
-          </span>
+          <div className="header-badges">
+            <span
+              className={`badge-status-top status-${formData.status}`}
+            >
+              {statusLabel}
+            </span>
+
+            <span className={`badge-type-top badge-type-top--${formData.type}`}>
+              <ListTodo size={13} />
+              {formData.type === 'tarefa' ? 'Tarefa' : 'Chamado'}
+            </span>
+          </div>
         </div>
 
-        <div className="header-actions">
+        {!isReadOnly && (
+          <div className="header-actions">
 
-          <button
-            type="button"
-            className="btn-delete"
-            disabled={deleting}
-            onClick={handleDelete}
-          >
-            <Trash2 size={16} />
+            <button
+              type="button"
+              className="btn-delete"
+              disabled={deleting}
+              onClick={handleDelete}
+            >
+              <Trash2 size={16} />
 
-            {deleting
-              ? 'Excluindo...'
-              : 'Excluir'}
-          </button>
+              {deleting
+                ? 'Excluindo...'
+                : 'Excluir'}
+            </button>
 
-        </div>
+          </div>
+        )}
 
       </header>
 
@@ -625,7 +665,7 @@ const TicketDetails = () => {
           </span>
 
           <strong>
-            {selectedUser?.name ||
+            {formData.user_name ||
               'Não informado'}
           </strong>
         </div>
@@ -703,7 +743,7 @@ const TicketDetails = () => {
 
             </div>
 
-            {!isClosed ? (
+            {!isClosed && !isReadOnly ? (
               <div className="message-composer">
 
                 <textarea
@@ -737,7 +777,7 @@ const TicketDetails = () => {
                 </div>
 
               </div>
-            ) : (
+            ) : isReadOnly ? null : (
               <div className="closed-warning">
                 <Info size={16} />
                 <span>
@@ -841,31 +881,33 @@ const TicketDetails = () => {
 
         <aside className="sidebar-info">
 
-          <div className="info-group primary-action">
+          {!isReadOnly && (
+            <div className="info-group primary-action">
 
-            <button
-              type="button"
-              className="btn-save"
-              disabled={saving}
-              onClick={handleSave}
-            >
-              <Save size={18} />
+              <button
+                type="button"
+                className="btn-save"
+                disabled={saving}
+                onClick={handleSave}
+              >
+                <Save size={18} />
 
-              {saving
-                ? 'Salvando...'
-                : 'Salvar alterações'}
-            </button>
+                {saving
+                  ? 'Salvando...'
+                  : 'Salvar alterações'}
+              </button>
 
-            <button
-              type="button"
-              className="btn-merge"
-              onClick={openMergeModal}
-            >
-              <GitMerge size={18} />
-              Fundir chamado
-            </button>
+              <button
+                type="button"
+                className="btn-merge"
+                onClick={openMergeModal}
+              >
+                <GitMerge size={18} />
+                Fundir chamado
+              </button>
 
-          </div>
+            </div>
+          )}
 
           <div className="info-group">
 
@@ -874,28 +916,34 @@ const TicketDetails = () => {
               Solicitante
             </label>
 
-            <select
-              value={formData.user_id}
-              onChange={e =>
-                handleFieldChange(
-                  'user_id',
-                  normalizeId(e.target.value)
-                )
-              }
-            >
-              <option value="">
-                Selecionar...
-              </option>
-
-              {users.map(user => (
-                <option
-                  key={user.id}
-                  value={user.id}
-                >
-                  {user.name}
+            {isReadOnly ? (
+              <div className="info-readonly-value">
+                {formData.user_name || 'Não informado'}
+              </div>
+            ) : (
+              <select
+                value={formData.user_id}
+                onChange={e =>
+                  handleFieldChange(
+                    'user_id',
+                    normalizeId(e.target.value)
+                  )
+                }
+              >
+                <option value="">
+                  Selecionar...
                 </option>
-              ))}
-            </select>
+
+                {users.map(user => (
+                  <option
+                    key={user.id}
+                    value={user.id}
+                  >
+                    {user.name}
+                  </option>
+                ))}
+              </select>
+            )}
 
           </div>
 
@@ -906,30 +954,36 @@ const TicketDetails = () => {
               Responsável
             </label>
 
-            <select
-              value={formData.assigned_to}
-              onChange={e =>
-                handleFieldChange(
-                  'assigned_to',
-                  normalizeId(e.target.value)
-                )
-              }
-            >
-              <option value="">
-                Sem responsável
-              </option>
+            {isReadOnly ? (
+              <div className="info-readonly-value">
+                {formData.assignee_name || 'Sem responsável'}
+              </div>
+            ) : (
+              <select
+                value={formData.assigned_to}
+                onChange={e =>
+                  handleFieldChange(
+                    'assigned_to',
+                    normalizeId(e.target.value)
+                  )
+                }
+              >
+                <option value="">
+                  Sem responsável
+                </option>
 
-              {users
-                .filter(user => user.access_type === 'admin' || user.access_type === 'technician')
-                .map(user => (
-                  <option
-                    key={user.id}
-                    value={user.id}
-                  >
-                    {user.name}
-                  </option>
-                ))}
-            </select>
+                {users
+                  .filter(user => user.access_type === 'admin' || user.access_type === 'technician')
+                  .map(user => (
+                    <option
+                      key={user.id}
+                      value={user.id}
+                    >
+                      {user.name}
+                    </option>
+                  ))}
+              </select>
+            )}
 
           </div>
 
@@ -942,6 +996,7 @@ const TicketDetails = () => {
 
             <select
               value={formData.status}
+              disabled={isReadOnly}
               onChange={e =>
                 handleFieldChange(
                   'status',
@@ -970,6 +1025,7 @@ const TicketDetails = () => {
 
             <select
               value={formData.priority_id}
+              disabled={isReadOnly}
               onChange={e =>
                 handleFieldChange(
                   'priority_id',
@@ -1002,6 +1058,7 @@ const TicketDetails = () => {
 
             <select
               value={formData.category_id}
+              disabled={isReadOnly}
               onChange={e =>
                 handleFieldChange(
                   'category_id',
@@ -1025,6 +1082,42 @@ const TicketDetails = () => {
 
           </div>
 
+          <div className="info-group">
+
+            <label>
+              <Calendar size={16} />
+              Data de Início
+            </label>
+
+            <input
+              type="datetime-local"
+              value={toDatetimeLocalValue(formData.start_date)}
+              disabled={isReadOnly}
+              onChange={e =>
+                handleFieldChange('start_date', e.target.value)
+              }
+            />
+
+          </div>
+
+          <div className="info-group">
+
+            <label>
+              <Clock size={16} />
+              Prazo (SLA)
+            </label>
+
+            <input
+              type="datetime-local"
+              value={toDatetimeLocalValue(formData.sla)}
+              disabled={isReadOnly}
+              onChange={e =>
+                handleFieldChange('sla', e.target.value)
+              }
+            />
+
+          </div>
+
           <div className="info-footer">
 
             <div className="info-static-item">
@@ -1040,22 +1133,6 @@ const TicketDetails = () => {
                   {formatDate(
                     formData.creation
                   )}
-                </strong>
-              </div>
-
-            </div>
-
-            <div className="info-static-item danger">
-
-              <Clock size={14} />
-
-              <div>
-                <span>
-                  Prazo SLA
-                </span>
-
-                <strong>
-                  {formatDate(formData.sla)}
                 </strong>
               </div>
 

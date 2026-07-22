@@ -15,7 +15,7 @@ ticket_bp = Blueprint(
 
 
 @ticket_bp.route("/", methods=["POST"])
-@jwt_required()
+@require_role("admin", "technician", "client")
 def create_ticket():
     data = request.get_json()
 
@@ -72,7 +72,11 @@ def delete_ticket(ticket_id):
 def list_messages(ticket_id):
 
     ticket, ticket_status = TicketController.get_ticket(ticket_id)
-    is_client = get_current_role() == "client"
+    role = get_current_role()
+    is_client = role == "client"
+    # 'viewer' não tem noção de "chamado próprio" (vê todos, só-leitura), mas
+    # também não deve enxergar notas internas — mesma regra de privacidade do 'client'.
+    hide_private = role in ("client", "viewer")
 
     if is_client and (ticket_status != 200 or ticket.get("user_id") != int(get_jwt_identity())):
         return jsonify({"success": False, "message": "Registro de chamado não encontrado."}), 404
@@ -81,8 +85,8 @@ def list_messages(ticket_id):
         if hasattr(MessageModel, 'get_by_ticket_id'):
             messages = MessageModel.get_by_ticket_id(ticket_id)
             # Mensagens marcadas como privadas são anotações internas entre
-            # técnicos — o cliente dono do chamado não deve enxergá-las.
-            if is_client:
+            # técnicos — cliente e visualizador não devem enxergá-las.
+            if hide_private:
                 messages = [m for m in messages if not m.get("private")]
             return jsonify(messages), 200
         else:
@@ -93,7 +97,7 @@ def list_messages(ticket_id):
 
 # Rota para criar uma nova mensagem/atividade em um ticket específico
 @ticket_bp.route("/<int:ticket_id>/messages", methods=["POST"])
-@jwt_required()
+@require_role("admin", "technician", "client")
 def create_message(ticket_id):
     data = request.get_json()
 

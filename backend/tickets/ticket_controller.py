@@ -56,7 +56,9 @@ class TicketController:
                 "assignee": ticket[10],
                 "project_id": ticket[11],
                 "project": ticket[12],
-                "type": ticket[13]
+                "type": ticket[13],
+                "start_date": ticket[14],
+                "close_time": ticket[15]
             })
 
         return result
@@ -86,7 +88,9 @@ class TicketController:
             "email_message_id": ticket[11],
             "project_id": ticket[12],
             "project": ticket[13],
-            "type": ticket[14]
+            "type": ticket[14],
+            "start_date": ticket[15],
+            "close_time": ticket[16]
         }, 200
 
     @staticmethod
@@ -188,6 +192,13 @@ class TicketController:
 
         if "assigned_to" in data:
             TicketModel.update_assignee(ticket_id, data["assigned_to"])
+
+        if "start_date" in data or "sla" in data:
+            TicketModel.update_dates(
+                ticket_id,
+                start_date=data.get("start_date"),
+                sla=data.get("sla")
+            )
 
         # Caso seu TicketModel possua uma query de atualização geral para os outros campos:
         # TicketModel.update_general_fields(ticket_id, data)

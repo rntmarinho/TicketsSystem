@@ -33,7 +33,7 @@ def listar_anexos(ticket_id):
 
 # ── POST /tickets/<id>/anexos ────────────────────────────────────────────────
 @anexo_bp.route("/<int:ticket_id>/anexos", methods=["POST"])
-@jwt_required()
+@require_role("admin", "technician", "client")
 def upload_anexo(ticket_id):
     if _client_bloqueado(ticket_id):
         return jsonify({"success": False, "message": "Registro de chamado não encontrado."}), 404

@@ -112,6 +112,7 @@ const CreateUser = () => {
                 <option value="client">Cliente / Comum</option>
                 <option value="technician">Técnico</option>
                 <option value="admin">Administrador</option>
+                <option value="viewer">Visualizador (Gantt/Calendário/Relatórios)</option>
               </select>
             </div>
             

@@ -5,6 +5,7 @@ import { useAuth } from './context/AuthContext';
 
 // Componentes e Páginas
 import Sidebar from './components/Sidebar';
+import NotificationBell from './components/NotificationBell';
 import Dashboard from './pages/Dashboard';
 import NewTicket from './pages/NewTicket';
 import Login from './pages/Login';
@@ -13,6 +14,8 @@ import Users from './pages/Users';
 import AllTickets from './pages/AllTickets';
 import Kanban from './pages/Kanban';
 import Projects from './pages/Projects';
+import Gantt from './pages/Gantt';
+import CalendarView from './pages/CalendarView';
 import TicketDetails from './pages/TicketDetails';
 import Reports from './pages/Reports';
 import ManageCategories from './pages/ManageCategories';
@@ -103,14 +106,31 @@ function App() {
                   >
                     <Menu size={22} />
                   </button>
-                  <button className="logout-btn-top" onClick={handleLogout}>
-                    <LogOut size={18} /> Sair
-                  </button>
+
+                  <div className="top-bar-actions">
+                    {(role === 'admin' || role === 'technician') && <NotificationBell />}
+                    <button className="logout-btn-top" onClick={handleLogout}>
+                      <LogOut size={18} /> Sair
+                    </button>
+                  </div>
                 </div>
 
                 <Routes>
-                  <Route path="/" element={<Dashboard />} />
-                  <Route path="/novo-chamado" element={<NewTicket />} />
+                  {/* 'viewer' não tem Painel Inicial — manda pro Gantt em vez de
+                      usar RoleProtectedRoute aqui (que redireciona pra "/" e
+                      criaria um loop infinito nesta rota específica). */}
+                  <Route
+                    path="/"
+                    element={role === 'viewer' ? <Navigate to="/gantt" replace /> : <Dashboard />}
+                  />
+                  <Route
+                    path="/novo-chamado"
+                    element={
+                      <RoleProtectedRoute role={role} allowed={['admin', 'technician', 'client']}>
+                        <NewTicket />
+                      </RoleProtectedRoute>
+                    }
+                  />
                   <Route
                     path="/users"
                     element={
@@ -127,7 +147,14 @@ function App() {
                       </RoleProtectedRoute>
                     }
                   />
-                  <Route path="/tickets" element={<AllTickets />} />
+                  <Route
+                    path="/tickets"
+                    element={
+                      <RoleProtectedRoute role={role} allowed={['admin', 'technician', 'client']}>
+                        <AllTickets />
+                      </RoleProtectedRoute>
+                    }
+                  />
                   <Route
                     path="/kanban"
                     element={
@@ -144,11 +171,27 @@ function App() {
                       </RoleProtectedRoute>
                     }
                   />
+                  <Route
+                    path="/gantt"
+                    element={
+                      <RoleProtectedRoute role={role} allowed={['admin', 'technician', 'viewer']}>
+                        <Gantt />
+                      </RoleProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/calendario"
+                    element={
+                      <RoleProtectedRoute role={role} allowed={['admin', 'technician', 'viewer']}>
+                        <CalendarView />
+                      </RoleProtectedRoute>
+                    }
+                  />
                   <Route path="/tickets/:id" element={<TicketDetails />} />
                   <Route
                     path="/relatorios"
                     element={
-                      <RoleProtectedRoute role={role} allowed={['admin', 'technician']}>
+                      <RoleProtectedRoute role={role} allowed={['admin', 'technician', 'viewer']}>
                         <Reports />
                       </RoleProtectedRoute>
                     }

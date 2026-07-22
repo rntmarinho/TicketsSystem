@@ -9,6 +9,21 @@ import './styles/Projects.css';
 
 const emptyForm = { name: '', description: '', owner_id: '' };
 
+const parseDate = (val) => {
+  if (!val) return null;
+  const clean = typeof val === 'string' ? val.replace(' GMT', '') : val;
+  const d = new Date(clean);
+  return isNaN(d.getTime()) ? null : d;
+};
+
+const fmtDuracao = (horas) => {
+  if (horas === null || horas === undefined) return '—';
+  const total = Math.round(horas);
+  const dias = Math.floor(total / 24);
+  const resto = total % 24;
+  return dias === 0 ? `${resto}h` : `${dias}d ${resto}h`;
+};
+
 const Projects = () => {
   const { role } = useAuth();
   const isAdmin = role === 'admin';
@@ -45,9 +60,19 @@ const Projects = () => {
     const map = {};
     tickets.forEach(t => {
       if (!t.project_id) return;
-      if (!map[t.project_id]) map[t.project_id] = { open: 0, closed: 0 };
-      if (t.status === 'closed') map[t.project_id].closed += 1;
-      else map[t.project_id].open += 1;
+      if (!map[t.project_id]) map[t.project_id] = { open: 0, closed: 0, somaDuracaoHoras: 0, qtdComDuracao: 0 };
+      if (t.status === 'closed') {
+        map[t.project_id].closed += 1;
+
+        const inicio = parseDate(t.creation);
+        const fim = parseDate(t.close_time);
+        if (inicio && fim) {
+          map[t.project_id].somaDuracaoHoras += (fim - inicio) / (1000 * 60 * 60);
+          map[t.project_id].qtdComDuracao += 1;
+        }
+      } else {
+        map[t.project_id].open += 1;
+      }
     });
     return map;
   }, [tickets]);
@@ -153,14 +178,41 @@ const Projects = () => {
                 <span>{project.status === 'active' ? 'Ativo' : 'Arquivado'}</span>
               </div>
 
-              <div className="project-counts">
-                <span className="project-count-open">{counts[project.id]?.open || 0} em aberto</span>
-                <span className="project-count-closed">{counts[project.id]?.closed || 0} fechados</span>
-              </div>
+              {(() => {
+                const c = counts[project.id];
+                const total = (c?.open || 0) + (c?.closed || 0);
+                const pct = total > 0 ? Math.round((c.closed / total) * 100) : 0;
+                const mediaHoras = c?.qtdComDuracao > 0 ? c.somaDuracaoHoras / c.qtdComDuracao : null;
 
-              <Link to={`/kanban?project=${project.id}`} className="project-kanban-link">
-                Ver no Kanban
-              </Link>
+                return (
+                  <>
+                    <div className="project-progress">
+                      <div className="project-progress-track">
+                        <div className="project-progress-fill" style={{ width: `${pct}%` }} />
+                      </div>
+                      <span className="project-progress-label">{pct}% concluído</span>
+                    </div>
+
+                    <div className="project-counts">
+                      <span className="project-count-open">{c?.open || 0} em aberto</span>
+                      <span className="project-count-closed">{c?.closed || 0} fechados</span>
+                    </div>
+
+                    <div className="project-avg-time">
+                      Tempo médio de resolução: <strong>{fmtDuracao(mediaHoras)}</strong>
+                    </div>
+                  </>
+                );
+              })()}
+
+              <div className="project-links">
+                <Link to={`/kanban?project=${project.id}`} className="project-kanban-link">
+                  Ver no Kanban
+                </Link>
+                <Link to={`/gantt?project=${project.id}`} className="project-gantt-link">
+                  Ver no Gantt
+                </Link>
+              </div>
             </div>
           ))
         )}

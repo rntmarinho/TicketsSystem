@@ -142,7 +142,49 @@
   color: #15803d;
 }
 
-.project-kanban-link {
+.project-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.project-progress-track {
+  height: 6px;
+  border-radius: 999px;
+  background: #f1f5f9;
+  overflow: hidden;
+}
+
+.project-progress-fill {
+  height: 100%;
+  background: #0d977d;
+  border-radius: 999px;
+  transition: width 0.3s ease;
+}
+
+.project-progress-label {
+  font-size: 0.72rem;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.project-avg-time {
+  font-size: 0.78rem;
+  color: #64748b;
+}
+
+.project-avg-time strong {
+  color: #334155;
+}
+
+.project-links {
+  display: flex;
+  gap: 8px;
+}
+
+.project-kanban-link,
+.project-gantt-link {
+  flex: 1;
   text-align: center;
   background: #e6f5f2;
   color: #0d977d;
@@ -151,4 +193,9 @@
   font-size: 0.82rem;
   font-weight: 600;
   text-decoration: none;
+}
+
+.project-gantt-link {
+  background: #fdecec;
+  color: #e83338;
 }

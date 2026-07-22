@@ -49,12 +49,18 @@
 }
 
 .header-eyebrow {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 5px;
   font-size: 0.85rem;
   color: #6b7280;
   margin-bottom: 6px;
   text-transform: uppercase;
   letter-spacing: 0.08em;
+}
+
+.header-eyebrow-sep {
+  color: #cbd5e1;
 }
 
 .header-title h1 {
@@ -63,9 +69,15 @@
   line-height: 1.1;
 }
 
+.header-badges {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+}
+
 .badge-status-top {
   display: inline-flex;
-  margin-top: 12px;
   padding: 6px 12px;
   border-radius: 999px;
   font-size: 0.85rem;
@@ -82,9 +94,34 @@
   background: #fef3c7;
 }
 
+.status-pending {
+  color: #1e5a8a;
+  background: #dbeafe;
+}
+
 .status-closed {
   color: #7c2d12;
   background: #fee2e2;
+}
+
+.badge-type-top {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.badge-type-top--chamado {
+  color: #334155;
+  background: #f1f5f9;
+}
+
+.badge-type-top--tarefa {
+  color: #7c3aed;
+  background: #ede9fe;
 }
 
 .header-actions {
@@ -185,7 +222,8 @@
 
 .subject-input,
 .messages-section textarea,
-.sidebar-info select {
+.sidebar-info select,
+.sidebar-info input {
   width: 100%;
   box-sizing: border-box; /* <-- Adicione esta linha */
   max-width: 100%;        /* <-- Adicione esta linha por segurança */
@@ -200,9 +238,26 @@
 
 .subject-input:focus,
 .messages-section textarea:focus,
-.sidebar-info select:focus {
+.sidebar-info select:focus,
+.sidebar-info input:focus {
   border-color: #e83338;
   background: #ffffff;
+}
+
+.sidebar-info select:disabled,
+.sidebar-info input:disabled {
+  background: #f1f5f9;
+  color: #94a3b8;
+  cursor: not-allowed;
+}
+
+.info-readonly-value {
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 14px 16px;
+  font-size: 1rem;
+  color: #374151;
+  background: #f1f5f9;
 }
 
 .messages-section {

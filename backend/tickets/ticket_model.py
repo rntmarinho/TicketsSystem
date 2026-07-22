@@ -53,6 +53,10 @@ class TicketModel:
         data_criacao = datetime.now()
         prazo_sla = data_criacao + timedelta(hours=float(sla_horas))
 
+        # Data de início: chamado usa a própria criação; tarefa de projeto
+        # pode informar um início planejado diferente.
+        start_date = data.get("start_date") or data_criacao
+
         #Inserção do registro contemplando as matrizes de data recém-calculadas
         cursor.execute("""
             INSERT INTO tbl_tickets (
@@ -64,9 +68,10 @@ class TicketModel:
                 creation,
                 sla,
                 project_id,
-                type
+                type,
+                start_date
             )
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             RETURNING id
         """, (
             data["subject"],
@@ -77,7 +82,8 @@ class TicketModel:
             data_criacao,
             prazo_sla,
             data.get("project_id"),
-            data.get("type", "chamado")
+            data.get("type", "chamado"),
+            start_date
         ))
 
         ticket_id = cursor.fetchone()[0]
@@ -112,7 +118,9 @@ class TicketModel:
                 t.email_message_id,
                 t.project_id,
                 pr.name,
-                t.type
+                t.type,
+                t.start_date,
+                t.close_time
             FROM tbl_tickets t
             LEFT JOIN tbl_categories c
                 ON c.id = t.category_id
@@ -161,7 +169,9 @@ class TicketModel:
                 a.name,
                 t.project_id,
                 pr.name,
-                t.type
+                t.type,
+                t.start_date,
+                t.close_time
             FROM tbl_tickets t
             LEFT JOIN tbl_categories c
                 ON c.id = t.category_id
@@ -234,6 +244,27 @@ class TicketModel:
 
         conn.commit()
 
+        cursor.close()
+        conn.close()
+
+    @staticmethod
+    def update_dates(ticket_id, start_date=None, sla=None):
+        """Edição manual de datas pela tela de detalhe (planejamento de
+        tarefa de projeto) — só atualiza os campos informados."""
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        if start_date is not None:
+            cursor.execute("""
+                UPDATE tbl_tickets SET start_date = %s WHERE id = %s
+            """, (start_date, ticket_id))
+
+        if sla is not None:
+            cursor.execute("""
+                UPDATE tbl_tickets SET sla = %s WHERE id = %s
+            """, (sla, ticket_id))
+
+        conn.commit()
         cursor.close()
         conn.close()
 

@@ -174,6 +174,64 @@ class ReportModel:
                 d = hoje - timedelta(days=i)
                 por_dia.append({"label": d.strftime('%d/%m'), "count": contagem_db.get(str(d), 0)})
 
+            # ── 6b. Tempo médio de resolução (creation → close_time) ─────────
+            # Só considera chamados/tarefas já fechados no período.
+            cursor.execute(f"""
+                SELECT AVG(EXTRACT(EPOCH FROM (t.close_time - t.creation))) / 3600.0
+                FROM tbl_tickets t
+                WHERE t.close_time IS NOT NULL {period_sql}
+            """, period_params)
+            row = cursor.fetchone()
+            tempo_medio_geral = round(float(row[0]), 1) if row and row[0] is not None else None
+
+            cursor.execute(f"""
+                SELECT
+                    COALESCE(c.name, 'Sem Categoria') AS nome,
+                    AVG(EXTRACT(EPOCH FROM (t.close_time - t.creation))) / 3600.0 AS horas,
+                    COUNT(*) AS qtd
+                FROM tbl_tickets t
+                LEFT JOIN tbl_categories c ON c.id = t.category_id
+                WHERE t.close_time IS NOT NULL {period_sql}
+                GROUP BY nome
+                ORDER BY horas DESC
+            """, period_params)
+            tempo_medio_categoria = [
+                {"nome": r[0], "horas": round(float(r[1]), 1), "qtd": int(r[2])}
+                for r in cursor.fetchall()
+            ]
+
+            cursor.execute(f"""
+                SELECT
+                    COALESCE(p.name, '—') AS nome,
+                    AVG(EXTRACT(EPOCH FROM (t.close_time - t.creation))) / 3600.0 AS horas,
+                    COUNT(*) AS qtd
+                FROM tbl_tickets t
+                LEFT JOIN tbl_priorities p ON p.id = t.priority_id
+                WHERE t.close_time IS NOT NULL {period_sql}
+                GROUP BY nome
+                ORDER BY horas DESC
+            """, period_params)
+            tempo_medio_prioridade = [
+                {"nome": r[0], "horas": round(float(r[1]), 1), "qtd": int(r[2])}
+                for r in cursor.fetchall()
+            ]
+
+            cursor.execute(f"""
+                SELECT
+                    COALESCE(pr.name, 'Sem Projeto') AS nome,
+                    AVG(EXTRACT(EPOCH FROM (t.close_time - t.creation))) / 3600.0 AS horas,
+                    COUNT(*) AS qtd
+                FROM tbl_tickets t
+                LEFT JOIN tbl_projects pr ON pr.id = t.project_id
+                WHERE t.close_time IS NOT NULL {period_sql}
+                GROUP BY nome
+                ORDER BY horas DESC
+            """, period_params)
+            tempo_medio_projeto = [
+                {"nome": r[0], "horas": round(float(r[1]), 1), "qtd": int(r[2])}
+                for r in cursor.fetchall()
+            ]
+
             # ── 7. Lista de chamados ─────────────────────────────────────────
             cursor.execute(f"""
                 SELECT
@@ -221,6 +279,10 @@ class ReportModel:
                 "clientes":       clientes,
                 "por_dia":        por_dia,
                 "tickets":        tickets,
+                "tempo_medio_geral_horas": tempo_medio_geral,
+                "tempo_medio_categoria":   tempo_medio_categoria,
+                "tempo_medio_prioridade":  tempo_medio_prioridade,
+                "tempo_medio_projeto":     tempo_medio_projeto,
             }
 
         finally:

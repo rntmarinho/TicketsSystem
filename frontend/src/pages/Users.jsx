@@ -249,6 +249,7 @@ const Users = () => {
                   <option value="client">Comum (Solicitante)</option>
                   <option value="technician">Técnico (Suporte)</option>
                   <option value="admin">Administrador</option>
+                  <option value="viewer">Visualizador (Gantt/Calendário/Relatórios)</option>
                 </select>
               </div>
 

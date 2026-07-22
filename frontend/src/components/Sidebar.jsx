@@ -10,6 +10,8 @@ import { LayoutDashboard,
   CircleAlert,
   LayoutGrid,
   Briefcase,
+  GanttChartSquare,
+  CalendarDays,
   X } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import './Sidebar.css';
@@ -20,6 +22,8 @@ const Sidebar = ({ isOpen, onClose, role }) => {
   const isActive = (path) => location.pathname === path ? "nav-item active" : "nav-item";
   const isAdmin = role === 'admin';
   const isAdminOrTechnician = role === 'admin' || role === 'technician';
+  const isOperational = role === 'admin' || role === 'technician' || role === 'client';
+  const canSeeReportsGanttCalendar = role === 'admin' || role === 'technician' || role === 'viewer';
 
   const handleNavClick = () => {
     if (onClose) onClose();
@@ -42,17 +46,23 @@ const Sidebar = ({ isOpen, onClose, role }) => {
         </div>
 
         <nav>
-          <Link to="/" className={isActive("/")} onClick={handleNavClick}>
-            <LayoutDashboard size={20} /> Painel Inicial
-          </Link>
+          {isOperational && (
+            <Link to="/" className={isActive("/")} onClick={handleNavClick}>
+              <LayoutDashboard size={20} /> Painel Inicial
+            </Link>
+          )}
 
-          <Link to="/novo-chamado" className={isActive("/novo-chamado")} onClick={handleNavClick}>
-            <PlusCircle size={20} /> Abrir Chamado
-          </Link>
+          {isOperational && (
+            <Link to="/novo-chamado" className={isActive("/novo-chamado")} onClick={handleNavClick}>
+              <PlusCircle size={20} /> Abrir Chamado
+            </Link>
+          )}
 
-          <Link to="/tickets" className={isActive("/tickets")} onClick={handleNavClick}>
-            <Ticket size={20} /> Todos os Chamados
-          </Link>
+          {isOperational && (
+            <Link to="/tickets" className={isActive("/tickets")} onClick={handleNavClick}>
+              <Ticket size={20} /> Todos os Chamados
+            </Link>
+          )}
 
           {isAdminOrTechnician && (
             <Link to="/kanban" className={isActive("/kanban")} onClick={handleNavClick}>
@@ -63,6 +73,18 @@ const Sidebar = ({ isOpen, onClose, role }) => {
           {isAdminOrTechnician && (
             <Link to="/projetos" className={isActive("/projetos")} onClick={handleNavClick}>
               <Briefcase size={20} /> Projetos
+            </Link>
+          )}
+
+          {canSeeReportsGanttCalendar && (
+            <Link to="/gantt" className={isActive("/gantt")} onClick={handleNavClick}>
+              <GanttChartSquare size={20} /> Gantt
+            </Link>
+          )}
+
+          {canSeeReportsGanttCalendar && (
+            <Link to="/calendario" className={isActive("/calendario")} onClick={handleNavClick}>
+              <CalendarDays size={20} /> Calendário
             </Link>
           )}
 
@@ -90,7 +112,7 @@ const Sidebar = ({ isOpen, onClose, role }) => {
             </Link>
           )}
 
-          {isAdminOrTechnician && (
+          {canSeeReportsGanttCalendar && (
             <Link to="/relatorios" className={isActive("/relatorios")} onClick={handleNavClick}>
               <BarChart size={20} /> Relatórios
             </Link>
@@ -102,9 +124,11 @@ const Sidebar = ({ isOpen, onClose, role }) => {
             </Link>
           )}
 
-          <Link to="/LGPD" className={isActive("/LGPD")} onClick={handleNavClick}>
-            <Scale size={20} /> LGPD
-          </Link>
+          {isOperational && (
+            <Link to="/LGPD" className={isActive("/LGPD")} onClick={handleNavClick}>
+              <Scale size={20} /> LGPD
+            </Link>
+          )}
         </nav>
 
       </div>
