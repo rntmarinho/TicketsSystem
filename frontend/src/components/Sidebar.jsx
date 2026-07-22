@@ -9,6 +9,7 @@ import { LayoutDashboard,
   Tag,
   CircleAlert,
   LayoutGrid,
+  Briefcase,
   X } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import './Sidebar.css';
@@ -56,6 +57,12 @@ const Sidebar = ({ isOpen, onClose, role }) => {
           {isAdminOrTechnician && (
             <Link to="/kanban" className={isActive("/kanban")} onClick={handleNavClick}>
               <LayoutGrid size={20} /> Kanban
+            </Link>
+          )}
+
+          {isAdminOrTechnician && (
+            <Link to="/projetos" className={isActive("/projetos")} onClick={handleNavClick}>
+              <Briefcase size={20} /> Projetos
             </Link>
           )}
 

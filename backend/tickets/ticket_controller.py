@@ -37,8 +37,8 @@ class TicketController:
             }, 500
 
     @staticmethod
-    def list_tickets(owner_id=None):
-        tickets = TicketModel.get_all(owner_id=owner_id)
+    def list_tickets(owner_id=None, project_id=None):
+        tickets = TicketModel.get_all(owner_id=owner_id, project_id=project_id)
         result = []
 
         for ticket in tickets:
@@ -53,7 +53,10 @@ class TicketController:
                 "user": ticket[7],
                 "user_id": ticket[8],
                 "assigned_to": ticket[9],
-                "assignee": ticket[10]
+                "assignee": ticket[10],
+                "project_id": ticket[11],
+                "project": ticket[12],
+                "type": ticket[13]
             })
 
         return result
@@ -80,7 +83,10 @@ class TicketController:
             "user_id": ticket[8],
             "assigned_to": ticket[9],
             "assignee": ticket[10],
-            "email_message_id": ticket[11]
+            "email_message_id": ticket[11],
+            "project_id": ticket[12],
+            "project": ticket[13],
+            "type": ticket[14]
         }, 200
 
     @staticmethod

@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { LayoutGrid, Clock, User } from 'lucide-react';
 import { apiFetch } from '../services/api';
-import { getTickets, updateStatus, updateAssignee } from '../services/ticketService';
+import { updateStatus, updateAssignee } from '../services/ticketService';
+import { getProjects } from '../services/projectService';
 import { STATUS_OPTIONS, getStatusMeta, normalizeStatus } from '../constants/ticketStatus';
 import './styles/Kanban.css';
 
@@ -21,28 +22,45 @@ const isSlaOverdue = (sla) => {
 };
 
 const Kanban = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const projectFilter = searchParams.get('project') || '';
+
   const [tickets, setTickets] = useState([]);
   const [staff, setStaff] = useState([]);
+  const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [dragOverColumn, setDragOverColumn] = useState(null);
 
   useEffect(() => {
+    setLoading(true);
+    const ticketsEndpoint = projectFilter ? `/tickets/?project_id=${projectFilter}` : '/tickets/';
+
     Promise.all([
-      getTickets(),
-      apiFetch('/users/').then(r => r.json())
+      apiFetch(ticketsEndpoint).then(r => r.json()),
+      apiFetch('/users/').then(r => r.json()),
+      getProjects()
     ])
-      .then(([ticketData, userData]) => {
+      .then(([ticketData, userData, projectData]) => {
         setTickets(Array.isArray(ticketData) ? ticketData : []);
         const users = Array.isArray(userData) ? userData : [];
         setStaff(users.filter(u => u.access_type === 'admin' || u.access_type === 'technician'));
+        setProjects(Array.isArray(projectData) ? projectData : []);
         setLoading(false);
       })
       .catch(() => {
         setError('Não foi possível carregar os chamados.');
         setLoading(false);
       });
-  }, []);
+  }, [projectFilter]);
+
+  const handleProjectChange = (value) => {
+    if (value) {
+      setSearchParams({ project: value });
+    } else {
+      setSearchParams({});
+    }
+  };
 
   const columns = useMemo(() => {
     const map = {};
@@ -101,6 +119,18 @@ const Kanban = () => {
           <LayoutGrid size={24} />
           <h1>Quadro Kanban</h1>
         </div>
+
+        <select
+          className="kanban-project-select"
+          value={projectFilter}
+          onChange={e => handleProjectChange(e.target.value)}
+        >
+          <option value="">Todos os projetos</option>
+          {projects.map(p => (
+            <option key={p.id} value={p.id}>{p.name}</option>
+          ))}
+        </select>
+
         {error && <div className="kanban-error">{error}</div>}
       </header>
 
@@ -140,6 +170,9 @@ const Kanban = () => {
                       </span>
                       {ticket.category && (
                         <span className="kanban-tag">{ticket.category}</span>
+                      )}
+                      {ticket.type === 'tarefa' && (
+                        <span className="kanban-tag kanban-tag--task">Tarefa</span>
                       )}
                     </div>
 

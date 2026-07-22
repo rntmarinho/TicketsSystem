@@ -40,6 +40,14 @@
   font-size: 0.85rem;
 }
 
+.kanban-project-select {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  color: #334155;
+  background: #fff;
+}
+
 .kanban-loading {
   padding: 40px;
   color: #64748b;
@@ -142,6 +150,12 @@
   background: #f1f5f9;
   padding: 2px 8px;
   border-radius: 999px;
+}
+
+.kanban-tag--task {
+  color: #7c3aed;
+  background: #ede9fe;
+  font-weight: 600;
 }
 
 .kanban-card-footer {

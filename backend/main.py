@@ -13,6 +13,7 @@ from services.email_service import iniciar_daemon_email
 from tickets.anexos.anexo_routes import anexo_bp
 from settings.settings_routes import settings_bp
 from reports.report_routes import reports_bp
+from projects.project_routes import project_bp
 from flask_cors import CORS
 from database.create_database import create_database, create_tables
 from seed_admin import create_default_client, create_admin_user
@@ -69,6 +70,7 @@ def create_app():
     app.register_blueprint(anexo_bp)
     app.register_blueprint(settings_bp)
     app.register_blueprint(reports_bp)
+    app.register_blueprint(project_bp)
     # Health Check
     @app.route("/", methods=["GET"])
     def home():

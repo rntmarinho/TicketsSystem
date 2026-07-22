@@ -28,13 +28,18 @@ def create_ticket():
     response, status = TicketController.create_ticket(data)
     return jsonify(response), status
 
-# Rota para listar todos os tickets — 'client' só vê os próprios
+# Rota para listar todos os tickets — 'client' só vê os próprios;
+# ?project_id= filtra por projeto (usado pelo Kanban)
 @ticket_bp.route("/", methods=["GET"])
 @jwt_required()
 def list_tickets():
     owner_id = int(get_jwt_identity()) if get_current_role() == "client" else None
+
+    project_id = request.args.get("project_id")
+    project_id = int(project_id) if project_id else None
+
     return jsonify(
-        TicketController.list_tickets(owner_id=owner_id)
+        TicketController.list_tickets(owner_id=owner_id, project_id=project_id)
     )
 
 # Rota para obter detalhes de um ticket específico — 'client' só acessa o próprio

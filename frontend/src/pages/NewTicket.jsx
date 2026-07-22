@@ -1,21 +1,29 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Send, ArrowLeft, Info, Users, Tag, AlertCircle } from 'lucide-react';
+import { Send, ArrowLeft, Info, Users, Tag, AlertCircle, Briefcase, ListTodo } from 'lucide-react';
 import { apiFetch } from '../services/api';
+import { getProjects } from '../services/projectService';
+import { useAuth } from '../context/AuthContext';
 import './styles/NewTicket.css';
 
 const NewTicket = () => {
   const navigate = useNavigate();
-  const [users, setUsers] = useState([]); 
-  const [categories, setCategories] = useState([]); 
+  const { role } = useAuth();
+  const isStaff = role === 'admin' || role === 'technician';
+
+  const [users, setUsers] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [priorities, setPriorities] = useState([]); // Novo estado para prioridades
-  
+  const [projects, setProjects] = useState([]);
+
   const [formData, setFormData] = useState({
     subject: '',
     description: '',
     priority_id: '',
     category_id: '',
-    user_id: '' 
+    user_id: '',
+    type: 'chamado',
+    project_id: ''
   });
 
   useEffect(() => {
@@ -23,28 +31,35 @@ const NewTicket = () => {
     Promise.all([
       apiFetch('/users/').then(res => res.json()),
       apiFetch('/categories/').then(res => res.json()),
-      apiFetch('/priorities/').then(res => res.json()) // Assumindo existência do endpoint
+      apiFetch('/priorities/').then(res => res.json()), // Assumindo existência do endpoint
+      isStaff ? getProjects() : Promise.resolve([]) // Projetos são uso interno da equipe
     ])
-    .then(([userData, categoryData, priorityData]) => {
+    .then(([userData, categoryData, priorityData, projectData]) => {
       setUsers(Array.isArray(userData) ? userData : []);
       setCategories(Array.isArray(categoryData) ? categoryData : []);
       setPriorities(Array.isArray(priorityData) ? priorityData : []);
-      
+      setProjects(Array.isArray(projectData) ? projectData : []);
+
       const loggedUser = JSON.parse(localStorage.getItem('user'));
       if (loggedUser) {
         setFormData(prev => ({ ...prev, user_id: loggedUser.id }));
       }
     })
     .catch(err => console.error("Erro na aquisição de dependências:", err));
-  }, []);
+  }, [isStaff]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      const payload = {
+        ...formData,
+        project_id: formData.project_id ? Number(formData.project_id) : null
+      };
+
       const response = await apiFetch('/tickets/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(payload)
       });
 
       if (response.ok) {
@@ -93,6 +108,40 @@ const NewTicket = () => {
               </select>
             </div>
           </div>
+
+          {isStaff && (
+            <div className="form-row">
+              <div className="form-group">
+                <label>Tipo</label>
+                <div className="input-with-icon">
+                  <ListTodo size={18} />
+                  <select
+                    value={formData.type}
+                    onChange={e => setFormData({ ...formData, type: e.target.value })}
+                  >
+                    <option value="chamado">Chamado</option>
+                    <option value="tarefa">Tarefa</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label>Projeto (opcional)</label>
+                <div className="input-with-icon">
+                  <Briefcase size={18} />
+                  <select
+                    value={formData.project_id}
+                    onChange={e => setFormData({ ...formData, project_id: e.target.value })}
+                  >
+                    <option value="">Sem projeto vinculado</option>
+                    {projects.map(p => (
+                      <option key={p.id} value={p.id}>{p.name}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="form-group">
             <label>Assunto</label>

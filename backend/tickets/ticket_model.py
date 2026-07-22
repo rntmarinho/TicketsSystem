@@ -62,9 +62,11 @@ class TicketModel:
                 priority_id,
                 status,
                 creation,
-                sla
+                sla,
+                project_id,
+                type
             )
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
             RETURNING id
         """, (
             data["subject"],
@@ -73,7 +75,9 @@ class TicketModel:
             data["priority_id"],
             "open",
             data_criacao,
-            prazo_sla
+            prazo_sla,
+            data.get("project_id"),
+            data.get("type", "chamado")
         ))
 
         ticket_id = cursor.fetchone()[0]
@@ -105,7 +109,10 @@ class TicketModel:
                 t.user_id,
                 t.assigned_to,
                 a.name,
-                t.email_message_id
+                t.email_message_id,
+                t.project_id,
+                pr.name,
+                t.type
             FROM tbl_tickets t
             LEFT JOIN tbl_categories c
                 ON c.id = t.category_id
@@ -115,6 +122,8 @@ class TicketModel:
                 ON u.id = t.user_id
             LEFT JOIN tbl_users a
                 ON a.id = t.assigned_to
+            LEFT JOIN tbl_projects pr
+                ON pr.id = t.project_id
             WHERE t.id = %s
         """, (ticket_id,))
         #Atribuição direta do resultado da consulta, garantindo a integridade dos dados retornados e a clareza na manipulação do objeto ticket.
@@ -127,10 +136,12 @@ class TicketModel:
 
     #Método de consulta que recupera a lista completa de chamados, ordenada por data de criação, e enriquecida com as informações correlatas de categoria, prioridade e usuário, proporcionando uma visão abrangente e contextualizada dos registros.
     @staticmethod
-    def get_all(owner_id=None):
+    def get_all(owner_id=None, project_id=None):
         """
         owner_id: quando informado, restringe o resultado aos chamados abertos
         por esse usuário (usado para isolar o papel 'client' aos próprios chamados).
+        project_id: quando informado, restringe aos itens vinculados a esse projeto
+        (usado pelo Kanban ao filtrar por projeto).
         """
         conn = get_db_connection()
         cursor = conn.cursor()
@@ -147,7 +158,10 @@ class TicketModel:
                 u.name,
                 t.user_id,
                 t.assigned_to,
-                a.name
+                a.name,
+                t.project_id,
+                pr.name,
+                t.type
             FROM tbl_tickets t
             LEFT JOIN tbl_categories c
                 ON c.id = t.category_id
@@ -157,12 +171,27 @@ class TicketModel:
                 ON u.id = t.user_id
             LEFT JOIN tbl_users a
                 ON a.id = t.assigned_to
+            LEFT JOIN tbl_projects pr
+                ON pr.id = t.project_id
         """
 
+        conditions = []
+        params = []
+
         if owner_id is not None:
-            cursor.execute(base_query + " WHERE t.user_id = %s ORDER BY t.creation DESC", (owner_id,))
-        else:
-            cursor.execute(base_query + " ORDER BY t.creation DESC")
+            conditions.append("t.user_id = %s")
+            params.append(owner_id)
+
+        if project_id is not None:
+            conditions.append("t.project_id = %s")
+            params.append(project_id)
+
+        if conditions:
+            base_query += " WHERE " + " AND ".join(conditions)
+
+        base_query += " ORDER BY t.creation DESC"
+
+        cursor.execute(base_query, tuple(params))
 
         tickets = cursor.fetchall()
 
