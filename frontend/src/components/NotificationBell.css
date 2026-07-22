@@ -109,6 +109,23 @@
   border-left-color: #3b82f6;
 }
 
+.nb-enable-desktop {
+  width: 100%;
+  padding: 10px 14px;
+  border: none;
+  border-top: 1px solid #e2e8f0;
+  background: #f8fafc;
+  color: #2563eb;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+}
+
+.nb-enable-desktop:hover {
+  background: #eff6ff;
+}
+
 .nb-item-subject {
   font-size: 0.85rem;
   font-weight: 600;

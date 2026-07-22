@@ -16,16 +16,57 @@ const parseDate = (val) => {
   return isNaN(d.getTime()) ? null : d;
 };
 
+// Bip curto via Web Audio API — sem depender de um arquivo de áudio externo.
+const playChime = () => {
+  try {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    const ctx = new Ctx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(880, ctx.currentTime);
+    osc.frequency.setValueAtTime(1108, ctx.currentTime + 0.12);
+
+    gain.gain.setValueAtTime(0.18, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start();
+    osc.stop(ctx.currentTime + 0.35);
+  } catch {
+    // Autoplay bloqueado pelo navegador antes de qualquer interação — ignora.
+  }
+};
+
+const showDesktopNotification = (title, body) => {
+  if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return;
+
+  try {
+    new Notification(title, { body, icon: '/favicon.svg' });
+  } catch {
+    // Alguns navegadores bloqueiam notificação sem Service Worker registrado.
+  }
+};
+
 const NotificationBell = () => {
   const navigate = useNavigate();
   const { user, role } = useAuth();
   const [alerts, setAlerts] = useState([]);
   const [activity, setActivity] = useState([]);
   const [open, setOpen] = useState(false);
+  const [desktopPermission, setDesktopPermission] = useState(
+    typeof Notification !== 'undefined' ? Notification.permission : 'unsupported'
+  );
   const ref = useRef(null);
   const lastSeenRef = useRef(null);
+  const notifiedRef = useRef(null);
 
+  const isStaff = role === 'admin' || role === 'technician';
   const seenKey = user?.id ? `notif_activity_seen_${user.id}` : null;
+  const notifiedKey = user?.id ? `notif_sound_keys_${user.id}` : null;
 
   const getLastSeen = () => {
     if (lastSeenRef.current) return lastSeenRef.current;
@@ -42,10 +83,34 @@ const NotificationBell = () => {
     const agora = new Date();
     lastSeenRef.current = agora;
     if (seenKey) localStorage.setItem(seenKey, agora.toISOString());
-    setActivity([]);
+    // Não limpa `activity` aqui — a lista some naturalmente na próxima
+    // consulta (porque vai ficar mais velha que o novo "visto"). Limpar na
+    // hora faria o dropdown abrir sempre vazio.
   };
 
-  const isStaff = role === 'admin' || role === 'technician';
+  const getNotifiedSet = () => {
+    if (notifiedRef.current) return notifiedRef.current;
+    let stored = [];
+    try {
+      stored = JSON.parse((notifiedKey && localStorage.getItem(notifiedKey)) || '[]');
+    } catch {
+      stored = [];
+    }
+    notifiedRef.current = new Set(stored);
+    return notifiedRef.current;
+  };
+
+  const persistNotifiedSet = (set) => {
+    if (!notifiedKey) return;
+    // Mantém só as últimas entradas — não precisa crescer sem limite.
+    const arr = Array.from(set).slice(-500);
+    localStorage.setItem(notifiedKey, JSON.stringify(arr));
+  };
+
+  const requestDesktopPermission = () => {
+    if (typeof Notification === 'undefined') return;
+    Notification.requestPermission().then(setDesktopPermission);
+  };
 
   const load = () => {
     apiFetch('/tickets/')
@@ -55,9 +120,11 @@ const NotificationBell = () => {
         const agora = new Date();
         const limite = new Date(agora.getTime() + LIMIAR_HORAS * 60 * 60 * 1000);
 
+        let proximos = [];
+
         // Alerta de SLA é informação de operação da equipe — cliente não vê.
         if (isStaff) {
-          const proximos = data
+          proximos = data
             .filter(t => normalizeStatus(t.status) !== 'closed')
             .map(t => ({ ...t, _sla: parseDate(t.sla) }))
             .filter(t => t._sla && t._sla <= limite)
@@ -67,31 +134,61 @@ const NotificationBell = () => {
           setAlerts(proximos);
         }
 
-        if (!seenKey) return;
-        const lastSeen = getLastSeen();
         let novaAtividade = [];
 
-        if (isStaff) {
-          const novosChamados = data
-            .map(t => ({ ...t, _quando: parseDate(t.creation) }))
-            .filter(t => t._quando && t._quando > lastSeen)
-            .map(t => ({ ...t, _tipo: 'novo_chamado' }));
+        if (seenKey) {
+          const lastSeen = getLastSeen();
 
-          const novasRespostas = data
-            .map(t => ({ ...t, _quando: parseDate(t.last_message_at) }))
-            .filter(t => t._quando && t._quando > lastSeen && t.last_message_is_client)
-            .map(t => ({ ...t, _tipo: 'nova_resposta' }));
+          if (isStaff) {
+            const novosChamados = data
+              .map(t => ({ ...t, _quando: parseDate(t.creation) }))
+              .filter(t => t._quando && t._quando > lastSeen)
+              .map(t => ({ ...t, _tipo: 'novo_chamado' }));
 
-          novaAtividade = [...novosChamados, ...novasRespostas];
-        } else if (role === 'client') {
-          novaAtividade = data
-            .map(t => ({ ...t, _quando: parseDate(t.last_message_at) }))
-            .filter(t => t._quando && t._quando > lastSeen && t.last_message_is_client === false)
-            .map(t => ({ ...t, _tipo: 'nova_resposta' }));
+            const novasRespostas = data
+              .map(t => ({ ...t, _quando: parseDate(t.last_message_at) }))
+              .filter(t => t._quando && t._quando > lastSeen && t.last_message_is_client)
+              .map(t => ({ ...t, _tipo: 'nova_resposta' }));
+
+            novaAtividade = [...novosChamados, ...novasRespostas];
+          } else if (role === 'client') {
+            novaAtividade = data
+              .map(t => ({ ...t, _quando: parseDate(t.last_message_at) }))
+              .filter(t => t._quando && t._quando > lastSeen && t.last_message_is_client === false)
+              .map(t => ({ ...t, _tipo: 'nova_resposta' }));
+          }
+
+          novaAtividade.sort((a, b) => b._quando - a._quando);
+          setActivity(novaAtividade);
         }
 
-        novaAtividade.sort((a, b) => b._quando - a._quando);
-        setActivity(novaAtividade);
+        // Som + notificação de desktop só pra itens ainda não notificados
+        // nesta sessão/navegador — evita ficar tocando de novo a cada
+        // consulta (2 em 2 minutos) pro mesmo alerta ainda em aberto.
+        const chaves = [
+          ...proximos.map(a => `sla-${a.id}`),
+          ...novaAtividade.map(a => `${a._tipo}-${a.id}`)
+        ];
+
+        const notificados = getNotifiedSet();
+        const novasChaves = chaves.filter(k => !notificados.has(k));
+
+        if (novasChaves.length > 0) {
+          playChime();
+
+          const primeiroItem = novaAtividade[0] || proximos[0];
+          const titulo = novaAtividade.length > 0
+            ? 'Novo chamado ou resposta'
+            : 'SLA prestes a vencer';
+          const corpo = novasChaves.length === 1 && primeiroItem
+            ? `#${primeiroItem.id} ${primeiroItem.subject}`
+            : `${novasChaves.length} novidade(s) no sistema de chamados.`;
+
+          showDesktopNotification(titulo, corpo);
+        }
+
+        chaves.forEach(k => notificados.add(k));
+        persistNotifiedSet(notificados);
       })
       .catch(() => {});
   };
@@ -179,6 +276,12 @@ const NotificationBell = () => {
                 </button>
               ))}
             </div>
+          )}
+
+          {desktopPermission === 'default' && (
+            <button className="nb-enable-desktop" onClick={requestDesktopPermission}>
+              Ativar notificações no desktop
+            </button>
           )}
         </div>
       )}
