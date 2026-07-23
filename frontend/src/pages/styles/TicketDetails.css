@@ -411,6 +411,14 @@
   margin: 0;
   color: #374151;
   line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.subject-text-view {
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.6;
 }
 
 .sidebar-info .info-group {

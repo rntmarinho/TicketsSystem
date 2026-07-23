@@ -45,6 +45,35 @@ class PriorityController:
         return result, 200
 
     @staticmethod
+    def update_priority(priority_id, data):
+        if not PriorityModel.get_by_id(priority_id):
+            return {"success": False, "message": "Prioridade não encontrada."}, 404
+
+        if "name" not in data or not data["name"].strip():
+            return {
+                "success": False,
+                "message": "Campo 'name' é obrigatório."
+            }, 400
+
+        if "sla" not in data:
+            return {
+                "success": False,
+                "message": "Campo 'sla' (prazo em horas) é obrigatório."
+            }, 400
+
+        try:
+            PriorityModel.update(priority_id, data)
+            return {
+                "success": True,
+                "message": "Prioridade atualizada com sucesso."
+            }, 200
+        except Exception as e:
+            return {
+                "success": False,
+                "message": f"Erro interno ao atualizar prioridade: {str(e)}"
+            }, 500
+
+    @staticmethod
     def delete_priority(priority_id):
         try:
             PriorityModel.delete(priority_id)

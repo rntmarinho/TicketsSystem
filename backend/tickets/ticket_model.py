@@ -69,9 +69,10 @@ class TicketModel:
                 sla,
                 project_id,
                 type,
-                start_date
+                start_date,
+                description
             )
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             RETURNING id
         """, (
             data["subject"],
@@ -83,7 +84,8 @@ class TicketModel:
             prazo_sla,
             data.get("project_id"),
             data.get("type", "chamado"),
-            start_date
+            start_date,
+            data.get("description")
         ))
 
         ticket_id = cursor.fetchone()[0]
@@ -120,7 +122,8 @@ class TicketModel:
                 pr.name,
                 t.type,
                 t.start_date,
-                t.close_time
+                t.close_time,
+                t.description
             FROM tbl_tickets t
             LEFT JOIN tbl_categories c
                 ON c.id = t.category_id
@@ -285,7 +288,7 @@ class TicketModel:
         """Atualiza os campos gerais do chamado (assunto, categoria,
         prioridade, solicitante, projeto) editáveis pela tela de detalhe —
         só altera os campos de fato presentes no payload recebido."""
-        colunas = ("subject", "category_id", "priority_id", "user_id", "project_id")
+        colunas = ("subject", "description", "category_id", "priority_id", "user_id", "project_id")
         presentes = [c for c in colunas if c in data]
 
         if not presentes:

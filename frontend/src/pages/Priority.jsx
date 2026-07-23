@@ -163,7 +163,16 @@ const Priorities = () => {
                 </div>
 
                 <div className="priority-actions">
-                  
+
+                  <button
+                    className="btn-icon"
+                    onClick={() =>
+                      openEditModal(priority)
+                    }
+                  >
+                    <Pencil size={16} />
+                  </button>
+
                   <button
                     className="btn-icon delete"
                     onClick={() =>

@@ -92,7 +92,8 @@ class TicketController:
             "project": ticket[13],
             "type": ticket[14],
             "start_date": ticket[15],
-            "close_time": ticket[16]
+            "close_time": ticket[16],
+            "description": ticket[17]
         }, 200
 
     @staticmethod

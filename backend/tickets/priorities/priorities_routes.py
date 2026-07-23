@@ -26,6 +26,14 @@ def list_priorities():
     return jsonify(response), status
 
 # Configuração — somente admin
+@priority_bp.route("/<int:priority_id>", methods=["PUT"])
+@require_role("admin")
+def update_priority(priority_id):
+    data = request.get_json()
+    response, status = PriorityController.update_priority(priority_id, data)
+    return jsonify(response), status
+
+# Configuração — somente admin
 @priority_bp.route("/<int:priority_id>", methods=["DELETE"])
 @require_role("admin")
 def delete_priority(priority_id):
