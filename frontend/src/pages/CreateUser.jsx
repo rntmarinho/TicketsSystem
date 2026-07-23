@@ -37,18 +37,13 @@ const CreateUser = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    const payload = { 
+    const payload = {
       name: formData.name,
       email: formData.email,
       access_type: formData.access_type,
-      client_id: parseInt(formData.client_id) // Conversão rigorosa para inteiro
+      client_id: parseInt(formData.client_id), // Conversão rigorosa para inteiro
+      password: formData.password
     };
-
-    if (payload.access_type === 'client') {
-      payload.password = 'NO_LOGIN_USER';
-    } else {
-      payload.password = formData.password;
-    }
 
     try {
       const response = await apiFetch('/users/', {
@@ -133,19 +128,17 @@ const CreateUser = () => {
             </div>
           </div>
 
-          {formData.access_type !== 'client' && (
-            <div className="form-row">
-              <div className="form-group" style={{ width: '50%' }}>
-                <label>Senha de Acesso</label>
-                <input 
-                  type="password" 
-                  value={formData.password} 
-                  onChange={e => setFormData({...formData, password: e.target.value})} 
-                  required={formData.access_type !== 'client'} 
-                />
-              </div>
+          <div className="form-row">
+            <div className="form-group" style={{ width: '50%' }}>
+              <label>Senha de Acesso</label>
+              <input
+                type="password"
+                value={formData.password}
+                onChange={e => setFormData({...formData, password: e.target.value})}
+                required
+              />
             </div>
-          )}
+          </div>
 
           <button type="submit" className="btn-submit">
             <UserPlus size={18} /> Cadastrar Usuário
