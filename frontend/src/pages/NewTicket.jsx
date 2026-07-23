@@ -9,7 +9,7 @@ import './styles/NewTicket.css';
 
 const NewTicket = () => {
   const navigate = useNavigate();
-  const { role } = useAuth();
+  const { role, user } = useAuth();
   const isStaff = role === 'admin' || role === 'technician';
 
   const [users, setUsers] = useState([]);
@@ -60,7 +60,9 @@ const NewTicket = () => {
   useEffect(() => {
     // Obtenção simultânea das entidades de domínio
     Promise.all([
-      apiFetch('/users/').then(res => res.json()),
+      // GET /users/ é admin/técnico-only — cliente não tem essa permissão
+      // (e nem precisa: só pode abrir chamado em nome de si mesmo, ver abaixo).
+      isStaff ? apiFetch('/users/').then(res => res.json()) : Promise.resolve([]),
       apiFetch('/categories/').then(res => res.json()),
       apiFetch('/priorities/').then(res => res.json()), // Assumindo existência do endpoint
       isStaff ? getProjects() : Promise.resolve([]) // Projetos são uso interno da equipe
@@ -142,20 +144,27 @@ const NewTicket = () => {
             <label>Identificação do Solicitante</label>
             <div className="input-with-icon">
               <Users size={18} />
-              <select 
-                value={formData.user_id}
-                onChange={e => setFormData({...formData, user_id: Number(e.target.value)})}
-                required
-              >
-                <option value="">Selecione o usuário requisitante...</option>
-                {users
-                  .filter(user => user.situation !== 'I')
-                  .map(user => (
-                    <option key={user.id} value={user.id}>
-                      {user.name || user.nome}
-                    </option>
-                  ))}
-              </select>
+              {isStaff ? (
+                <select
+                  value={formData.user_id}
+                  onChange={e => setFormData({...formData, user_id: Number(e.target.value)})}
+                  required
+                >
+                  <option value="">Selecione o usuário requisitante...</option>
+                  {users
+                    .filter(u => u.situation !== 'I')
+                    .map(u => (
+                      <option key={u.id} value={u.id}>
+                        {u.name || u.nome}
+                      </option>
+                    ))}
+                </select>
+              ) : (
+                // Cliente só abre chamado em nome de si mesmo (reforçado no
+                // backend) — mostra o próprio nome, sem depender de
+                // GET /users/ (que ele não tem permissão de chamar).
+                <input type="text" value={user?.name || ''} disabled />
+              )}
             </div>
           </div>
 
