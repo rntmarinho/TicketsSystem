@@ -58,6 +58,12 @@ def create_app():
         )
     )
 
+    # Nome do parâmetro de querystring aceito como alternativa ao header
+    # Authorization — só vale pras rotas que pedirem explicitamente
+    # locations=["query_string"] (ver download_anexo em anexo_routes.py);
+    # não muda o comportamento padrão do resto da API.
+    app.config["JWT_QUERY_STRING_NAME"] = "token"
+
     jwt = JWTManager(app)
 
     # Blueprints - Registro de todas as rotas da aplicação

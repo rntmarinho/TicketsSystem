@@ -63,9 +63,11 @@ def deletar_anexo(ticket_id, anexo_id):
 
 
 # ── GET /tickets/anexos/download/<nome_arquivo> ──────────────────────────────
-# Serve o arquivo com autenticação JWT (útil se public/ não for servida
-# estaticamente pelo servidor web em produção).
+# Serve o arquivo com autenticação JWT. Como é um link <a href> direto (sem
+# como mandar header Authorization customizado), o token vem via querystring
+# (?token=...) — locations=["query_string"] só vale pra esta rota, não muda
+# o comportamento das demais.
 @anexo_bp.route("/anexos/download/<string:nome_arquivo>", methods=["GET"])
-#@jwt_required()
+@jwt_required(locations=["query_string"])
 def download_anexo(nome_arquivo):
     return send_from_directory(_pasta_anexos(), nome_arquivo, as_attachment=True)
