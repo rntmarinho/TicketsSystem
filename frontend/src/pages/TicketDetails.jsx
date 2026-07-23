@@ -952,14 +952,16 @@ const TicketDetails = () => {
                   Selecionar...
                 </option>
 
-                {users.map(user => (
-                  <option
-                    key={user.id}
-                    value={user.id}
-                  >
-                    {user.name}
-                  </option>
-                ))}
+                {users
+                  .filter(user => user.situation !== 'I' || Number(user.id) === Number(formData.user_id))
+                  .map(user => (
+                    <option
+                      key={user.id}
+                      value={user.id}
+                    >
+                      {user.name}{user.situation === 'I' ? ' [INATIVO]' : ''}
+                    </option>
+                  ))}
               </select>
             )}
 
@@ -991,13 +993,16 @@ const TicketDetails = () => {
                 </option>
 
                 {users
-                  .filter(user => user.access_type === 'admin' || user.access_type === 'technician')
+                  .filter(user =>
+                    (user.access_type === 'admin' || user.access_type === 'technician') &&
+                    (user.situation !== 'I' || Number(user.id) === Number(formData.assigned_to))
+                  )
                   .map(user => (
                     <option
                       key={user.id}
                       value={user.id}
                     >
-                      {user.name}
+                      {user.name}{user.situation === 'I' ? ' [INATIVO]' : ''}
                     </option>
                   ))}
               </select>
@@ -1121,12 +1126,14 @@ const TicketDetails = () => {
                 Nenhum
               </option>
 
-              {projects.map(project => (
+              {projects
+                .filter(project => project.status !== 'archived' || Number(project.id) === Number(formData.project_id))
+                .map(project => (
                 <option
                   key={project.id}
                   value={project.id}
                 >
-                  {project.name}
+                  {project.name}{project.status === 'archived' ? ' [ARQUIVADO]' : ''}
                 </option>
               ))}
             </select>

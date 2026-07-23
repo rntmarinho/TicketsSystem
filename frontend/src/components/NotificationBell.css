@@ -59,6 +59,24 @@
   overflow: hidden;
 }
 
+.nb-clear-all {
+  width: 100%;
+  padding: 9px 14px;
+  border: none;
+  border-bottom: 1px solid #e2e8f0;
+  background: #f8fafc;
+  color: #475569;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+}
+
+.nb-clear-all:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
 .nb-dropdown-head {
   padding: 12px 14px;
   font-weight: 700;

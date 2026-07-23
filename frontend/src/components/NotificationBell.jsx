@@ -135,6 +135,17 @@ const NotificationBell = () => {
     persistDismissedSet(set);
   };
 
+  // Dispensa tudo que está sendo mostrado agora, de uma vez — mesmo
+  // mecanismo do dismissItem individual, só que em lote.
+  const clearAll = () => {
+    const dismissed = getDismissedSet();
+    alerts.forEach(a => dismissed.add(`sla-${a.id}`));
+    activity.forEach(a => dismissed.add(`${a._tipo}-${a.id}`));
+    persistDismissedSet(dismissed);
+    setAlerts([]);
+    setActivity([]);
+  };
+
   const requestDesktopPermission = () => {
     if (typeof Notification === 'undefined') return;
     Notification.requestPermission().then(setDesktopPermission);
@@ -264,6 +275,12 @@ const NotificationBell = () => {
 
       {open && (
         <div className="nb-dropdown">
+          {totalCount > 0 && (
+            <button className="nb-clear-all" onClick={clearAll}>
+              Limpar notificações
+            </button>
+          )}
+
           {isStaff && (
             <>
               <div className="nb-dropdown-head">SLA prestes a vencer / vencido</div>

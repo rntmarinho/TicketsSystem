@@ -1,5 +1,11 @@
 import { apiFetch } from './api';
 
+export const MAX_SIZE_MB = 10;
+export const EXTENSOES_PERMITIDAS = [
+  'pdf', 'png', 'jpg', 'jpeg', 'gif', 'webp', 'doc', 'docx',
+  'xls', 'xlsx', 'txt', 'csv', 'zip', 'rar', '7z', 'mp4', 'mp3'
+];
+
 /** Lista os anexos de um chamado. */
 export async function getAnexos(ticketId) {
   const response = await apiFetch(`/tickets/${ticketId}/anexos`);

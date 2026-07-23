@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Send, ArrowLeft, Info, Users, Tag, AlertCircle, Briefcase, ListTodo } from 'lucide-react';
+import { Send, ArrowLeft, Info, Users, Tag, AlertCircle, Briefcase, ListTodo, Paperclip, Upload, X } from 'lucide-react';
 import { apiFetch } from '../services/api';
 import { getProjects } from '../services/projectService';
+import { uploadAnexo, formatBytes, MAX_SIZE_MB, EXTENSOES_PERMITIDAS } from '../services/anexoService';
 import { useAuth } from '../context/AuthContext';
 import './styles/NewTicket.css';
 
@@ -25,6 +26,36 @@ const NewTicket = () => {
     type: 'chamado',
     project_id: ''
   });
+
+  const [files, setFiles] = useState([]);
+  const [submitting, setSubmitting] = useState(false);
+  const fileInputRef = useRef(null);
+
+  const adicionarArquivos = (lista) => {
+    const validos = [];
+    const invalidos = [];
+
+    Array.from(lista).forEach(f => {
+      const ext = f.name.split('.').pop()?.toLowerCase();
+      const extOk = EXTENSOES_PERMITIDAS.includes(ext);
+      const tamanhoOk = f.size <= MAX_SIZE_MB * 1024 * 1024;
+
+      if (extOk && tamanhoOk) validos.push(f);
+      else invalidos.push(f.name);
+    });
+
+    if (invalidos.length) {
+      alert(
+        `Arquivo(s) rejeitado(s) — extensão inválida ou tamanho > ${MAX_SIZE_MB} MB:\n` +
+        invalidos.join('\n')
+      );
+    }
+    if (validos.length) setFiles(prev => [...prev, ...validos]);
+  };
+
+  const removerArquivo = (index) => {
+    setFiles(prev => prev.filter((_, i) => i !== index));
+  };
 
   useEffect(() => {
     // Obtenção simultânea das entidades de domínio
@@ -50,6 +81,8 @@ const NewTicket = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setSubmitting(true);
+
     try {
       const payload = {
         ...formData,
@@ -62,15 +95,30 @@ const NewTicket = () => {
         body: JSON.stringify(payload)
       });
 
-      if (response.ok) {
-        alert("Chamado processado e registrado com êxito!");
-        navigate('/');
-      } else {
+      if (!response.ok) {
         const error = await response.json();
         alert("Falha operacional: " + error.message);
+        return;
       }
+
+      const result = await response.json();
+
+      if (files.length > 0) {
+        const resultados = await Promise.allSettled(
+          files.map(f => uploadAnexo(result.ticket_id, f))
+        );
+        const falhas = resultados.filter(r => r.status === 'rejected').length;
+        if (falhas > 0) {
+          alert(`Chamado criado, mas ${falhas} de ${files.length} anexo(s) não puderam ser enviados. Você pode anexá-los novamente na tela do chamado.`);
+        }
+      }
+
+      alert("Chamado processado e registrado com êxito!");
+      navigate('/');
     } catch (err) {
       alert("Anomalia na comunicação com o servidor.");
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -100,11 +148,13 @@ const NewTicket = () => {
                 required
               >
                 <option value="">Selecione o usuário requisitante...</option>
-                {users.map(user => (
-                  <option key={user.id} value={user.id}>
-                    {user.name || user.nome} 
-                  </option>
-                ))}
+                {users
+                  .filter(user => user.situation !== 'I')
+                  .map(user => (
+                    <option key={user.id} value={user.id}>
+                      {user.name || user.nome}
+                    </option>
+                  ))}
               </select>
             </div>
           </div>
@@ -134,9 +184,11 @@ const NewTicket = () => {
                     onChange={e => setFormData({ ...formData, project_id: e.target.value })}
                   >
                     <option value="">Sem projeto vinculado</option>
-                    {projects.map(p => (
-                      <option key={p.id} value={p.id}>{p.name}</option>
-                    ))}
+                    {projects
+                      .filter(p => p.status !== 'archived')
+                      .map(p => (
+                        <option key={p.id} value={p.id}>{p.name}</option>
+                      ))}
                   </select>
                 </div>
               </div>
@@ -204,7 +256,7 @@ const NewTicket = () => {
 
           <div className="form-group">
             <label>Descritivo Técnico</label>
-            <textarea 
+            <textarea
               rows="4"
               value={formData.description}
               onChange={e => setFormData({...formData, description: e.target.value})}
@@ -212,8 +264,47 @@ const NewTicket = () => {
             ></textarea>
           </div>
 
-          <button type="submit" className="btn-submit">
-            <Send size={18} /> Submeter Chamado
+          <div className="form-group">
+            <label>Anexos (opcional)</label>
+            <div
+              className="new-ticket-dropzone"
+              onClick={() => fileInputRef.current?.click()}
+              onDragOver={e => e.preventDefault()}
+              onDrop={e => { e.preventDefault(); adicionarArquivos(e.dataTransfer.files); }}
+            >
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                accept={EXTENSOES_PERMITIDAS.map(ext => `.${ext}`).join(',')}
+                style={{ display: 'none' }}
+                onChange={e => { adicionarArquivos(e.target.files); e.target.value = ''; }}
+              />
+              <Upload size={22} />
+              <span>Arraste arquivos ou <strong>clique para selecionar</strong></span>
+              <span className="new-ticket-dropzone-hint">
+                Máx. {MAX_SIZE_MB} MB &bull; {EXTENSOES_PERMITIDAS.join(', ')}
+              </span>
+            </div>
+
+            {files.length > 0 && (
+              <ul className="new-ticket-file-list">
+                {files.map((f, i) => (
+                  <li key={`${f.name}-${i}`}>
+                    <Paperclip size={14} />
+                    <span className="new-ticket-file-name">{f.name}</span>
+                    <span className="new-ticket-file-size">{formatBytes(f.size)}</span>
+                    <button type="button" onClick={() => removerArquivo(i)} aria-label="Remover">
+                      <X size={14} />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
+          <button type="submit" className="btn-submit" disabled={submitting}>
+            <Send size={18} /> {submitting ? 'Enviando...' : 'Submeter Chamado'}
           </button>
         </form>
       </div>

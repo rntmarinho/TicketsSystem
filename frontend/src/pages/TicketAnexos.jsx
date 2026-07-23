@@ -6,13 +6,10 @@ import {
 } from 'lucide-react';
 import {
   getAnexos, uploadAnexo, deleteAnexo,
-  getDownloadUrl, formatBytes, getFileIcon
+  getDownloadUrl, formatBytes, getFileIcon,
+  MAX_SIZE_MB, EXTENSOES_PERMITIDAS as EXTENSOES
 } from '../services/anexoService';
 import './styles/TicketAnexos.css';
-
-const MAX_SIZE_MB = 10;
-const EXTENSOES = ['pdf','png','jpg','jpeg','gif','webp','doc','docx',
-                   'xls','xlsx','txt','csv','zip','rar','7z','mp4','mp3'];
 
 /* ── Miniatura de imagem ──────────────────────────────────────────────── */
 const ImageThumb = ({ url, nome }) => {

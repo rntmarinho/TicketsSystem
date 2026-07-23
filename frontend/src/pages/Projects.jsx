@@ -142,9 +142,11 @@ const Projects = () => {
             onChange={e => setFormData({ ...formData, owner_id: e.target.value })}
           >
             <option value="">Sem dono definido</option>
-            {staff.map(u => (
-              <option key={u.id} value={u.id}>{u.name}</option>
-            ))}
+            {staff
+              .filter(u => u.situation !== 'I' || Number(u.id) === Number(formData.owner_id))
+              .map(u => (
+                <option key={u.id} value={u.id}>{u.name}</option>
+              ))}
           </select>
           <button type="submit" disabled={saving}>
             {saving ? 'Salvando...' : 'Criar'}

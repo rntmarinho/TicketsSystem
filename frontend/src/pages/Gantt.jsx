@@ -101,9 +101,11 @@ const Gantt = () => {
           onChange={e => (e.target.value ? setSearchParams({ project: e.target.value }) : setSearchParams({}))}
         >
           <option value="">Todos os projetos</option>
-          {projects.map(p => (
-            <option key={p.id} value={p.id}>{p.name}</option>
-          ))}
+          {projects
+            .filter(p => p.status !== 'archived' || String(p.id) === projectFilter)
+            .map(p => (
+              <option key={p.id} value={p.id}>{p.name}</option>
+            ))}
         </select>
 
         {error && <div className="gantt-error">{error}</div>}

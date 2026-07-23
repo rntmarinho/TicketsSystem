@@ -126,9 +126,11 @@ const Kanban = () => {
           onChange={e => handleProjectChange(e.target.value)}
         >
           <option value="">Todos os projetos</option>
-          {projects.map(p => (
-            <option key={p.id} value={p.id}>{p.name}</option>
-          ))}
+          {projects
+            .filter(p => p.status !== 'archived' || String(p.id) === projectFilter)
+            .map(p => (
+              <option key={p.id} value={p.id}>{p.name}</option>
+            ))}
         </select>
 
         {error && <div className="kanban-error">{error}</div>}
@@ -192,9 +194,11 @@ const Kanban = () => {
                       onClick={e => e.stopPropagation()}
                     >
                       <option value="">Sem responsável</option>
-                      {staff.map(s => (
-                        <option key={s.id} value={s.id}>{s.name}</option>
-                      ))}
+                      {staff
+                        .filter(s => s.situation !== 'I' || Number(s.id) === Number(ticket.assigned_to))
+                        .map(s => (
+                          <option key={s.id} value={s.id}>{s.name}</option>
+                        ))}
                     </select>
                   </div>
                 );
