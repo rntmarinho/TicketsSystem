@@ -70,9 +70,10 @@ class TicketModel:
                 project_id,
                 type,
                 start_date,
-                description
+                description,
+                assigned_to
             )
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             RETURNING id
         """, (
             data["subject"],
@@ -85,7 +86,8 @@ class TicketModel:
             data.get("project_id"),
             data.get("type", "chamado"),
             start_date,
-            data.get("description")
+            data.get("description"),
+            data.get("assigned_to")
         ))
 
         ticket_id = cursor.fetchone()[0]

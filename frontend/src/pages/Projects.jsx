@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Briefcase, Plus, Archive, RotateCcw, ListTodo, BarChart3, LayoutGrid } from 'lucide-react';
+import { Briefcase, Plus, Archive, RotateCcw, ListTodo, BarChart3, LayoutGrid, X } from 'lucide-react';
 import { apiFetch } from '../services/api';
 import { getProjects, createProject, setProjectStatus } from '../services/projectService';
-import { getTickets, updateStatus, updateAssignee, updateTicket } from '../services/ticketService';
+import { getTickets, updateStatus, updateAssignee, updateTicket, createTicket } from '../services/ticketService';
 import { getPriorities } from '../services/priorityService';
+import { getCategories } from '../services/categoryService';
 import { STATUS_OPTIONS, normalizeStatus } from '../constants/ticketStatus';
 import { useAuth } from '../context/AuthContext';
 import './styles/Projects.css';
@@ -39,8 +40,10 @@ const TABS = [
   { key: 'relatorios', label: 'Relatórios', icon: BarChart3 },
 ];
 
+const emptyTaskForm = { project_id: '', subject: '', category_id: '', priority_id: '', assigned_to: '' };
+
 const Projects = () => {
-  const { role } = useAuth();
+  const { role, user } = useAuth();
   const isAdmin = role === 'admin';
   const canEditTasks = role === 'admin' || role === 'technician';
 
@@ -50,26 +53,32 @@ const Projects = () => {
   const [tickets, setTickets] = useState([]);
   const [staff, setStaff] = useState([]);
   const [priorities, setPriorities] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
 
   const [taskProjectFilter, setTaskProjectFilter] = useState('');
+  const [showTaskForm, setShowTaskForm] = useState(false);
+  const [taskFormData, setTaskFormData] = useState(emptyTaskForm);
+  const [savingTask, setSavingTask] = useState(false);
 
   const loadData = async () => {
     try {
-      const [projectData, ticketData, userData, priorityData] = await Promise.all([
+      const [projectData, ticketData, userData, priorityData, categoryData] = await Promise.all([
         getProjects(),
         getTickets(),
         apiFetch('/users/').then(r => r.json()).catch(() => []),
-        getPriorities().catch(() => [])
+        getPriorities().catch(() => []),
+        getCategories().catch(() => [])
       ]);
       setProjects(Array.isArray(projectData) ? projectData : []);
       setTickets(Array.isArray(ticketData) ? ticketData : []);
       const users = Array.isArray(userData) ? userData : [];
       setStaff(users.filter(u => u.access_type === 'admin' || u.access_type === 'technician'));
       setPriorities(Array.isArray(priorityData) ? priorityData : []);
+      setCategories(Array.isArray(categoryData) ? categoryData : []);
     } catch {
       // silencioso — página segue com listas vazias
     } finally {
@@ -168,6 +177,47 @@ const Projects = () => {
   const handleTaskDeadline = async (taskId, value) => {
     await updateTicket(taskId, { sla: value || null });
     loadData();
+  };
+
+  const handleTaskDone = async (taskId, done) => {
+    await updateStatus(taskId, done ? 'closed' : 'open');
+    loadData();
+  };
+
+  const openTaskForm = () => {
+    setTaskFormData({ ...emptyTaskForm, project_id: taskProjectFilter || '' });
+    setShowTaskForm(true);
+  };
+
+  const closeTaskForm = () => {
+    setShowTaskForm(false);
+    setTaskFormData(emptyTaskForm);
+  };
+
+  const handleCreateTask = async (e) => {
+    e.preventDefault();
+    if (!taskFormData.project_id || !taskFormData.subject.trim() || !taskFormData.category_id || !taskFormData.priority_id) return;
+
+    setSavingTask(true);
+    try {
+      const response = await createTicket({
+        subject: taskFormData.subject.trim(),
+        category_id: Number(taskFormData.category_id),
+        priority_id: Number(taskFormData.priority_id),
+        user_id: Number(user?.id),
+        project_id: Number(taskFormData.project_id),
+        assigned_to: taskFormData.assigned_to ? Number(taskFormData.assigned_to) : null,
+        type: 'tarefa'
+      });
+      if (response.success === false) {
+        alert(response.message || 'Erro ao criar tarefa.');
+        return;
+      }
+      closeTaskForm();
+      loadData();
+    } finally {
+      setSavingTask(false);
+    }
   };
 
   if (loading) return <div className="projects-loading">Carregando projetos...</div>;
@@ -324,6 +374,12 @@ const Projects = () => {
                 <option key={p.id} value={p.id}>{p.name}</option>
               ))}
             </select>
+
+            {canEditTasks && (
+              <button type="button" className="projects-btn-new" onClick={openTaskForm}>
+                <Plus size={16} /> Nova Tarefa
+              </button>
+            )}
           </div>
 
           {tarefas.length === 0 ? (
@@ -333,6 +389,7 @@ const Projects = () => {
               <table className="tasks-table">
                 <thead>
                   <tr>
+                    <th>Concluída</th>
                     <th>Projeto</th>
                     <th>Tarefa</th>
                     <th>Tag</th>
@@ -345,11 +402,23 @@ const Projects = () => {
                 <tbody>
                   {tarefas.map(t => {
                     const vencida = t._prazo && t._prazo < new Date() && normalizeStatus(t.status) !== 'closed';
+                    const concluida = normalizeStatus(t.status) === 'closed';
                     return (
                       <tr key={t.id}>
+                        <td>
+                          <input
+                            type="checkbox"
+                            checked={concluida}
+                            disabled={!canEditTasks}
+                            onChange={e => handleTaskDone(t.id, e.target.checked)}
+                          />
+                        </td>
                         <td>{t.project || '—'}</td>
                         <td>
-                          <Link to={`/tickets/${t.id}`} className="task-subject-link">
+                          <Link
+                            to={`/tickets/${t.id}`}
+                            className={`task-subject-link ${concluida ? 'task-subject-link--done' : ''}`}
+                          >
                             #{t.id} {t.subject}
                           </Link>
                         </td>
@@ -438,10 +507,12 @@ const Projects = () => {
                     <th>Projeto</th>
                     <th>Chamados abertos</th>
                     <th>Chamados fechados</th>
-                    <th>Tempo médio (chamados)</th>
+                    <th>% concluído</th>
+                    <th>Tempo médio</th>
                     <th>Tarefas abertas</th>
                     <th>Tarefas fechadas</th>
-                    <th>Tempo médio (tarefas)</th>
+                    <th>% concluído</th>
+                    <th>Tempo médio</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -451,23 +522,153 @@ const Projects = () => {
                     const tarefa = c?.tarefa || { open: 0, closed: 0, somaDuracaoHoras: 0, qtdComDuracao: 0 };
                     const mediaChamado = chamado.qtdComDuracao > 0 ? chamado.somaDuracaoHoras / chamado.qtdComDuracao : null;
                     const mediaTarefa = tarefa.qtdComDuracao > 0 ? tarefa.somaDuracaoHoras / tarefa.qtdComDuracao : null;
+                    const pctChamado = (chamado.open + chamado.closed) > 0 ? Math.round((chamado.closed / (chamado.open + chamado.closed)) * 100) : 0;
+                    const pctTarefa = (tarefa.open + tarefa.closed) > 0 ? Math.round((tarefa.closed / (tarefa.open + tarefa.closed)) * 100) : 0;
 
                     return (
                       <tr key={project.id}>
                         <td>{project.name}</td>
                         <td>{chamado.open}</td>
                         <td>{chamado.closed}</td>
+                        <td>{pctChamado}%</td>
                         <td>{fmtDuracao(mediaChamado)}</td>
                         <td>{tarefa.open}</td>
                         <td>{tarefa.closed}</td>
+                        <td>{pctTarefa}%</td>
                         <td>{fmtDuracao(mediaTarefa)}</td>
                       </tr>
                     );
                   })}
                 </tbody>
+                <tfoot>
+                  {(() => {
+                    const totalChamado = { open: 0, closed: 0, somaDuracaoHoras: 0, qtdComDuracao: 0 };
+                    const totalTarefa = { open: 0, closed: 0, somaDuracaoHoras: 0, qtdComDuracao: 0 };
+                    Object.values(counts).forEach(c => {
+                      totalChamado.open += c.chamado.open;
+                      totalChamado.closed += c.chamado.closed;
+                      totalChamado.somaDuracaoHoras += c.chamado.somaDuracaoHoras;
+                      totalChamado.qtdComDuracao += c.chamado.qtdComDuracao;
+                      totalTarefa.open += c.tarefa.open;
+                      totalTarefa.closed += c.tarefa.closed;
+                      totalTarefa.somaDuracaoHoras += c.tarefa.somaDuracaoHoras;
+                      totalTarefa.qtdComDuracao += c.tarefa.qtdComDuracao;
+                    });
+                    const pctChamado = (totalChamado.open + totalChamado.closed) > 0
+                      ? Math.round((totalChamado.closed / (totalChamado.open + totalChamado.closed)) * 100) : 0;
+                    const pctTarefa = (totalTarefa.open + totalTarefa.closed) > 0
+                      ? Math.round((totalTarefa.closed / (totalTarefa.open + totalTarefa.closed)) * 100) : 0;
+                    const mediaChamado = totalChamado.qtdComDuracao > 0 ? totalChamado.somaDuracaoHoras / totalChamado.qtdComDuracao : null;
+                    const mediaTarefa = totalTarefa.qtdComDuracao > 0 ? totalTarefa.somaDuracaoHoras / totalTarefa.qtdComDuracao : null;
+
+                    return (
+                      <tr className="reports-table-total">
+                        <td>Total</td>
+                        <td>{totalChamado.open}</td>
+                        <td>{totalChamado.closed}</td>
+                        <td>{pctChamado}%</td>
+                        <td>{fmtDuracao(mediaChamado)}</td>
+                        <td>{totalTarefa.open}</td>
+                        <td>{totalTarefa.closed}</td>
+                        <td>{pctTarefa}%</td>
+                        <td>{fmtDuracao(mediaTarefa)}</td>
+                      </tr>
+                    );
+                  })()}
+                </tfoot>
               </table>
             </div>
           )}
+        </div>
+      )}
+
+      {showTaskForm && (
+        <div className="modal-overlay" onClick={closeTaskForm}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <div>
+                <h2>Nova Tarefa</h2>
+                <p>Cria uma tarefa interna vinculada a um projeto.</p>
+              </div>
+              <button className="btn-close" onClick={closeTaskForm}><X size={20} /></button>
+            </div>
+
+            <form className="modal-form" onSubmit={handleCreateTask}>
+              <div className="form-group">
+                <label>Projeto</label>
+                <select
+                  value={taskFormData.project_id}
+                  onChange={e => setTaskFormData({ ...taskFormData, project_id: e.target.value })}
+                  required
+                >
+                  <option value="" disabled>Selecione um projeto...</option>
+                  {projects
+                    .filter(p => p.status !== 'archived')
+                    .map(p => (
+                      <option key={p.id} value={p.id}>{p.name}</option>
+                    ))}
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label>Assunto</label>
+                <input
+                  type="text"
+                  value={taskFormData.subject}
+                  onChange={e => setTaskFormData({ ...taskFormData, subject: e.target.value })}
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Categoria</label>
+                <select
+                  value={taskFormData.category_id}
+                  onChange={e => setTaskFormData({ ...taskFormData, category_id: e.target.value })}
+                  required
+                >
+                  <option value="" disabled>Selecione uma categoria...</option>
+                  {categories.map(c => (
+                    <option key={c.id} value={c.id}>{c.name || c.nome}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label>Prioridade</label>
+                <select
+                  value={taskFormData.priority_id}
+                  onChange={e => setTaskFormData({ ...taskFormData, priority_id: e.target.value })}
+                  required
+                >
+                  <option value="" disabled>Selecione a prioridade...</option>
+                  {priorities.map(p => (
+                    <option key={p.id} value={p.id}>{p.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label>Responsável (opcional)</label>
+                <select
+                  value={taskFormData.assigned_to}
+                  onChange={e => setTaskFormData({ ...taskFormData, assigned_to: e.target.value })}
+                >
+                  <option value="">Sem responsável</option>
+                  {staff.filter(u => u.situation !== 'I').map(u => (
+                    <option key={u.id} value={u.id}>{u.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="modal-actions">
+                <button type="button" className="btn-cancel" onClick={closeTaskForm}>Cancelar</button>
+                <button type="submit" className="btn-save" disabled={savingTask}>
+                  {savingTask ? 'Criando...' : 'Criar Tarefa'}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </div>
