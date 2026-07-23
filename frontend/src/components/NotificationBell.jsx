@@ -63,10 +63,12 @@ const NotificationBell = () => {
   const ref = useRef(null);
   const lastSeenRef = useRef(null);
   const notifiedRef = useRef(null);
+  const dismissedRef = useRef(null);
 
   const isStaff = role === 'admin' || role === 'technician';
   const seenKey = user?.id ? `notif_activity_seen_${user.id}` : null;
   const notifiedKey = user?.id ? `notif_sound_keys_${user.id}` : null;
+  const dismissedKey = user?.id ? `notif_dismissed_${user.id}` : null;
 
   const getLastSeen = () => {
     if (lastSeenRef.current) return lastSeenRef.current;
@@ -107,6 +109,32 @@ const NotificationBell = () => {
     localStorage.setItem(notifiedKey, JSON.stringify(arr));
   };
 
+  const getDismissedSet = () => {
+    if (dismissedRef.current) return dismissedRef.current;
+    let stored = [];
+    try {
+      stored = JSON.parse((dismissedKey && localStorage.getItem(dismissedKey)) || '[]');
+    } catch {
+      stored = [];
+    }
+    dismissedRef.current = new Set(stored);
+    return dismissedRef.current;
+  };
+
+  const persistDismissedSet = (set) => {
+    if (!dismissedKey) return;
+    const arr = Array.from(set).slice(-500);
+    localStorage.setItem(dismissedKey, JSON.stringify(arr));
+  };
+
+  // Some da lista só pra este usuário (localStorage) — não afeta o chamado
+  // nem a visão de outros usuários, é só um "já vi isso" pessoal.
+  const dismissItem = (key) => {
+    const set = getDismissedSet();
+    set.add(key);
+    persistDismissedSet(set);
+  };
+
   const requestDesktopPermission = () => {
     if (typeof Notification === 'undefined') return;
     Notification.requestPermission().then(setDesktopPermission);
@@ -120,6 +148,8 @@ const NotificationBell = () => {
         const agora = new Date();
         const limite = new Date(agora.getTime() + LIMIAR_HORAS * 60 * 60 * 1000);
 
+        const dismissed = getDismissedSet();
+
         let proximos = [];
 
         // Alerta de SLA é informação de operação da equipe — cliente não vê.
@@ -129,6 +159,7 @@ const NotificationBell = () => {
             .map(t => ({ ...t, _sla: parseDate(t.sla) }))
             .filter(t => t._sla && t._sla <= limite)
             .map(t => ({ ...t, _vencido: t._sla < agora }))
+            .filter(t => !dismissed.has(`sla-${t.id}`))
             .sort((a, b) => a._sla - b._sla);
 
           setAlerts(proximos);
@@ -158,6 +189,7 @@ const NotificationBell = () => {
               .map(t => ({ ...t, _tipo: 'nova_resposta' }));
           }
 
+          novaAtividade = novaAtividade.filter(t => !dismissed.has(`${t._tipo}-${t.id}`));
           novaAtividade.sort((a, b) => b._quando - a._quando);
           setActivity(novaAtividade);
         }
@@ -243,7 +275,12 @@ const NotificationBell = () => {
                     <button
                       key={`sla-${a.id}`}
                       className={`nb-item ${a._vencido ? 'nb-item--critical' : 'nb-item--warning'}`}
-                      onClick={() => { setOpen(false); navigate(`/tickets/${a.id}`); }}
+                      onClick={() => {
+                        dismissItem(`sla-${a.id}`);
+                        setAlerts(prev => prev.filter(x => x.id !== a.id));
+                        setOpen(false);
+                        navigate(`/tickets/${a.id}`);
+                      }}
                     >
                       <span className="nb-item-subject">#{a.id} {a.subject}</span>
                       <span className="nb-item-sla">
@@ -266,7 +303,12 @@ const NotificationBell = () => {
                 <button
                   key={`act-${a._tipo}-${a.id}`}
                   className="nb-item nb-item--info"
-                  onClick={() => { setOpen(false); navigate(`/tickets/${a.id}`); }}
+                  onClick={() => {
+                    dismissItem(`${a._tipo}-${a.id}`);
+                    setActivity(prev => prev.filter(x => !(x.id === a.id && x._tipo === a._tipo)));
+                    setOpen(false);
+                    navigate(`/tickets/${a.id}`);
+                  }}
                 >
                   <span className="nb-item-subject">#{a.id} {a.subject}</span>
                   <span className="nb-item-sla">
