@@ -98,7 +98,29 @@ class TicketController:
 
     @staticmethod
     def update_status(ticket_id, status):
+        ticket = TicketModel.get_by_id(ticket_id)
+        status_anterior = ticket[2] if ticket else None
+
         TicketModel.update_status(ticket_id, status)
+
+        # Só notifica o solicitante se o status de fato mudou — este método é
+        # chamado tanto pelo Kanban (PUT /tickets/<id>/status) quanto pelo
+        # "Salvar alterações" da tela de detalhe (que reenvia o status atual
+        # mesmo quando só outro campo foi editado).
+        if ticket and status_anterior != status:
+            from services.email_service import send_status_change_email
+
+            send_status_change_email(
+                {
+                    "id": ticket[0],
+                    "subject": ticket[1],
+                    "user_id": ticket[8],
+                    "email_message_id": ticket[11],
+                },
+                status_anterior,
+                status
+            )
+
         return {
             "success": True,
             "message": "Estado do chamado devidamente atualizado."
@@ -191,7 +213,7 @@ class TicketController:
         # Se os dados contiverem campos isolados, você pode optar por atualizar tudo
         # de forma dinâmica. Abaixo atualizamos o status e delegamos os demais dados.
         if "status" in data:
-            TicketModel.update_status(ticket_id, data["status"])
+            TicketController.update_status(ticket_id, data["status"])
 
         if "assigned_to" in data:
             TicketModel.update_assignee(ticket_id, data["assigned_to"])

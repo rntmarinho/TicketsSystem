@@ -186,6 +186,119 @@ Mensagem:
         logging.error(f"Erro ao enviar e-mail: {e}")
 
 
+STATUS_LABELS = {
+    "open": "Aberto",
+    "in_progress": "Em Atendimento",
+    "pending": "Pendente",
+    "closed": "Fechado",
+}
+
+
+def _status_label(status):
+    return STATUS_LABELS.get(status, status or "Desconhecido")
+
+
+# ─── Notificação de mudança de status ────────────────────────────────────────
+
+def send_status_change_email(ticket, status_anterior, status_novo):
+    """Avisa o solicitante do chamado por e-mail quando o status muda
+    (aberto pela tela ou pelo Kanban) — mesmo padrão de send_email_notification."""
+    try:
+        cfg = get_email_settings()
+    except RuntimeError as e:
+        logging.warning(str(e))
+        return
+
+    smtp_host = cfg["smtp_host"]
+    smtp_port = cfg["smtp_port"]
+    smtp_user = cfg["email_user"]
+    smtp_pass = cfg["email_password"]
+
+    if not smtp_user or not smtp_pass:
+        logging.warning("SMTP não configurado.")
+        return
+
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            SELECT email
+            FROM tbl_users
+            WHERE id = %s
+        """, (ticket["user_id"],))
+
+        row = cursor.fetchone()
+        cursor.close()
+        conn.close()
+
+        if not row:
+            return
+
+        destinatario = row[0]
+        label_anterior = _status_label(status_anterior)
+        label_novo = _status_label(status_novo)
+
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = (
+            f"[Chamado #{ticket['id']}] "
+            f"{ticket['subject']} — {label_novo}"
+        )
+        msg["From"] = smtp_user
+        msg["To"] = destinatario
+
+        novo_message_id = make_msgid()
+        msg["Message-ID"] = novo_message_id
+
+        anchor = ticket.get("email_message_id")
+        if anchor:
+            msg["In-Reply-To"] = anchor
+            msg["References"] = anchor
+
+        texto = f"""
+Chamado: #{ticket['id']}
+Assunto: {ticket['subject']}
+
+O status do seu chamado mudou de "{label_anterior}" para "{label_novo}".
+"""
+
+        html = f"""
+        <html>
+        <body>
+            <h2>Chamado #{ticket['id']}</h2>
+
+            <p>
+                <strong>Assunto:</strong>
+                {ticket['subject']}
+            </p>
+
+            <hr>
+
+            <p>
+                O status do seu chamado mudou de
+                <strong>{label_anterior}</strong> para
+                <strong>{label_novo}</strong>.
+            </p>
+        </body>
+        </html>
+        """
+
+        msg.attach(MIMEText(texto, "plain"))
+        msg.attach(MIMEText(html, "html"))
+
+        with smtplib.SMTP(smtp_host, smtp_port) as server:
+            server.starttls()
+            server.login(smtp_user, smtp_pass)
+            server.sendmail(smtp_user, destinatario, msg.as_string())
+
+        TicketModel.set_email_message_id(ticket["id"], novo_message_id)
+
+        logging.info(f"E-mail de mudança de status enviado para {destinatario}")
+
+    except Exception as e:
+        logging.error(f"Erro ao enviar e-mail de mudança de status: {e}")
+
+
 # ─── Processamento IMAP ───────────────────────────────────────────────────────
 
 def processar_emails_imap():
