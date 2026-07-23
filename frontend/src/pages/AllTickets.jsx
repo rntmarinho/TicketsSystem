@@ -60,7 +60,9 @@ const AllTickets = () => {
   const [sortBy, setSortBy]   = useState('creation_desc'); 
 
   useEffect(() => {
-    apiFetch('/tickets/')
+    // ?type=chamado — tarefa interna de projeto não entra na lista de
+    // chamados de suporte (aparece em Kanban/Gantt/Calendário/Projetos).
+    apiFetch('/tickets/?type=chamado')
       .then(r => r.json())
       .then(data => { setTickets(Array.isArray(data) ? data : []); setLoading(false); })
       .catch(() => setLoading(false));

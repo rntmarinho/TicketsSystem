@@ -134,6 +134,16 @@
   white-space: nowrap;
 }
 
+.cal-item-tag {
+  margin-left: 4px;
+  font-size: 0.62rem;
+  font-weight: 600;
+  color: #7c3aed;
+  background: #ede9fe;
+  padding: 0 4px;
+  border-radius: 999px;
+}
+
 .cal-item-more {
   font-size: 0.65rem;
   color: #94a3b8;

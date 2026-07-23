@@ -25,6 +25,7 @@ const CalendarView = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const projectFilter = searchParams.get('project') || '';
+  const typeFilter = searchParams.get('type') || '';
 
   const [cursor, setCursor] = useState(() => {
     const d = new Date();
@@ -37,7 +38,11 @@ const CalendarView = () => {
 
   useEffect(() => {
     setLoading(true);
-    const endpoint = projectFilter ? `/tickets/?project_id=${projectFilter}` : '/tickets/';
+    const params = new URLSearchParams();
+    if (projectFilter) params.set('project_id', projectFilter);
+    if (typeFilter) params.set('type', typeFilter);
+    const qs = params.toString();
+    const endpoint = qs ? `/tickets/?${qs}` : '/tickets/';
 
     Promise.all([
       apiFetch(endpoint).then(r => r.json()),
@@ -49,7 +54,14 @@ const CalendarView = () => {
         setLoading(false);
       })
       .catch(() => setLoading(false));
-  }, [projectFilter]);
+  }, [projectFilter, typeFilter]);
+
+  const updateParam = (key, value) => {
+    const next = new URLSearchParams(searchParams);
+    if (value) next.set(key, value);
+    else next.delete(key);
+    setSearchParams(next);
+  };
 
   const itemsByDay = useMemo(() => {
     const map = {};
@@ -95,7 +107,7 @@ const CalendarView = () => {
         <select
           className="cal-project-select"
           value={projectFilter}
-          onChange={e => (e.target.value ? setSearchParams({ project: e.target.value }) : setSearchParams({}))}
+          onChange={e => updateParam('project', e.target.value)}
         >
           <option value="">Todos os projetos</option>
           {projects
@@ -103,6 +115,16 @@ const CalendarView = () => {
             .map(p => (
             <option key={p.id} value={p.id}>{p.name}</option>
           ))}
+        </select>
+
+        <select
+          className="cal-project-select"
+          value={typeFilter}
+          onChange={e => updateParam('type', e.target.value)}
+        >
+          <option value="">Chamados e tarefas</option>
+          <option value="chamado">Só chamados</option>
+          <option value="tarefa">Só tarefas</option>
         </select>
 
         <div className="cal-nav">
@@ -144,6 +166,7 @@ const CalendarView = () => {
                       onClick={() => navigate(`/tickets/${item.id}`)}
                     >
                       #{item.id} {item.subject}
+                      {item.type === 'tarefa' && <span className="cal-item-tag">Tarefa</span>}
                     </div>
                   );
                 })}

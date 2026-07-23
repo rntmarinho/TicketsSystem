@@ -28,6 +28,7 @@ const Gantt = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const projectFilter = searchParams.get('project') || '';
+  const typeFilter = searchParams.get('type') || '';
 
   const [tickets, setTickets] = useState([]);
   const [projects, setProjects] = useState([]);
@@ -36,7 +37,11 @@ const Gantt = () => {
 
   useEffect(() => {
     setLoading(true);
-    const endpoint = projectFilter ? `/tickets/?project_id=${projectFilter}` : '/tickets/';
+    const params = new URLSearchParams();
+    if (projectFilter) params.set('project_id', projectFilter);
+    if (typeFilter) params.set('type', typeFilter);
+    const qs = params.toString();
+    const endpoint = qs ? `/tickets/?${qs}` : '/tickets/';
 
     Promise.all([
       apiFetch(endpoint).then(r => r.json()),
@@ -51,7 +56,14 @@ const Gantt = () => {
         setError('Não foi possível carregar os dados do Gantt.');
         setLoading(false);
       });
-  }, [projectFilter]);
+  }, [projectFilter, typeFilter]);
+
+  const updateParam = (key, value) => {
+    const next = new URLSearchParams(searchParams);
+    if (value) next.set(key, value);
+    else next.delete(key);
+    setSearchParams(next);
+  };
 
   const items = useMemo(() => {
     return tickets
@@ -98,7 +110,7 @@ const Gantt = () => {
         <select
           className="gantt-project-select"
           value={projectFilter}
-          onChange={e => (e.target.value ? setSearchParams({ project: e.target.value }) : setSearchParams({}))}
+          onChange={e => updateParam('project', e.target.value)}
         >
           <option value="">Todos os projetos</option>
           {projects
@@ -106,6 +118,16 @@ const Gantt = () => {
             .map(p => (
               <option key={p.id} value={p.id}>{p.name}</option>
             ))}
+        </select>
+
+        <select
+          className="gantt-project-select"
+          value={typeFilter}
+          onChange={e => updateParam('type', e.target.value)}
+        >
+          <option value="">Chamados e tarefas</option>
+          <option value="chamado">Só chamados</option>
+          <option value="tarefa">Só tarefas</option>
         </select>
 
         {error && <div className="gantt-error">{error}</div>}

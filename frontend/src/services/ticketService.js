@@ -1,8 +1,11 @@
 import { apiFetch } from './api';
 
-export async function getTickets() {
+export async function getTickets(type) {
   // A barra final previne o erro 308 de redirecionamento
-  const response = await apiFetch('/tickets/');
+  // type: 'chamado' | 'tarefa' — opcional, filtra pra não misturar tarefa
+  // interna de projeto com chamado de suporte.
+  const query = type ? `?type=${type}` : '';
+  const response = await apiFetch(`/tickets/${query}`);
   return await response.json();
 }
 

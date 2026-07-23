@@ -24,6 +24,7 @@ const isSlaOverdue = (sla) => {
 const Kanban = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const projectFilter = searchParams.get('project') || '';
+  const typeFilter = searchParams.get('type') || '';
 
   const [tickets, setTickets] = useState([]);
   const [staff, setStaff] = useState([]);
@@ -34,7 +35,11 @@ const Kanban = () => {
 
   useEffect(() => {
     setLoading(true);
-    const ticketsEndpoint = projectFilter ? `/tickets/?project_id=${projectFilter}` : '/tickets/';
+    const params = new URLSearchParams();
+    if (projectFilter) params.set('project_id', projectFilter);
+    if (typeFilter) params.set('type', typeFilter);
+    const qs = params.toString();
+    const ticketsEndpoint = qs ? `/tickets/?${qs}` : '/tickets/';
 
     Promise.all([
       apiFetch(ticketsEndpoint).then(r => r.json()),
@@ -52,15 +57,17 @@ const Kanban = () => {
         setError('Não foi possível carregar os chamados.');
         setLoading(false);
       });
-  }, [projectFilter]);
+  }, [projectFilter, typeFilter]);
 
-  const handleProjectChange = (value) => {
-    if (value) {
-      setSearchParams({ project: value });
-    } else {
-      setSearchParams({});
-    }
+  const updateParam = (key, value) => {
+    const next = new URLSearchParams(searchParams);
+    if (value) next.set(key, value);
+    else next.delete(key);
+    setSearchParams(next);
   };
+
+  const handleProjectChange = (value) => updateParam('project', value);
+  const handleTypeChange = (value) => updateParam('type', value);
 
   const columns = useMemo(() => {
     const map = {};
@@ -131,6 +138,16 @@ const Kanban = () => {
             .map(p => (
               <option key={p.id} value={p.id}>{p.name}</option>
             ))}
+        </select>
+
+        <select
+          className="kanban-type-select"
+          value={typeFilter}
+          onChange={e => handleTypeChange(e.target.value)}
+        >
+          <option value="">Chamados e tarefas</option>
+          <option value="chamado">Só chamados</option>
+          <option value="tarefa">Só tarefas</option>
         </select>
 
         {error && <div className="kanban-error">{error}</div>}

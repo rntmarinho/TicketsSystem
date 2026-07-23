@@ -147,12 +147,15 @@ class TicketModel:
 
     #Método de consulta que recupera a lista completa de chamados, ordenada por data de criação, e enriquecida com as informações correlatas de categoria, prioridade e usuário, proporcionando uma visão abrangente e contextualizada dos registros.
     @staticmethod
-    def get_all(owner_id=None, project_id=None):
+    def get_all(owner_id=None, project_id=None, ticket_type=None):
         """
         owner_id: quando informado, restringe o resultado aos chamados abertos
         por esse usuário (usado para isolar o papel 'client' aos próprios chamados).
         project_id: quando informado, restringe aos itens vinculados a esse projeto
         (usado pelo Kanban ao filtrar por projeto).
+        ticket_type: quando informado ('chamado' ou 'tarefa'), restringe pelo tipo
+        do registro — usado pelas telas que não devem misturar tarefas internas
+        de projeto com chamados de suporte (Todos os Chamados, Painel, Relatórios).
         """
         conn = get_db_connection()
         cursor = conn.cursor()
@@ -210,6 +213,10 @@ class TicketModel:
         if project_id is not None:
             conditions.append("t.project_id = %s")
             params.append(project_id)
+
+        if ticket_type is not None:
+            conditions.append("t.type = %s")
+            params.append(ticket_type)
 
         if conditions:
             base_query += " WHERE " + " AND ".join(conditions)

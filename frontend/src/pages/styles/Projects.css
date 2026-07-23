@@ -142,6 +142,29 @@
   color: #15803d;
 }
 
+.project-type-breakdown {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  padding: 12px 0;
+  border-top: 1px solid #f1f5f9;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.project-type-block {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.project-type-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #94a3b8;
+}
+
 .project-progress {
   display: flex;
   flex-direction: column;
@@ -180,6 +203,7 @@
 .project-links {
   display: flex;
   gap: 8px;
+  flex-wrap: wrap;
 }
 
 .project-kanban-link,
@@ -198,4 +222,10 @@
 .project-gantt-link {
   background: #fdecec;
   color: #e83338;
+}
+
+@media (max-width: 420px) {
+  .project-type-breakdown {
+    grid-template-columns: 1fr;
+  }
 }

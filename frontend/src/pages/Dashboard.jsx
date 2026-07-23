@@ -9,7 +9,7 @@ const Dashboard = () => {
   const [stats, setStats] = useState({ aberto: 0, atendimento: 0, fechado: 0 });
 
   useEffect(() => {
-    getTickets()
+    getTickets('chamado')
       .then(data => {
         setTickets(data);
         

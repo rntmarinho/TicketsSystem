@@ -166,7 +166,7 @@ const NotificationBell = () => {
         // Alerta de SLA é informação de operação da equipe — cliente não vê.
         if (isStaff) {
           proximos = data
-            .filter(t => normalizeStatus(t.status) !== 'closed')
+            .filter(t => t.type !== 'tarefa' && normalizeStatus(t.status) !== 'closed')
             .map(t => ({ ...t, _sla: parseDate(t.sla) }))
             .filter(t => t._sla && t._sla <= limite)
             .map(t => ({ ...t, _vencido: t._sla < agora }))
@@ -183,6 +183,7 @@ const NotificationBell = () => {
 
           if (isStaff) {
             const novosChamados = data
+              .filter(t => t.type !== 'tarefa')
               .map(t => ({ ...t, _quando: parseDate(t.creation) }))
               .filter(t => t._quando && t._quando > lastSeen)
               .map(t => ({ ...t, _tipo: 'novo_chamado' }));

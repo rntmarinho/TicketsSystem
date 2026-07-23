@@ -37,8 +37,8 @@ class TicketController:
             }, 500
 
     @staticmethod
-    def list_tickets(owner_id=None, project_id=None):
-        tickets = TicketModel.get_all(owner_id=owner_id, project_id=project_id)
+    def list_tickets(owner_id=None, project_id=None, ticket_type=None):
+        tickets = TicketModel.get_all(owner_id=owner_id, project_id=project_id, ticket_type=ticket_type)
         result = []
 
         for ticket in tickets:

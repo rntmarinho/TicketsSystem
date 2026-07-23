@@ -56,22 +56,29 @@ const Projects = () => {
 
   useEffect(() => { loadData(); }, []);
 
+  // Contagem separada por tipo — chamado (suporte) e tarefa (gestão interna
+  // do projeto) não se misturam numa única métrica, cada um com seu próprio
+  // progresso/tempo médio.
   const counts = useMemo(() => {
+    const vazio = () => ({ open: 0, closed: 0, somaDuracaoHoras: 0, qtdComDuracao: 0 });
     const map = {};
     tickets.forEach(t => {
       if (!t.project_id) return;
-      if (!map[t.project_id]) map[t.project_id] = { open: 0, closed: 0, somaDuracaoHoras: 0, qtdComDuracao: 0 };
+      const tipo = t.type === 'tarefa' ? 'tarefa' : 'chamado';
+      if (!map[t.project_id]) map[t.project_id] = { chamado: vazio(), tarefa: vazio() };
+
+      const bucket = map[t.project_id][tipo];
       if (t.status === 'closed') {
-        map[t.project_id].closed += 1;
+        bucket.closed += 1;
 
         const inicio = parseDate(t.creation);
         const fim = parseDate(t.close_time);
         if (inicio && fim) {
-          map[t.project_id].somaDuracaoHoras += (fim - inicio) / (1000 * 60 * 60);
-          map[t.project_id].qtdComDuracao += 1;
+          bucket.somaDuracaoHoras += (fim - inicio) / (1000 * 60 * 60);
+          bucket.qtdComDuracao += 1;
         }
       } else {
-        map[t.project_id].open += 1;
+        bucket.open += 1;
       }
     });
     return map;
@@ -182,32 +189,49 @@ const Projects = () => {
 
               {(() => {
                 const c = counts[project.id];
-                const total = (c?.open || 0) + (c?.closed || 0);
-                const pct = total > 0 ? Math.round((c.closed / total) * 100) : 0;
-                const mediaHoras = c?.qtdComDuracao > 0 ? c.somaDuracaoHoras / c.qtdComDuracao : null;
+                const chamado = c?.chamado || { open: 0, closed: 0, somaDuracaoHoras: 0, qtdComDuracao: 0 };
+                const tarefa = c?.tarefa || { open: 0, closed: 0, somaDuracaoHoras: 0, qtdComDuracao: 0 };
+
+                const bloco = (label, dados) => {
+                  const total = dados.open + dados.closed;
+                  const pct = total > 0 ? Math.round((dados.closed / total) * 100) : 0;
+                  const media = dados.qtdComDuracao > 0 ? dados.somaDuracaoHoras / dados.qtdComDuracao : null;
+
+                  return (
+                    <div className="project-type-block">
+                      <span className="project-type-label">{label}</span>
+
+                      <div className="project-progress">
+                        <div className="project-progress-track">
+                          <div className="project-progress-fill" style={{ width: `${pct}%` }} />
+                        </div>
+                        <span className="project-progress-label">{pct}% concluído</span>
+                      </div>
+
+                      <div className="project-counts">
+                        <span className="project-count-open">{dados.open} em aberto</span>
+                        <span className="project-count-closed">{dados.closed} fechados</span>
+                      </div>
+
+                      <div className="project-avg-time">
+                        Tempo médio: <strong>{fmtDuracao(media)}</strong>
+                      </div>
+                    </div>
+                  );
+                };
 
                 return (
-                  <>
-                    <div className="project-progress">
-                      <div className="project-progress-track">
-                        <div className="project-progress-fill" style={{ width: `${pct}%` }} />
-                      </div>
-                      <span className="project-progress-label">{pct}% concluído</span>
-                    </div>
-
-                    <div className="project-counts">
-                      <span className="project-count-open">{c?.open || 0} em aberto</span>
-                      <span className="project-count-closed">{c?.closed || 0} fechados</span>
-                    </div>
-
-                    <div className="project-avg-time">
-                      Tempo médio de resolução: <strong>{fmtDuracao(mediaHoras)}</strong>
-                    </div>
-                  </>
+                  <div className="project-type-breakdown">
+                    {bloco('Chamados', chamado)}
+                    {bloco('Tarefas', tarefa)}
+                  </div>
                 );
               })()}
 
               <div className="project-links">
+                <Link to={`/kanban?project=${project.id}&type=tarefa`} className="project-kanban-link">
+                  Ver tarefas
+                </Link>
                 <Link to={`/kanban?project=${project.id}`} className="project-kanban-link">
                   Ver no Kanban
                 </Link>

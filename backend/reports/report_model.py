@@ -45,7 +45,7 @@ class ReportModel:
                     COUNT(*) FILTER (WHERE t.status IN %s)            AS atendimento,
                     COUNT(*) FILTER (WHERE t.status IN %s)            AS fechados
                 FROM tbl_tickets t
-                WHERE 1=1 {period_sql}
+                WHERE t.type = 'chamado' {period_sql}
             """, (STATUSES_ABERTO, STATUSES_ATENDIMENTO, STATUSES_FECHADO) + period_params)
 
             row = cursor.fetchone()
@@ -68,6 +68,7 @@ class ReportModel:
                     FROM tbl_priorities p
                     LEFT JOIN tbl_tickets t
                         ON t.priority_id = p.id
+                        AND t.type = 'chamado'
                         AND t.creation >= NOW() - INTERVAL '%s days'
                     GROUP BY p.id, p.name, p.color
                     ORDER BY qtd DESC, p.id ASC
@@ -79,7 +80,7 @@ class ReportModel:
                         COALESCE(p.color, '#6366f1') AS color,
                         COUNT(t.id)                  AS qtd
                     FROM tbl_priorities p
-                    LEFT JOIN tbl_tickets t ON t.priority_id = p.id
+                    LEFT JOIN tbl_tickets t ON t.priority_id = p.id AND t.type = 'chamado'
                     GROUP BY p.id, p.name, p.color
                     ORDER BY qtd DESC, p.id ASC
                 """)
@@ -96,7 +97,7 @@ class ReportModel:
                     COUNT(*)                           AS qtd
                 FROM tbl_tickets t
                 LEFT JOIN tbl_categories c ON c.id = t.category_id
-                WHERE 1=1 {period_sql}
+                WHERE t.type = 'chamado' {period_sql}
                 GROUP BY nome
                 ORDER BY qtd DESC
             """, period_params)
@@ -114,7 +115,7 @@ class ReportModel:
                     COUNT(*) FILTER (WHERE t.status IN %s)         AS fechados
                 FROM tbl_tickets t
                 LEFT JOIN tbl_users u ON u.id = t.user_id
-                WHERE 1=1 {period_sql}
+                WHERE t.type = 'chamado' {period_sql}
                 GROUP BY nome
                 ORDER BY total DESC
             """, (STATUSES_FECHADO,) + period_params)
@@ -138,7 +139,7 @@ class ReportModel:
                 FROM tbl_tickets t
                 LEFT JOIN tbl_users   u  ON u.id  = t.user_id
                 LEFT JOIN tbl_clients cl ON cl.id = u.client_id
-                WHERE 1=1 {period_sql}
+                WHERE t.type = 'chamado' {period_sql}
                 GROUP BY cl.id, cl.razao, cl.cnpj
                 ORDER BY total DESC
             """, (STATUSES_ABERTO, STATUSES_ATENDIMENTO, STATUSES_FECHADO) + period_params)
@@ -162,7 +163,7 @@ class ReportModel:
             cursor.execute("""
                 SELECT DATE(creation) AS dia, COUNT(*) AS count
                 FROM tbl_tickets
-                WHERE creation >= NOW() - INTERVAL '14 days'
+                WHERE type = 'chamado' AND creation >= NOW() - INTERVAL '14 days'
                 GROUP BY dia
                 ORDER BY dia
             """)
@@ -179,7 +180,7 @@ class ReportModel:
             cursor.execute(f"""
                 SELECT AVG(EXTRACT(EPOCH FROM (t.close_time - t.creation))) / 3600.0
                 FROM tbl_tickets t
-                WHERE t.close_time IS NOT NULL {period_sql}
+                WHERE t.type = 'chamado' AND t.close_time IS NOT NULL {period_sql}
             """, period_params)
             row = cursor.fetchone()
             tempo_medio_geral = round(float(row[0]), 1) if row and row[0] is not None else None
@@ -191,7 +192,7 @@ class ReportModel:
                     COUNT(*) AS qtd
                 FROM tbl_tickets t
                 LEFT JOIN tbl_categories c ON c.id = t.category_id
-                WHERE t.close_time IS NOT NULL {period_sql}
+                WHERE t.type = 'chamado' AND t.close_time IS NOT NULL {period_sql}
                 GROUP BY nome
                 ORDER BY horas DESC
             """, period_params)
@@ -207,7 +208,7 @@ class ReportModel:
                     COUNT(*) AS qtd
                 FROM tbl_tickets t
                 LEFT JOIN tbl_priorities p ON p.id = t.priority_id
-                WHERE t.close_time IS NOT NULL {period_sql}
+                WHERE t.type = 'chamado' AND t.close_time IS NOT NULL {period_sql}
                 GROUP BY nome
                 ORDER BY horas DESC
             """, period_params)
@@ -223,7 +224,7 @@ class ReportModel:
                     COUNT(*) AS qtd
                 FROM tbl_tickets t
                 LEFT JOIN tbl_projects pr ON pr.id = t.project_id
-                WHERE t.close_time IS NOT NULL {period_sql}
+                WHERE t.type = 'chamado' AND t.close_time IS NOT NULL {period_sql}
                 GROUP BY nome
                 ORDER BY horas DESC
             """, period_params)
@@ -248,7 +249,7 @@ class ReportModel:
                 LEFT JOIN tbl_priorities p  ON p.id  = t.priority_id
                 LEFT JOIN tbl_users      u  ON u.id  = t.user_id
                 LEFT JOIN tbl_clients    cl ON cl.id = u.client_id
-                WHERE 1=1 {period_sql}
+                WHERE t.type = 'chamado' {period_sql}
                 ORDER BY t.creation DESC
             """, period_params)
 
