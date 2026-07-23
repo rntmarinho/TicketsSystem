@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { UserPlus, ArrowLeft } from 'lucide-react';
 import { apiFetch } from '../services/api'; 
 // Importação do serviço de clientes para popular a lista
-import { getClients } from '../services/clientService'; 
+import { getClients } from '../services/clientService';
+import { DEPARTMENTS } from '../constants/departments';
 import './styles/CreateUser.css';
 
 const CreateUser = () => {
@@ -17,7 +18,8 @@ const CreateUser = () => {
     email: '',
     password: '',
     access_type: 'client',
-    client_id: '' // Inicializado vazio para forçar a seleção
+    client_id: '', // Inicializado vazio para forçar a seleção
+    department: ''
   });
 
   // Carrega a lista de clientes ao renderizar o componente
@@ -42,7 +44,8 @@ const CreateUser = () => {
       email: formData.email,
       access_type: formData.access_type,
       client_id: parseInt(formData.client_id), // Conversão rigorosa para inteiro
-      password: formData.password
+      password: formData.password,
+      department: formData.department || null
     };
 
     try {
@@ -113,9 +116,9 @@ const CreateUser = () => {
             
             <div className="form-group">
               <label>Cliente Vinculado</label>
-              <select 
-                value={formData.client_id} 
-                onChange={e => setFormData({...formData, client_id: e.target.value})} 
+              <select
+                value={formData.client_id}
+                onChange={e => setFormData({...formData, client_id: e.target.value})}
                 required // Campo estritamente obrigatório
               >
                 <option value="" disabled>Selecione um cliente...</option>
@@ -123,6 +126,21 @@ const CreateUser = () => {
                   <option key={client.id} value={client.id}>
                     {client.razao} ({client.cnpj})
                   </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label>Departamento (opcional)</label>
+              <select
+                value={formData.department}
+                onChange={e => setFormData({...formData, department: e.target.value})}
+              >
+                <option value="">Não informado</option>
+                {DEPARTMENTS.map(dep => (
+                  <option key={dep} value={dep}>{dep}</option>
                 ))}
               </select>
             </div>

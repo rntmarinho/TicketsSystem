@@ -16,15 +16,16 @@ def create_project():
     response, status = ProjectController.create_project(data)
     return jsonify(response), status
 
-# Listar projetos — technician também precisa pra vincular tarefa a um projeto
+# Listar projetos — technician também precisa pra vincular tarefa a um
+# projeto; viewer só enxerga (tela de Projetos é leitura pra esse papel)
 @project_bp.route("/", methods=["GET"])
-@require_role("admin", "technician")
+@require_role("admin", "technician", "viewer")
 def list_projects():
     response, status = ProjectController.list_projects()
     return jsonify(response), status
 
 @project_bp.route("/<int:project_id>", methods=["GET"])
-@require_role("admin", "technician")
+@require_role("admin", "technician", "viewer")
 def get_project(project_id):
     response, status = ProjectController.get_project(project_id)
     return jsonify(response), status

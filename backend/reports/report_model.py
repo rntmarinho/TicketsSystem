@@ -176,7 +176,7 @@ class ReportModel:
                 por_dia.append({"label": d.strftime('%d/%m'), "count": contagem_db.get(str(d), 0)})
 
             # ── 6b. Tempo médio de resolução (creation → close_time) ─────────
-            # Só considera chamados/tarefas já fechados no período.
+            # Só considera chamados (não tarefa) já fechados no período.
             cursor.execute(f"""
                 SELECT AVG(EXTRACT(EPOCH FROM (t.close_time - t.creation))) / 3600.0
                 FROM tbl_tickets t

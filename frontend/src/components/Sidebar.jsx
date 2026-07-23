@@ -70,7 +70,7 @@ const Sidebar = ({ isOpen, onClose, role }) => {
             </Link>
           )}
 
-          {isAdminOrTechnician && (
+          {canSeeReportsGanttCalendar && (
             <Link to="/projetos" className={isActive("/projetos")} onClick={handleNavClick}>
               <Briefcase size={20} /> Projetos
             </Link>

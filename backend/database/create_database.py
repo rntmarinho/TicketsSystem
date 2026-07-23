@@ -159,9 +159,28 @@ def create_tables():
 
             signature BYTEA,
 
-            picture BYTEA
+            picture BYTEA,
+
+            department VARCHAR(50)
+            CHECK (department IN (
+                'Financeiro', 'Logística', 'Suprimentos', 'Almoxarifado',
+                'Departamento Pessoal', 'Segurança do Trabalho', 'Diretoria',
+                'RH', 'Engenharia', 'Comunicação', 'Meio Ambiente'
+            ))
 
         );
+
+        -- Garante a coluna department em bancos já existentes (criados antes
+        -- desta versão) — usuário sem departamento definido fica NULL.
+        ALTER TABLE tbl_users ADD COLUMN IF NOT EXISTS department VARCHAR(50);
+
+        ALTER TABLE tbl_users DROP CONSTRAINT IF EXISTS tbl_users_department_check;
+        ALTER TABLE tbl_users ADD CONSTRAINT tbl_users_department_check
+            CHECK (department IN (
+                'Financeiro', 'Logística', 'Suprimentos', 'Almoxarifado',
+                'Departamento Pessoal', 'Segurança do Trabalho', 'Diretoria',
+                'RH', 'Engenharia', 'Comunicação', 'Meio Ambiente'
+            ));
 
 
         -- PROJETOS

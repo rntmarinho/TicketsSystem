@@ -229,3 +229,136 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ─────────────────────────────────────────────
+   ABAS
+───────────────────────────────────────────── */
+
+.projects-tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.projects-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  border: none;
+  background: none;
+  color: #64748b;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+
+.projects-tab:hover {
+  color: #0f172a;
+}
+
+.projects-tab--active {
+  color: #e83338;
+  border-bottom-color: #e83338;
+}
+
+/* ─────────────────────────────────────────────
+   TAREFAS (TO-DO LIST)
+───────────────────────────────────────────── */
+
+.projects-tasks-toolbar {
+  margin-bottom: 14px;
+}
+
+.projects-tasks-toolbar select {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  color: #334155;
+  background: #fff;
+}
+
+.tasks-table-wrapper,
+.reports-table-wrapper {
+  overflow-x: auto;
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+}
+
+.tasks-table,
+.reports-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.tasks-table th,
+.reports-table th {
+  text-align: left;
+  padding: 10px 12px;
+  background: #f8fafc;
+  color: #64748b;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.tasks-table td,
+.reports-table td {
+  padding: 8px 12px;
+  border-top: 1px solid #f1f5f9;
+  color: #334155;
+  vertical-align: middle;
+}
+
+.tasks-table select,
+.tasks-table input {
+  padding: 5px 8px;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  font-size: 0.82rem;
+  background: #fff;
+}
+
+.task-subject-link {
+  color: #0f172a;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.task-subject-link:hover {
+  color: #e83338;
+}
+
+.task-tag {
+  background: #ede9fe;
+  color: #7c3aed;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.task-deadline--overdue {
+  color: #e83338;
+  font-weight: 600;
+}
+
+/* ─────────────────────────────────────────────
+   RELATÓRIOS
+───────────────────────────────────────────── */
+
+.reports-table td {
+  text-align: center;
+}
+
+.reports-table td:first-child {
+  text-align: left;
+  font-weight: 600;
+  color: #0f172a;
+}

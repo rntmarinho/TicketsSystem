@@ -3,6 +3,7 @@ import { UserPlus, User, Pencil, Mail, Shield, Search, X, Building2 } from 'luci
 import { apiFetch } from '../services/api';
 import { deleteUser, activateUser } from '../services/userService';
 import { getClients } from '../services/clientService';
+import { DEPARTMENTS } from '../constants/departments';
 import './styles/Users.css';
 
 const Users = () => {
@@ -17,6 +18,7 @@ const Users = () => {
     email: '',
     client_id: '',
     access_type: '',
+    department: '',
     senha: ''
   });
 
@@ -48,6 +50,7 @@ const Users = () => {
       email: user.email || '',
       client_id: user.client_id || '',
       access_type: user.access_type || 'client',  // valor padrão alinhado ao banco
+      department: user.department || '',
       senha: ''
     });
     setIsModalOpen(true);
@@ -56,7 +59,7 @@ const Users = () => {
   const closeModal = () => {
     setSelectedUser(null);
     setIsModalOpen(false);
-    setFormData({ name: '', email: '', client_id: '', access_type: '', senha: '' });
+    setFormData({ name: '', email: '', client_id: '', access_type: '', department: '', senha: '' });
   };
 
   const handleChange = (e) => {
@@ -71,7 +74,8 @@ const Users = () => {
         name: formData.name,
         email: formData.email,
         access_type: formData.access_type,
-        client_id: parseInt(formData.client_id)
+        client_id: parseInt(formData.client_id),
+        department: formData.department || null
       };
 
       if (formData.senha.trim()) {
@@ -151,6 +155,7 @@ const Users = () => {
               <th>E-mail</th>
               <th>Cliente Vinculado</th>
               <th>Perfil</th>
+              <th>Departamento</th>
               <th>Ações</th>
             </tr>
           </thead>
@@ -194,6 +199,7 @@ const Users = () => {
                         {user.access_type}
                       </span>
                     </td>
+                    <td>{user.department || '—'}</td>
                     <td>
                       <div style={{ display: 'flex', gap: '0.5rem' }}>
                         <button className="btn-edit" onClick={() => openEditModal(user)}>
@@ -219,7 +225,7 @@ const Users = () => {
               })
             ) : (
               <tr>
-                <td colSpan="5" className="empty-state">Nenhum usuário encontrado.</td>
+                <td colSpan="6" className="empty-state">Nenhum usuário encontrado.</td>
               </tr>
             )}
           </tbody>
@@ -256,6 +262,16 @@ const Users = () => {
                   <option value="technician">Técnico (Suporte)</option>
                   <option value="admin">Administrador</option>
                   <option value="viewer">Visualizador (Gantt/Calendário/Relatórios)</option>
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label>Departamento</label>
+                <select name="department" value={formData.department} onChange={handleChange}>
+                  <option value="">Não informado</option>
+                  {DEPARTMENTS.map(dep => (
+                    <option key={dep} value={dep}>{dep}</option>
+                  ))}
                 </select>
               </div>
 

@@ -113,7 +113,8 @@ class UserController:
                 "email": user[2],
                 "client_id": user[3],
                 "access_type": user[4],
-                "situation": user[5]
+                "situation": user[5],
+                "department": user[6]
             })
 
         return result
@@ -131,7 +132,8 @@ class UserController:
             "name": data.get("nome", data.get("name", current_user[1])),
             "email": data.get("email", current_user[2]),
             "client_id": data.get("client_id", current_user[3]),
-            "access_type": data.get("access_type", current_user[4])
+            "access_type": data.get("access_type", current_user[4]),
+            "department": data.get("department", current_user[6])
         }
 
         # 3. Executa a atualização dos dados principais
@@ -193,7 +195,8 @@ class UserController:
             "email": user[2],
             "client_id": user[3],
             "access_type": user[4],
-            "situation": user[5]
+            "situation": user[5],
+            "department": user[6]
         }, 200
 
     @staticmethod

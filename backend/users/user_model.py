@@ -15,16 +15,18 @@ class UserModel:
                 email,
                 client_id,
                 password,
-                access_type
+                access_type,
+                department
             )
-            VALUES (%s, %s, %s, %s, %s)
+            VALUES (%s, %s, %s, %s, %s, %s)
             RETURNING id
         """, (
             data["name"],
             data["email"],
             data.get("client_id"),
             data["password"],
-            data["access_type"]
+            data["access_type"],
+            data.get("department")
         ))
 
         user_id = cursor.fetchone()[0]
@@ -77,7 +79,8 @@ class UserModel:
                 email,
                 client_id,
                 access_type,
-                situation
+                situation,
+                department
             FROM tbl_users
             WHERE id = %s
         """, (user_id,))
@@ -102,7 +105,8 @@ class UserModel:
                 email,
                 client_id,
                 access_type,
-                situation
+                situation,
+                department
             FROM tbl_users
             ORDER BY name
         """)
@@ -127,13 +131,15 @@ class UserModel:
                 name = %s,
                 email = %s,
                 client_id = %s,
-                access_type = %s
+                access_type = %s,
+                department = %s
             WHERE id = %s
         """, (
             data["name"],
             data["email"],
             data.get("client_id"),
             data["access_type"],
+            data.get("department"),
             user_id
         ))
 
