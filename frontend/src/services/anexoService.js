@@ -1,7 +1,5 @@
 import { apiFetch } from './api';
 
-const API_BASE_URL = 'http://127.0.0.1:5000';
-
 /** Lista os anexos de um chamado. */
 export async function getAnexos(ticketId) {
   const response = await apiFetch(`/tickets/${ticketId}/anexos`);
@@ -9,18 +7,13 @@ export async function getAnexos(ticketId) {
   return response.json();
 }
 
-/**
- * Faz upload de um arquivo.
- * Usa fetch diretamente (sem Content-Type JSON) para multipart/form-data.
- */
+/** Faz upload de um arquivo (multipart/form-data). */
 export async function uploadAnexo(ticketId, file) {
-  const token = localStorage.getItem('token');
   const formData = new FormData();
   formData.append('arquivo', file);
 
-  const response = await fetch(`${API_BASE_URL}/tickets/${ticketId}/anexos`, {
+  const response = await apiFetch(`/tickets/${ticketId}/anexos`, {
     method: 'POST',
-    headers: { Authorization: `Bearer ${token}` },
     body: formData,
   });
 
@@ -45,12 +38,12 @@ export async function deleteAnexo(ticketId, anexoId) {
 /** URL autenticada para download via rota do Flask. */
 export function getDownloadUrl(nomeArquivo) {
   const token = localStorage.getItem('token');
-  return `${API_BASE_URL}/tickets/anexos/download/${nomeArquivo}?token=${token}`;
+  return `/api/tickets/anexos/download/${nomeArquivo}?token=${token}`;
 }
 
 /** URL estática direta (só funciona se backend/public/ for servido como estático). */
 export function getStaticUrl(caminhoArquivo) {
-  return `${API_BASE_URL}${caminhoArquivo}`;
+  return `/api${caminhoArquivo}`;
 }
 
 /** Formata bytes para leitura humana. */

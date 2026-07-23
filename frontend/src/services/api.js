@@ -6,8 +6,11 @@ export async function apiFetch(endpoint, options = {}) {
 
   const token = localStorage.getItem('token');
 
+  // Upload de arquivo (FormData) não pode ter Content-Type forçado pra
+  // application/json — o navegador precisa definir o boundary do
+  // multipart/form-data sozinho.
   const headers = {
-    'Content-Type': 'application/json',
+    ...(!(options.body instanceof FormData) && { 'Content-Type': 'application/json' }),
     ...options.headers
   };
 

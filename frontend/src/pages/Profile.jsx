@@ -106,19 +106,10 @@ const Profile = () => {
         const signatureData = new FormData();
         signatureData.append('signature', signatureFile);
 
-        // Recupera o token de autenticação diretamente do armazenamento local
-        const token = localStorage.getItem('token'); 
-        
-        // Utilização da API nativa 'fetch' para contornar os cabeçalhos fixos do api.js
-        const signatureResponse = await fetch(
-          `http://127.0.0.1:5000/users/${user.id}/signature`,
+        const signatureResponse = await apiFetch(
+          `/users/${user.id}/signature`,
           {
             method: 'PATCH',
-            headers: {
-              'Authorization': `Bearer ${token}`
-              // A omissão estrita do 'Content-Type' é o que permite ao navegador
-              // processar a imagem adequadamente.
-            },
             body: signatureData
           }
         );
@@ -127,7 +118,7 @@ const Profile = () => {
           const errorPayload = await signatureResponse.json();
           throw new Error(errorPayload.message || 'Erro sistêmico ao realizar upload do arquivo de assinatura.');
         }
-      
+
       }
 
       alert('Perfil atualizado com sucesso!');
