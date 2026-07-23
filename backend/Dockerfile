@@ -4,6 +4,15 @@ FROM python:3.11-slim
 # Define o diretório de trabalho dentro do container
 WORKDIR /app
 
+# Fuso horário do sistema — horário de Brasília, usado por datetime.now()
+# em todo o backend (criação de chamado, SLA, mensagens etc.)
+ENV TZ=America/Sao_Paulo
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends tzdata \
+    && ln -snf /usr/share/zoneinfo/$TZ /etc/localtime \
+    && echo $TZ > /etc/timezone \
+    && rm -rf /var/lib/apt/lists/*
+
 # Copia primeiro só o requirements para aproveitar cache do Docker
 # (se as dependências não mudaram, essa camada não é reconstruída)
 COPY requirements.txt .

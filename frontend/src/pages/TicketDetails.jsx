@@ -81,6 +81,10 @@ const TicketDetails = () => {
   const navigate = useNavigate();
   const { role } = useAuth();
   const isReadOnly = role === 'viewer';
+  // Cliente participa da conversa (mensagens) mas não edita metadados do
+  // chamado nem exclui/funde — só admin/técnico gerenciam o chamado em si.
+  const canEditMetadata = role === 'admin' || role === 'technician';
+  const canMessage = role === 'admin' || role === 'technician' || role === 'client';
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -636,7 +640,7 @@ const TicketDetails = () => {
           </div>
         </div>
 
-        {!isReadOnly && (
+        {canEditMetadata && (
           <div className="header-actions">
 
             <button
@@ -757,7 +761,7 @@ const TicketDetails = () => {
 
             </div>
 
-            {!isClosed && !isReadOnly ? (
+            {!isClosed && canMessage ? (
               <div className="message-composer">
 
                 <textarea
@@ -895,7 +899,7 @@ const TicketDetails = () => {
 
         <aside className="sidebar-info">
 
-          {!isReadOnly && (
+          {canEditMetadata && (
             <div className="info-group primary-action">
 
               <button
@@ -930,7 +934,7 @@ const TicketDetails = () => {
               Solicitante
             </label>
 
-            {isReadOnly ? (
+            {!canEditMetadata ? (
               <div className="info-readonly-value">
                 {formData.user_name || 'Não informado'}
               </div>
@@ -968,7 +972,7 @@ const TicketDetails = () => {
               Responsável
             </label>
 
-            {isReadOnly ? (
+            {!canEditMetadata ? (
               <div className="info-readonly-value">
                 {formData.assignee_name || 'Sem responsável'}
               </div>
@@ -1010,7 +1014,7 @@ const TicketDetails = () => {
 
             <select
               value={formData.status}
-              disabled={isReadOnly}
+              disabled={!canEditMetadata}
               onChange={e =>
                 handleFieldChange(
                   'status',
@@ -1039,7 +1043,7 @@ const TicketDetails = () => {
 
             <select
               value={formData.priority_id}
-              disabled={isReadOnly}
+              disabled={!canEditMetadata}
               onChange={e =>
                 handleFieldChange(
                   'priority_id',
@@ -1072,7 +1076,7 @@ const TicketDetails = () => {
 
             <select
               value={formData.category_id}
-              disabled={isReadOnly}
+              disabled={!canEditMetadata}
               onChange={e =>
                 handleFieldChange(
                   'category_id',
@@ -1105,7 +1109,7 @@ const TicketDetails = () => {
 
             <select
               value={formData.project_id}
-              disabled={isReadOnly}
+              disabled={!canEditMetadata}
               onChange={e =>
                 handleFieldChange(
                   'project_id',
@@ -1139,7 +1143,7 @@ const TicketDetails = () => {
             <input
               type="datetime-local"
               value={toDatetimeLocalValue(formData.start_date)}
-              disabled={isReadOnly}
+              disabled={!canEditMetadata}
               onChange={e =>
                 handleFieldChange('start_date', e.target.value)
               }
@@ -1157,7 +1161,7 @@ const TicketDetails = () => {
             <input
               type="datetime-local"
               value={toDatetimeLocalValue(formData.sla)}
-              disabled={isReadOnly}
+              disabled={!canEditMetadata}
               onChange={e =>
                 handleFieldChange('sla', e.target.value)
               }
