@@ -325,6 +325,45 @@
   gap: 12px;
 }
 
+.message-private-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: #6b7280;
+  cursor: pointer;
+}
+
+.message-private-toggle input {
+  width: auto;
+}
+
+.message-cc-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+
+.message-item--private {
+  background: #fffbeb;
+  border-radius: 8px;
+  padding: 8px;
+  margin: -8px;
+}
+
+.message-private-badge {
+  background: #fef3c7;
+  color: #92400e;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  text-transform: uppercase;
+}
+
 .message-composer-footer span {
   color: #6b7280;
   font-size: 0.9rem;

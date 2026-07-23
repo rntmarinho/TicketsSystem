@@ -70,9 +70,19 @@ def get_email_settings():
         raise RuntimeError(f"Erro ao carregar configurações de e-mail: {e}")
 
 
+def _parse_cc(cc):
+    """Aceita string única ou várias separadas por vírgula/ponto e vírgula
+    (o que o usuário digitar no campo de CC) e devolve uma lista limpa."""
+    if not cc:
+        return []
+
+    separadores = cc.replace(";", ",").split(",")
+    return [e.strip() for e in separadores if e.strip()]
+
+
 # ─── Envio de notificação por e-mail ─────────────────────────────────────────
 
-def send_email_notification(ticket, autor, conteudo):
+def send_email_notification(ticket, autor, conteudo, cc=None):
 
     try:
         cfg = get_email_settings()
@@ -107,6 +117,7 @@ def send_email_notification(ticket, autor, conteudo):
             return
 
         destinatario = row[0]
+        cc_lista = _parse_cc(cc)
 
         msg = MIMEMultipart("alternative")
         msg["Subject"] = (
@@ -115,6 +126,8 @@ def send_email_notification(ticket, autor, conteudo):
         )
         msg["From"] = smtp_user
         msg["To"]   = destinatario
+        if cc_lista:
+            msg["Cc"] = ", ".join(cc_lista)
 
         # Message-ID próprio + threading: se o chamado já tem uma âncora de
         # e-mail (primeiro e-mail da thread, seja de entrada ou de saída),
@@ -173,14 +186,14 @@ Mensagem:
         with smtplib.SMTP(smtp_host, smtp_port) as server:
             server.starttls()
             server.login(smtp_user, smtp_pass)
-            server.sendmail(smtp_user, destinatario, msg.as_string())
+            server.sendmail(smtp_user, [destinatario, *cc_lista], msg.as_string())
 
         # Só grava se o chamado ainda não tiver âncora (ex: chamado aberto pela
         # tela, sem e-mail de origem) — não sobrescreve a âncora de um chamado
         # que já nasceu por e-mail.
         TicketModel.set_email_message_id(ticket["id"], novo_message_id)
 
-        logging.info(f"E-mail enviado para {destinatario}")
+        logging.info(f"E-mail enviado para {destinatario}" + (f" (cc: {', '.join(cc_lista)})" if cc_lista else ""))
 
     except Exception as e:
         logging.error(f"Erro ao enviar e-mail: {e}")

@@ -101,6 +101,8 @@ const TicketDetails = () => {
   const [messages, setMessages] = useState([]);
 
   const [newMessage, setNewMessage] = useState('');
+  const [isPrivateMessage, setIsPrivateMessage] = useState(false);
+  const [ccEmail, setCcEmail] = useState('');
   const [formData, setFormData] = useState(emptyFormData);
 
   // Merge
@@ -429,7 +431,9 @@ const TicketDetails = () => {
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            message: trimmed
+            message: trimmed,
+            private: canEditMetadata ? isPrivateMessage : false,
+            cc: !isPrivateMessage && ccEmail.trim() ? ccEmail.trim() : undefined
           })
         }
       );
@@ -441,6 +445,8 @@ const TicketDetails = () => {
       }
 
       setNewMessage('');
+      setIsPrivateMessage(false);
+      setCcEmail('');
 
       setSuccessMessage(
         'Mensagem registrada com sucesso.'
@@ -773,6 +779,27 @@ const TicketDetails = () => {
                   }
                 />
 
+                {canEditMetadata && (
+                  <label className="message-private-toggle">
+                    <input
+                      type="checkbox"
+                      checked={isPrivateMessage}
+                      onChange={e => setIsPrivateMessage(e.target.checked)}
+                    />
+                    Nota interna (não notifica o solicitante)
+                  </label>
+                )}
+
+                {!isPrivateMessage && (
+                  <input
+                    type="email"
+                    className="message-cc-input"
+                    placeholder="E-mail em cópia (CC) — opcional"
+                    value={ccEmail}
+                    onChange={e => setCcEmail(e.target.value)}
+                  />
+                )}
+
                 <div className="message-composer-footer">
 
                   <span>
@@ -840,7 +867,7 @@ const TicketDetails = () => {
 
                     return (
                       <article
-                        className="message-item"
+                        className={`message-item ${message.private ? 'message-item--private' : ''}`}
                         key={message.id || index}
                       >
 
@@ -862,6 +889,10 @@ const TicketDetails = () => {
                             <strong>
                               {author}
                             </strong>
+
+                            {message.private && (
+                              <span className="message-private-badge">Nota interna</span>
+                            )}
 
                             <span>
                               {formatDate(

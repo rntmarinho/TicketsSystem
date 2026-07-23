@@ -144,12 +144,13 @@ def create_message(ticket_id):
                 
                 if owner_row:
                     ticket_data["user_id"] = owner_row[0]
-                    
+
                     # Dispara o e-mail passando o nome real do autor para ficar bonito na notificação
                     send_email_notification(
                         ticket=ticket_data,
-                        autor=author_name, 
-                        conteudo=payload["message"]
+                        autor=author_name,
+                        conteudo=payload["message"],
+                        cc=data.get("cc")
                     )
            
         return jsonify({
