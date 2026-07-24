@@ -205,6 +205,33 @@ def create_tables():
         );
 
 
+        -- ANOTAÇÕES (módulo estilo "notas autoadesivas" — só admin/técnico)
+
+        CREATE TABLE IF NOT EXISTS tbl_notes (
+
+            id SERIAL PRIMARY KEY,
+
+            title VARCHAR(255) NOT NULL,
+
+            content TEXT,
+
+            scope VARCHAR(20)
+            NOT NULL
+            CHECK (scope IN ('pessoal', 'setor')),
+
+            color VARCHAR(20) NOT NULL DEFAULT '#fff9c4',
+
+            owner_id INTEGER
+            NOT NULL
+            REFERENCES tbl_users(id),
+
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+
+        );
+
+
         -- CHAMADOS
 
 

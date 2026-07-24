@@ -12,6 +12,7 @@ import { LayoutDashboard,
   Briefcase,
   GanttChartSquare,
   CalendarDays,
+  StickyNote,
   X } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import './Sidebar.css';
@@ -91,6 +92,12 @@ const Sidebar = ({ isOpen, onClose, role }) => {
           {isAdminOrTechnician && (
             <Link to="/users" className={isActive("/users")} onClick={handleNavClick}>
               <Users size={20} /> Usuários
+            </Link>
+          )}
+
+          {isAdminOrTechnician && (
+            <Link to="/anotacoes" className={isActive("/anotacoes")} onClick={handleNavClick}>
+              <StickyNote size={20} /> Anotações
             </Link>
           )}
 

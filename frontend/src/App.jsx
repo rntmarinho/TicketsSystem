@@ -24,6 +24,7 @@ import Priorities from './pages/Priority';
 import Clients from './pages/Clients';
 import Settings from './pages/Settings';
 import LGPD from './pages/LGPD';
+import Notes from './pages/Notes';
 import ForgotPassword from './pages/ForgotPassword';
 
 import './App.css';
@@ -222,6 +223,14 @@ function App() {
                     }
                   />
                   <Route path="/LGPD" element={<LGPD />} />
+                  <Route
+                    path="/anotacoes"
+                    element={
+                      <RoleProtectedRoute role={role} allowed={['admin', 'technician']}>
+                        <Notes />
+                      </RoleProtectedRoute>
+                    }
+                  />
                   <Route
                     path="/configuracoes"
                     element={
