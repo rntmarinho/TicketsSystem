@@ -159,28 +159,43 @@ def create_tables():
 
             signature BYTEA,
 
-            picture BYTEA,
-
-            department VARCHAR(50)
-            CHECK (department IN (
-                'Financeiro', 'Logística', 'Suprimentos', 'Almoxarifado',
-                'Departamento Pessoal', 'Segurança do Trabalho', 'Diretoria',
-                'RH', 'Engenharia', 'Comunicação', 'Meio Ambiente'
-            ))
+            picture BYTEA
 
         );
 
-        -- Garante a coluna department em bancos já existentes (criados antes
-        -- desta versão) — usuário sem departamento definido fica NULL.
-        ALTER TABLE tbl_users ADD COLUMN IF NOT EXISTS department VARCHAR(50);
+        -- Departamentos/setores — tabela de verdade (em vez de lista fixa),
+        -- pra dar pra adicionar novos pela tela de gestão de usuários.
+        CREATE TABLE IF NOT EXISTS tbl_departments (
+            id SERIAL PRIMARY KEY,
+            name VARCHAR(50) NOT NULL UNIQUE
+        );
 
-        ALTER TABLE tbl_users DROP CONSTRAINT IF EXISTS tbl_users_department_check;
-        ALTER TABLE tbl_users ADD CONSTRAINT tbl_users_department_check
-            CHECK (department IN (
-                'Financeiro', 'Logística', 'Suprimentos', 'Almoxarifado',
-                'Departamento Pessoal', 'Segurança do Trabalho', 'Diretoria',
-                'RH', 'Engenharia', 'Comunicação', 'Meio Ambiente'
-            ));
+        INSERT INTO tbl_departments (name) VALUES
+            ('Financeiro'), ('Logística'), ('Suprimentos'), ('Almoxarifado'),
+            ('Departamento Pessoal'), ('Segurança do Trabalho'), ('Diretoria'),
+            ('RH'), ('Engenharia'), ('Comunicação'), ('Meio Ambiente')
+        ON CONFLICT (name) DO NOTHING;
+
+        ALTER TABLE tbl_users ADD COLUMN IF NOT EXISTS department_id INTEGER REFERENCES tbl_departments(id);
+
+        -- Migração: bancos criados antes desta versão tinham o departamento
+        -- como texto livre (tbl_users.department) restrito por CHECK — migra
+        -- pra referência da nova tabela e remove a coluna antiga.
+        DO $$
+        BEGIN
+            IF EXISTS (
+                SELECT 1 FROM information_schema.columns
+                WHERE table_name = 'tbl_users' AND column_name = 'department'
+            ) THEN
+                UPDATE tbl_users u
+                SET department_id = d.id
+                FROM tbl_departments d
+                WHERE u.department = d.name AND u.department_id IS NULL;
+
+                ALTER TABLE tbl_users DROP CONSTRAINT IF EXISTS tbl_users_department_check;
+                ALTER TABLE tbl_users DROP COLUMN department;
+            END IF;
+        END $$;
 
 
         -- PROJETOS

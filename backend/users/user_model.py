@@ -16,7 +16,7 @@ class UserModel:
                 client_id,
                 password,
                 access_type,
-                department
+                department_id
             )
             VALUES (%s, %s, %s, %s, %s, %s)
             RETURNING id
@@ -26,7 +26,7 @@ class UserModel:
             data.get("client_id"),
             data["password"],
             data["access_type"],
-            data.get("department")
+            data.get("department_id")
         ))
 
         user_id = cursor.fetchone()[0]
@@ -74,15 +74,17 @@ class UserModel:
 
         cursor.execute("""
             SELECT
-                id,
-                name,
-                email,
-                client_id,
-                access_type,
-                situation,
-                department
-            FROM tbl_users
-            WHERE id = %s
+                u.id,
+                u.name,
+                u.email,
+                u.client_id,
+                u.access_type,
+                u.situation,
+                u.department_id,
+                d.name
+            FROM tbl_users u
+            LEFT JOIN tbl_departments d ON d.id = u.department_id
+            WHERE u.id = %s
         """, (user_id,))
 
         user = cursor.fetchone()
@@ -100,15 +102,17 @@ class UserModel:
 
         cursor.execute("""
             SELECT
-                id,
-                name,
-                email,
-                client_id,
-                access_type,
-                situation,
-                department
-            FROM tbl_users
-            ORDER BY name
+                u.id,
+                u.name,
+                u.email,
+                u.client_id,
+                u.access_type,
+                u.situation,
+                u.department_id,
+                d.name
+            FROM tbl_users u
+            LEFT JOIN tbl_departments d ON d.id = u.department_id
+            ORDER BY u.name
         """)
 
         users = cursor.fetchall()
@@ -132,14 +136,14 @@ class UserModel:
                 email = %s,
                 client_id = %s,
                 access_type = %s,
-                department = %s
+                department_id = %s
             WHERE id = %s
         """, (
             data["name"],
             data["email"],
             data.get("client_id"),
             data["access_type"],
-            data.get("department"),
+            data.get("department_id"),
             user_id
         ))
 

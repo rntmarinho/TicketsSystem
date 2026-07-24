@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { UserPlus, ArrowLeft } from 'lucide-react';
-import { apiFetch } from '../services/api'; 
+import { UserPlus, ArrowLeft, Plus } from 'lucide-react';
+import { apiFetch } from '../services/api';
 // Importação do serviço de clientes para popular a lista
 import { getClients } from '../services/clientService';
-import { DEPARTMENTS } from '../constants/departments';
+import { getDepartments, createDepartment } from '../services/departmentService';
 import './styles/CreateUser.css';
 
 const CreateUser = () => {
@@ -12,6 +12,7 @@ const CreateUser = () => {
   
   // Estado para armazenar a lista de clientes proveniente da API
   const [clientsList, setClientsList] = useState([]);
+  const [departmentsList, setDepartmentsList] = useState([]);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -19,8 +20,17 @@ const CreateUser = () => {
     password: '',
     access_type: 'client',
     client_id: '', // Inicializado vazio para forçar a seleção
-    department: ''
+    department_id: ''
   });
+
+  const loadDepartments = async () => {
+    try {
+      const data = await getDepartments();
+      setDepartmentsList(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error("Erro ao carregar departamentos:", err);
+    }
+  };
 
   // Carrega a lista de clientes ao renderizar o componente
   useEffect(() => {
@@ -34,7 +44,21 @@ const CreateUser = () => {
       }
     };
     fetchClients();
+    loadDepartments();
   }, []);
+
+  const handleAddDepartment = async () => {
+    const name = window.prompt('Nome do novo setor/departamento:');
+    if (!name || !name.trim()) return;
+
+    const response = await createDepartment(name.trim());
+    if (response.success === false) {
+      alert(response.message || 'Erro ao criar departamento.');
+      return;
+    }
+    await loadDepartments();
+    setFormData(prev => ({ ...prev, department_id: String(response.id) }));
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -45,7 +69,7 @@ const CreateUser = () => {
       access_type: formData.access_type,
       client_id: parseInt(formData.client_id), // Conversão rigorosa para inteiro
       password: formData.password,
-      department: formData.department || null
+      department_id: formData.department_id ? Number(formData.department_id) : null
     };
 
     try {
@@ -134,15 +158,20 @@ const CreateUser = () => {
           <div className="form-row">
             <div className="form-group">
               <label>Departamento (opcional)</label>
-              <select
-                value={formData.department}
-                onChange={e => setFormData({...formData, department: e.target.value})}
-              >
-                <option value="">Não informado</option>
-                {DEPARTMENTS.map(dep => (
-                  <option key={dep} value={dep}>{dep}</option>
-                ))}
-              </select>
+              <div className="input-with-button">
+                <select
+                  value={formData.department_id}
+                  onChange={e => setFormData({...formData, department_id: e.target.value})}
+                >
+                  <option value="">Não informado</option>
+                  {departmentsList.map(dep => (
+                    <option key={dep.id} value={dep.id}>{dep.name}</option>
+                  ))}
+                </select>
+                <button type="button" className="btn-add-department" onClick={handleAddDepartment} title="Adicionar setor">
+                  <Plus size={16} />
+                </button>
+              </div>
             </div>
           </div>
 

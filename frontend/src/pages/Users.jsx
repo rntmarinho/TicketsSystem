@@ -1,14 +1,15 @@
 import { useEffect, useState } from 'react';
-import { UserPlus, User, Pencil, Mail, Shield, Search, X, Building2 } from 'lucide-react';
+import { UserPlus, User, Pencil, Mail, Shield, Search, X, Building2, Plus } from 'lucide-react';
 import { apiFetch } from '../services/api';
 import { deleteUser, activateUser } from '../services/userService';
 import { getClients } from '../services/clientService';
-import { DEPARTMENTS } from '../constants/departments';
+import { getDepartments, createDepartment } from '../services/departmentService';
 import './styles/Users.css';
 
 const Users = () => {
   const [users, setUsers] = useState([]);
   const [clientsList, setClientsList] = useState([]);
+  const [departmentsList, setDepartmentsList] = useState([]);
   const [search, setSearch] = useState('');
   const [selectedUser, setSelectedUser] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -18,13 +19,14 @@ const Users = () => {
     email: '',
     client_id: '',
     access_type: '',
-    department: '',
+    department_id: '',
     senha: ''
   });
 
   useEffect(() => {
     loadUsers();
     loadClients();
+    loadDepartments();
   }, []);
 
   const loadUsers = () => {
@@ -43,6 +45,28 @@ const Users = () => {
     }
   };
 
+  const loadDepartments = async () => {
+    try {
+      const data = await getDepartments();
+      setDepartmentsList(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error('Erro ao carregar departamentos:', err);
+    }
+  };
+
+  const handleAddDepartment = async () => {
+    const name = window.prompt('Nome do novo setor/departamento:');
+    if (!name || !name.trim()) return;
+
+    const response = await createDepartment(name.trim());
+    if (response.success === false) {
+      alert(response.message || 'Erro ao criar departamento.');
+      return;
+    }
+    await loadDepartments();
+    setFormData(prev => ({ ...prev, department_id: String(response.id) }));
+  };
+
   const openEditModal = (user) => {
     setSelectedUser(user);
     setFormData({
@@ -50,7 +74,7 @@ const Users = () => {
       email: user.email || '',
       client_id: user.client_id || '',
       access_type: user.access_type || 'client',  // valor padrão alinhado ao banco
-      department: user.department || '',
+      department_id: user.department_id || '',
       senha: ''
     });
     setIsModalOpen(true);
@@ -59,7 +83,7 @@ const Users = () => {
   const closeModal = () => {
     setSelectedUser(null);
     setIsModalOpen(false);
-    setFormData({ name: '', email: '', client_id: '', access_type: '', department: '', senha: '' });
+    setFormData({ name: '', email: '', client_id: '', access_type: '', department_id: '', senha: '' });
   };
 
   const handleChange = (e) => {
@@ -75,7 +99,7 @@ const Users = () => {
         email: formData.email,
         access_type: formData.access_type,
         client_id: parseInt(formData.client_id),
-        department: formData.department || null
+        department_id: formData.department_id ? Number(formData.department_id) : null
       };
 
       if (formData.senha.trim()) {
@@ -267,12 +291,17 @@ const Users = () => {
 
               <div className="form-group">
                 <label>Departamento</label>
-                <select name="department" value={formData.department} onChange={handleChange}>
-                  <option value="">Não informado</option>
-                  {DEPARTMENTS.map(dep => (
-                    <option key={dep} value={dep}>{dep}</option>
-                  ))}
-                </select>
+                <div className="input-with-button">
+                  <select name="department_id" value={formData.department_id} onChange={handleChange}>
+                    <option value="">Não informado</option>
+                    {departmentsList.map(dep => (
+                      <option key={dep.id} value={dep.id}>{dep.name}</option>
+                    ))}
+                  </select>
+                  <button type="button" className="btn-add-department" onClick={handleAddDepartment} title="Adicionar setor">
+                    <Plus size={16} />
+                  </button>
+                </div>
               </div>
 
               <div className="form-group">

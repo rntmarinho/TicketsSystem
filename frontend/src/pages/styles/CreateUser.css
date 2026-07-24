@@ -24,6 +24,33 @@
   gap: 8px;
 }
 
+.input-with-button {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.input-with-button select {
+  flex: 1;
+}
+
+.btn-add-department {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: #f8fafc;
+  color: #334155;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.btn-add-department:hover {
+  background: #e2e8f0;
+}
+
 .btn-submit {
   width: 100%;
   padding: 12px;
