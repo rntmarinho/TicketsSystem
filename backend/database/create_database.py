@@ -303,6 +303,11 @@ def create_tables():
         ALTER TABLE tbl_tickets ADD COLUMN IF NOT EXISTS project_id INTEGER REFERENCES tbl_projects(id);
         ALTER TABLE tbl_tickets ADD COLUMN IF NOT EXISTS type VARCHAR(20) NOT NULL DEFAULT 'chamado' CHECK (type IN ('chamado', 'tarefa'));
 
+        -- Marca o instante em que o chamado entrou em status 'pending' —
+        -- usado pra pausar o SLA (o tempo pendente, esperando terceiros, não
+        -- deve contar contra o prazo). NULL quando o chamado não está pendente.
+        ALTER TABLE tbl_tickets ADD COLUMN IF NOT EXISTS pending_since TIMESTAMP;
+
         -- Migração RBAC: bancos criados antes desta versão têm o CHECK antigo
         -- (só 'client'/'technician'). Recria o constraint para aceitar 'admin' e,
         -- mais recentemente, 'viewer' (papel só-leitura de Gantt/Calendário/Relatórios).

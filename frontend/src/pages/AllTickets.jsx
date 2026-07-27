@@ -132,9 +132,12 @@ const AllTickets = () => {
   const renderRow = (ticket) => {
     const sm = getStatusMeta(ticket.status);
     
-    // Análise temporal do SLA (avaliado a partir do momento atual local)
+    // Análise temporal do SLA (avaliado a partir do momento atual local).
+    // 'pending' pausa o prazo (não depende do suporte) e 'closed' encerra a
+    // contagem (chamado já tratado) — nenhum dos dois deve aparecer vencido.
     const cleanSla = ticket.sla ? ticket.sla.replace(' GMT', '') : null;
-    const isSlaOverdue = cleanSla && new Date(cleanSla) < new Date();
+    const slaAtivo = !['closed', 'pending'].includes(normalizeStatus(ticket.status));
+    const isSlaOverdue = slaAtivo && cleanSla && new Date(cleanSla) < new Date();
 
     return (
       <tr key={ticket.id} className="at-row">

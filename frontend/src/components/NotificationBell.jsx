@@ -164,9 +164,12 @@ const NotificationBell = () => {
         let proximos = [];
 
         // Alerta de SLA é informação de operação da equipe — cliente não vê.
+        // 'closed' já foi tratado (não estoura) e 'pending' está com o prazo
+        // pausado (depende de terceiros, não do suporte) — nenhum dos dois
+        // deve gerar alerta de vencimento.
         if (isStaff) {
           proximos = data
-            .filter(t => t.type !== 'tarefa' && normalizeStatus(t.status) !== 'closed')
+            .filter(t => t.type !== 'tarefa' && !['closed', 'pending'].includes(normalizeStatus(t.status)))
             .map(t => ({ ...t, _sla: parseDate(t.sla) }))
             .filter(t => t._sla && t._sla <= limite)
             .map(t => ({ ...t, _vencido: t._sla < agora }))

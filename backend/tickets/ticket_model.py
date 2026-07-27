@@ -237,18 +237,50 @@ class TicketModel:
     #Método de atualização que permite a modificação do status de um chamado específico, garantindo a persistência da alteração no banco de dados e a integridade do registro.
     @staticmethod
     def update_status(ticket_id, status):
+        """
+        Regras de SLA acopladas à mudança de status:
+        - Entrando em 'pending': marca pending_since = agora. O prazo (sla)
+          não é alterado agora, mas nenhuma tela deve tratar um chamado
+          pendente como vencido enquanto ele estiver nesse status (isso é
+          responsabilidade das telas, que já ignoram 'pending' na checagem
+          de "vencido" — aqui só cuidamos de não deixar o tempo parado
+          contar quando o chamado sair de pendente).
+        - Saindo de 'pending' (pra qualquer outro status): o tempo que ficou
+          pendente é somado ao prazo (sla), empurrando o vencimento pra
+          frente na mesma quantidade — o relógio andou, mas não contra o
+          chamado, porque a demora não dependia do suporte.
+        - close_time continua só preenchido quando o status vira 'closed';
+          mover o card pra qualquer outra coluna limpa a data de fechamento.
+        """
         conn = get_db_connection()
         cursor = conn.cursor()
 
-        # close_time só é preenchido quando o status vira 'closed'; mover o
-        # card pra qualquer outra coluna (ex: reabrir) limpa a data de fechamento.
-        close_time = datetime.now() if status == "closed" else None
+        cursor.execute("""
+            SELECT status, pending_since, sla FROM tbl_tickets WHERE id = %s
+        """, (ticket_id,))
+        row = cursor.fetchone()
+        status_atual, pending_since_atual, sla_atual = row if row else (None, None, None)
+
+        agora = datetime.now()
+        close_time = agora if status == "closed" else None
+
+        pending_since = pending_since_atual
+        sla = sla_atual
+
+        if status == "pending" and status_atual != "pending":
+            # Entrando em pendente agora: começa a contar a pausa.
+            pending_since = agora
+        elif status != "pending" and status_atual == "pending" and pending_since_atual:
+            # Saindo de pendente: soma o tempo pausado ao prazo e encerra a pausa.
+            tempo_pausado = agora - pending_since_atual
+            sla = (sla_atual + tempo_pausado) if sla_atual else sla_atual
+            pending_since = None
 
         cursor.execute("""
             UPDATE tbl_tickets
-            SET status = %s, close_time = %s
+            SET status = %s, close_time = %s, pending_since = %s, sla = %s
             WHERE id = %s
-        """, (status, close_time, ticket_id))
+        """, (status, close_time, pending_since, sla, ticket_id))
 
         conn.commit()
 

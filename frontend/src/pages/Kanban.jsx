@@ -15,8 +15,11 @@ const fmtDate = (val) => {
   return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
 };
 
-const isSlaOverdue = (sla) => {
+const isSlaOverdue = (sla, status) => {
   if (!sla) return false;
+  // 'pending' pausa o prazo (não depende do suporte) e 'closed' encerra a
+  // contagem (chamado já tratado) — nenhum dos dois deve aparecer vencido.
+  if (['closed', 'pending'].includes(normalizeStatus(status))) return false;
   const clean = typeof sla === 'string' ? sla.replace(' GMT', '') : sla;
   return new Date(clean) < new Date();
 };
@@ -170,7 +173,7 @@ const Kanban = () => {
             <div className="kanban-column-body">
               {(columns[column.value] || []).map(ticket => {
                 const sm = getStatusMeta(ticket.status);
-                const overdue = isSlaOverdue(ticket.sla);
+                const overdue = isSlaOverdue(ticket.sla, ticket.status);
 
                 return (
                   <div

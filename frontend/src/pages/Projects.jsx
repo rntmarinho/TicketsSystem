@@ -401,7 +401,7 @@ const Projects = () => {
                 </thead>
                 <tbody>
                   {tarefas.map(t => {
-                    const vencida = t._prazo && t._prazo < new Date() && normalizeStatus(t.status) !== 'closed';
+                    const vencida = t._prazo && t._prazo < new Date() && !['closed', 'pending'].includes(normalizeStatus(t.status));
                     const concluida = normalizeStatus(t.status) === 'closed';
                     return (
                       <tr key={t.id}>
