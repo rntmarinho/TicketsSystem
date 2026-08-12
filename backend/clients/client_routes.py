@@ -11,7 +11,7 @@ client_bp = Blueprint(
 
 # Rota para criar um novo cliente
 @client_bp.route("/", methods=["POST"])
-@require_role("admin")
+@require_role("ADMIN")
 def create_client():
 
     data = request.get_json()
@@ -22,7 +22,7 @@ def create_client():
 
 # Rota para listar todos os clientes
 @client_bp.route("/", methods=["GET"])
-@require_role("admin")
+@require_role("ADMIN")
 def get_clients():
 
     return jsonify(
@@ -31,7 +31,7 @@ def get_clients():
 
 # Rota para atualizar um cliente específico
 @client_bp.route("/<int:client_id>", methods=["PUT"])
-@require_role("admin")
+@require_role("ADMIN")
 def update_client(client_id):
 
     data = request.get_json()
@@ -45,7 +45,7 @@ def update_client(client_id):
 
 # Rota para deletar um cliente específico
 @client_bp.route("/<int:client_id>", methods=["DELETE"])
-@require_role("admin")
+@require_role("ADMIN")
 def delete_client(client_id):
 
     response = ClientController.delete_client(
@@ -56,7 +56,7 @@ def delete_client(client_id):
 
 # Rota para atualizar a situação de um cliente específico
 @client_bp.route("/<int:client_id>/situation", methods=["PATCH"])
-@require_role("admin")
+@require_role("ADMIN")
 def update_situation(client_id):
 
     data = request.get_json()

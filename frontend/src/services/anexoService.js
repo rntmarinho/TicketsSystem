@@ -42,9 +42,9 @@ export async function deleteAnexo(ticketId, anexoId) {
 }
 
 /** URL autenticada para download via rota do Flask. */
-export function getDownloadUrl(nomeArquivo) {
+export function getDownloadUrl(ticketId, nomeArquivo) {
   const token = localStorage.getItem('token');
-  return `/api/tickets/anexos/download/${nomeArquivo}?token=${token}`;
+  return `/api/tickets/${ticketId}/anexos/download/${nomeArquivo}?token=${token}`;
 }
 
 /** URL estática direta (só funciona se backend/public/ for servido como estático). */

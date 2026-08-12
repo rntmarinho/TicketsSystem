@@ -18,7 +18,7 @@ const CreateUser = () => {
     name: '',
     email: '',
     password: '',
-    access_type: 'client',
+    access_type: 'CLIENTE',
     client_id: '', // Inicializado vazio para forçar a seleção
     department_id: ''
   });
@@ -131,10 +131,13 @@ const CreateUser = () => {
                 value={formData.access_type} 
                 onChange={e => setFormData({...formData, access_type: e.target.value})}
               >
-                <option value="client">Cliente / Comum</option>
-                <option value="technician">Técnico</option>
-                <option value="admin">Administrador</option>
-                <option value="viewer">Visualizador (Gantt/Calendário/Relatórios)</option>
+                <option value="CLIENTE">Cliente / Comum</option>
+                <option value="COLABORADOR">Colaborador</option>
+                <option value="GESTOR_PROJETO">Gestor de Projeto</option>
+                <option value="APROVADOR">Aprovador</option>
+                <option value="DIRETOR">Diretor</option>
+                <option value="ADMIN">Administrador</option>
+                <option value="VISUALIZADOR">Visualizador (Gantt/Calendário/Relatórios)</option>
               </select>
             </div>
             

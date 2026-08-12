@@ -9,7 +9,7 @@ note_bp = Blueprint("note_bp", __name__, url_prefix="/notes")
 
 
 @note_bp.route("/", methods=["GET"])
-@require_role("admin", "technician")
+@require_role("ADMIN", "GESTOR_PROJETO")
 def list_notes():
     scope = request.args.get("scope", "pessoal")
     response, status = NoteController.list_notes(scope, int(get_jwt_identity()))
@@ -17,7 +17,7 @@ def list_notes():
 
 
 @note_bp.route("/", methods=["POST"])
-@require_role("admin", "technician")
+@require_role("ADMIN", "GESTOR_PROJETO")
 def create_note():
     data = request.get_json()
     response, status = NoteController.create_note(data, int(get_jwt_identity()))
@@ -25,7 +25,7 @@ def create_note():
 
 
 @note_bp.route("/<int:note_id>", methods=["PUT"])
-@require_role("admin", "technician")
+@require_role("ADMIN", "GESTOR_PROJETO")
 def update_note(note_id):
     data = request.get_json()
     response, status = NoteController.update_note(note_id, data, int(get_jwt_identity()))
@@ -33,7 +33,7 @@ def update_note(note_id):
 
 
 @note_bp.route("/<int:note_id>", methods=["DELETE"])
-@require_role("admin", "technician")
+@require_role("ADMIN", "GESTOR_PROJETO")
 def delete_note(note_id):
     response, status = NoteController.delete_note(note_id, int(get_jwt_identity()))
     return jsonify(response), status

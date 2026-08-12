@@ -6,7 +6,7 @@ reports_bp = Blueprint("reports_bp", __name__, url_prefix="/reports")
 
 
 @reports_bp.route("/summary", methods=["GET"])
-@require_role("admin", "technician", "viewer")
+@require_role("ADMIN", "GESTOR_PROJETO", "VISUALIZADOR")
 def get_summary():
     """
     GET /reports/summary?periodo=todos|7d|30d|90d

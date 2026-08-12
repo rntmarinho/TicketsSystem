@@ -10,7 +10,7 @@ import './styles/NewTicket.css';
 const NewTicket = () => {
   const navigate = useNavigate();
   const { role, user } = useAuth();
-  const isStaff = role === 'admin' || role === 'technician';
+  const isStaff = role === 'ADMIN' || role === 'GESTOR_PROJETO';
 
   const [users, setUsers] = useState([]);
   const [categories, setCategories] = useState([]);

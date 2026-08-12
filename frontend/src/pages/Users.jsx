@@ -73,7 +73,7 @@ const Users = () => {
       name: user.name || '',
       email: user.email || '',
       client_id: user.client_id || '',
-      access_type: user.access_type || 'client',  // valor padrão alinhado ao banco
+      access_type: user.access_type || 'CLIENTE',  // valor padrão alinhado ao banco
       department_id: user.department_id || '',
       senha: ''
     });
@@ -217,7 +217,7 @@ const Users = () => {
                       ) : '-'}
                     </td>
                     <td>
-                      {/* Badge alinhada aos valores reais do banco: 'client' | 'technician' | 'admin' */}
+                      {/* Badge alinhada aos valores reais do banco: 'CLIENTE' | 'COLABORADOR' | 'GESTOR_PROJETO' | 'APROVADOR' | 'DIRETOR' | 'ADMIN' | 'VISUALIZADOR' */}
                       <span className={`badge ${user.access_type}`}>
                         <Shield size={14} />
                         {user.access_type}
@@ -282,10 +282,13 @@ const Users = () => {
                 <label>Perfil do Usuário</label>
                 {/* Valores alinhados ao CHECK constraint do banco */}
                 <select name="access_type" value={formData.access_type} onChange={handleChange}>
-                  <option value="client">Comum (Solicitante)</option>
-                  <option value="technician">Técnico (Suporte)</option>
-                  <option value="admin">Administrador</option>
-                  <option value="viewer">Visualizador (Gantt/Calendário/Relatórios)</option>
+                  <option value="CLIENTE">Comum (Solicitante)</option>
+                  <option value="COLABORADOR">Colaborador</option>
+                  <option value="GESTOR_PROJETO">Gestor de Projeto (Suporte)</option>
+                  <option value="APROVADOR">Aprovador</option>
+                  <option value="DIRETOR">Diretor</option>
+                  <option value="ADMIN">Administrador</option>
+                  <option value="VISUALIZADOR">Visualizador (Gantt/Calendário/Relatórios)</option>
                 </select>
               </div>
 

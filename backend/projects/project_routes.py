@@ -10,7 +10,7 @@ project_bp = Blueprint(
 
 # Criar projeto — decisão de gestão, só admin
 @project_bp.route("/", methods=["POST"])
-@require_role("admin")
+@require_role("ADMIN")
 def create_project():
     data = request.get_json()
     response, status = ProjectController.create_project(data)
@@ -19,19 +19,19 @@ def create_project():
 # Listar projetos — technician também precisa pra vincular tarefa a um
 # projeto; viewer só enxerga (tela de Projetos é leitura pra esse papel)
 @project_bp.route("/", methods=["GET"])
-@require_role("admin", "technician", "viewer")
+@require_role("ADMIN", "GESTOR_PROJETO", "VISUALIZADOR")
 def list_projects():
     response, status = ProjectController.list_projects()
     return jsonify(response), status
 
 @project_bp.route("/<int:project_id>", methods=["GET"])
-@require_role("admin", "technician", "viewer")
+@require_role("ADMIN", "GESTOR_PROJETO", "VISUALIZADOR")
 def get_project(project_id):
     response, status = ProjectController.get_project(project_id)
     return jsonify(response), status
 
 @project_bp.route("/<int:project_id>", methods=["PUT"])
-@require_role("admin")
+@require_role("ADMIN")
 def update_project(project_id):
     data = request.get_json()
     response, status = ProjectController.update_project(project_id, data)
@@ -39,7 +39,7 @@ def update_project(project_id):
 
 # Arquivar/reativar — decisão de gestão, só admin
 @project_bp.route("/<int:project_id>/situation", methods=["PATCH"])
-@require_role("admin")
+@require_role("ADMIN")
 def update_situation(project_id):
     data = request.get_json()
     response, status = ProjectController.update_status(project_id, data.get("status"))

@@ -3,6 +3,8 @@ import threading
 from dotenv import load_dotenv
 from flask import Flask, jsonify
 from flask_jwt_extended import JWTManager
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from users.user_routes import user_bp
 from clients.client_routes import client_bp
 from tickets.ticket_routes import ticket_bp
@@ -17,7 +19,10 @@ from projects.project_routes import project_bp
 from notes.note_routes import note_bp
 from departments.department_routes import department_bp
 from flask_cors import CORS
+from services.rate_limiter import limiter
 from database.create_database import create_database, create_tables
+from database.migrate_secrets import encrypt_existing_settings
+from database.gestao_db import SessionLocal
 from seed_admin import create_default_client, create_admin_user
 
 # Carrega as variáveis de ambiente do arquivo .env
@@ -33,6 +38,7 @@ def run_setup():
     try:
         create_database()
         create_tables()
+        encrypt_existing_settings()
         client_id = create_default_client()
         if client_id is not None:
             create_admin_user(client_id)
@@ -41,12 +47,61 @@ def run_setup():
         print(f"Aviso: setup inicial falhou: {e}. O sistema iniciará assim mesmo.")
 
 
+def run_alembic_upgrade():
+    """
+    Aplica as migrations do módulo de gestão (tabelas novas, sem prefixo
+    tbl_) até a revisão mais recente. Roda a cada boot, depois de run_setup()
+    — ordem importa só porque o banco precisa existir antes do Alembic
+    conectar (garantido por create_database() dentro de run_setup()); as
+    tabelas legadas (tbl_*) e as novas não têm dependência de conteúdo entre
+    si. Alembic é idempotente por natureza (tabela alembic_version), então
+    seguro rodar em todo boot, igual ao run_setup().
+    """
+    from alembic import command
+    from alembic.config import Config
+
+    backend_dir = os.path.dirname(os.path.abspath(__file__))
+    try:
+        alembic_cfg = Config(os.path.join(backend_dir, "alembic.ini"))
+        alembic_cfg.set_main_option("script_location", os.path.join(backend_dir, "alembic"))
+        command.upgrade(alembic_cfg, "head")
+        print("Migrações do módulo de gestão aplicadas.")
+    except Exception as e:
+        print(f"Aviso: alembic upgrade falhou: {e}. O sistema iniciará assim mesmo.")
+
+
 def create_app():
 
     app = Flask(__name__)
 
-    # Inicialização do CORS para permitir requisições cross-origin (preflight OPTIONS)
-    CORS(app)
+    # CORS restrito à(s) origem(ns) real(is) do frontend — configurar em
+    # CORS_ALLOWED_ORIGINS (separadas por vírgula). Sem essa variável, nenhuma
+    # origem é liberada (falha segura) em vez de CORS(app) aberto (antes
+    # liberava "*" pra qualquer origem).
+    origens_permitidas = [
+        origem.strip()
+        for origem in os.getenv("CORS_ALLOWED_ORIGINS", "").split(",")
+        if origem.strip()
+    ]
+    CORS(app, origins=origens_permitidas)
+
+    # Limite de tamanho de corpo de requisição — antes não havia nenhum,
+    # então um upload/POST arbitrariamente grande era aceito integralmente
+    # antes de qualquer validação de aplicação (ex: o limite de 10MB dos
+    # anexos só era checado depois de já ter gravado o arquivo em disco).
+    app.config["MAX_CONTENT_LENGTH"] = int(
+        os.getenv("MAX_CONTENT_LENGTH_BYTES", 200 * 1024 * 1024)  # 200MB
+    )
+
+    limiter.init_app(app)
+
+    # Descarta a sessão SQLAlchemy (módulo de gestão) ao fim de cada request
+    # — mesmo padrão de "uma sessão por request" do Flask-SQLAlchemy, feito
+    # manualmente aqui porque a engine é criada fora do objeto Flask
+    # (ver database/gestao_db.py).
+    @app.teardown_appcontext
+    def remove_gestao_session(exception=None):
+        SessionLocal.remove()
 
     # JWT
     app.config["JWT_SECRET_KEY"] = os.getenv(
@@ -104,6 +159,7 @@ def create_app():
 
 # Executa setup antes de criar a aplicação Flask
 run_setup()
+run_alembic_upgrade()
 
 app = create_app()
 

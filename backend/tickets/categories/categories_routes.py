@@ -12,7 +12,7 @@ category_bp = Blueprint(
 
 # Routa para criar uma nova categoria (configuração — somente admin)
 @category_bp.route("/", methods=["POST"])
-@require_role("admin")
+@require_role("ADMIN")
 def create_category():
     data = request.get_json()
     response, status = CategoryController.create_category(data)
@@ -27,7 +27,7 @@ def list_categories():
 
 # Routa para deletar uma categoria existente (configuração — somente admin)
 @category_bp.route("/<int:category_id>", methods=["DELETE"])
-@require_role("admin")
+@require_role("ADMIN")
 def delete_category(category_id):
     response, status = CategoryController.delete_category(category_id)
     return jsonify(response), status

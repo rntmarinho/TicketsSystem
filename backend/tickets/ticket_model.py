@@ -152,7 +152,7 @@ class TicketModel:
     def get_all(owner_id=None, project_id=None, ticket_type=None):
         """
         owner_id: quando informado, restringe o resultado aos chamados abertos
-        por esse usuário (usado para isolar o papel 'client' aos próprios chamados).
+        por esse usuário (usado para isolar o papel 'CLIENTE' aos próprios chamados).
         project_id: quando informado, restringe aos itens vinculados a esse projeto
         (usado pelo Kanban ao filtrar por projeto).
         ticket_type: quando informado ('chamado' ou 'tarefa'), restringe pelo tipo
@@ -196,7 +196,7 @@ class TicketModel:
             LEFT JOIN LATERAL (
                 SELECT
                     m.creation AS last_message_at,
-                    (mu.access_type = 'client') AS last_message_is_client
+                    (mu.access_type = 'CLIENTE') AS last_message_is_client
                 FROM tbl_messages m
                 LEFT JOIN tbl_users mu ON mu.id = m.sender
                 WHERE m.ticket_id = t.id AND m.private = FALSE

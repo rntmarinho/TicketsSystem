@@ -80,11 +80,11 @@ const TicketDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { role } = useAuth();
-  const isReadOnly = role === 'viewer';
+  const isReadOnly = role === 'VISUALIZADOR';
   // Cliente participa da conversa (mensagens) mas não edita metadados do
   // chamado nem exclui/funde — só admin/técnico gerenciam o chamado em si.
-  const canEditMetadata = role === 'admin' || role === 'technician';
-  const canMessage = role === 'admin' || role === 'technician' || role === 'client';
+  const canEditMetadata = role === 'ADMIN' || role === 'GESTOR_PROJETO';
+  const canMessage = role === 'ADMIN' || role === 'GESTOR_PROJETO' || role === 'CLIENTE';
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -187,7 +187,7 @@ const TicketDetails = () => {
         messageData
       ] = await Promise.all([
         requestJson(`/tickets/${id}`),
-        // 'viewer' não tem acesso a GET /users/ (só admin/technician) — a tela
+        // 'VISUALIZADOR' não tem acesso a GET /users/ (só admin/technician) — a tela
         // ainda precisa abrir em modo leitura pra ele, só sem a lista completa
         // de usuários (usa o nome que já vem pronto em ticketData.user/assignee).
         requestJson('/users/').catch(() => []),
@@ -1025,7 +1025,7 @@ const TicketDetails = () => {
 
                 {users
                   .filter(user =>
-                    (user.access_type === 'admin' || user.access_type === 'technician') &&
+                    (user.access_type === 'ADMIN' || user.access_type === 'GESTOR_PROJETO') &&
                     (user.situation !== 'I' || Number(user.id) === Number(formData.assigned_to))
                   )
                   .map(user => (

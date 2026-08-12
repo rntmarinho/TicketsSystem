@@ -46,7 +46,7 @@ const PublicRoute = ({ isAuthenticated, children }) => {
 };
 
 // Guarda por papel: bloqueia telas administrativas para quem não tem o
-// access_type necessário (ex.: 'client' não deve alcançar /users, /clientes etc,
+// access_type necessário (ex.: 'CLIENTE' não deve alcançar /users, /clientes etc,
 // mesmo digitando a URL direto).
 const RoleProtectedRoute = ({ role, allowed, children }) => {
   if (!allowed.includes(role)) {
@@ -109,7 +109,7 @@ function App() {
                   </button>
 
                   <div className="top-bar-actions">
-                    {(role === 'admin' || role === 'technician' || role === 'client') && <NotificationBell />}
+                    {(role === 'ADMIN' || role === 'GESTOR_PROJETO' || role === 'CLIENTE') && <NotificationBell />}
                     <button className="logout-btn-top" onClick={handleLogout}>
                       <LogOut size={18} /> Sair
                     </button>
@@ -117,17 +117,17 @@ function App() {
                 </div>
 
                 <Routes>
-                  {/* 'viewer' não tem Painel Inicial — manda pro Gantt em vez de
+                  {/* 'VISUALIZADOR' não tem Painel Inicial — manda pro Gantt em vez de
                       usar RoleProtectedRoute aqui (que redireciona pra "/" e
                       criaria um loop infinito nesta rota específica). */}
                   <Route
                     path="/"
-                    element={role === 'viewer' ? <Navigate to="/gantt" replace /> : <Dashboard />}
+                    element={role === 'VISUALIZADOR' ? <Navigate to="/gantt" replace /> : <Dashboard />}
                   />
                   <Route
                     path="/novo-chamado"
                     element={
-                      <RoleProtectedRoute role={role} allowed={['admin', 'technician', 'client']}>
+                      <RoleProtectedRoute role={role} allowed={['ADMIN', 'GESTOR_PROJETO', 'CLIENTE']}>
                         <NewTicket />
                       </RoleProtectedRoute>
                     }
@@ -135,7 +135,7 @@ function App() {
                   <Route
                     path="/users"
                     element={
-                      <RoleProtectedRoute role={role} allowed={['admin', 'technician']}>
+                      <RoleProtectedRoute role={role} allowed={['ADMIN', 'GESTOR_PROJETO']}>
                         <Users />
                       </RoleProtectedRoute>
                     }
@@ -143,7 +143,7 @@ function App() {
                   <Route
                     path="/users/novo"
                     element={
-                      <RoleProtectedRoute role={role} allowed={['admin']}>
+                      <RoleProtectedRoute role={role} allowed={['ADMIN']}>
                         <CreateUser />
                       </RoleProtectedRoute>
                     }
@@ -151,7 +151,7 @@ function App() {
                   <Route
                     path="/tickets"
                     element={
-                      <RoleProtectedRoute role={role} allowed={['admin', 'technician', 'client']}>
+                      <RoleProtectedRoute role={role} allowed={['ADMIN', 'GESTOR_PROJETO', 'CLIENTE']}>
                         <AllTickets />
                       </RoleProtectedRoute>
                     }
@@ -159,7 +159,7 @@ function App() {
                   <Route
                     path="/kanban"
                     element={
-                      <RoleProtectedRoute role={role} allowed={['admin', 'technician']}>
+                      <RoleProtectedRoute role={role} allowed={['ADMIN', 'GESTOR_PROJETO']}>
                         <Kanban />
                       </RoleProtectedRoute>
                     }
@@ -167,7 +167,7 @@ function App() {
                   <Route
                     path="/projetos"
                     element={
-                      <RoleProtectedRoute role={role} allowed={['admin', 'technician', 'viewer']}>
+                      <RoleProtectedRoute role={role} allowed={['ADMIN', 'GESTOR_PROJETO', 'VISUALIZADOR']}>
                         <Projects />
                       </RoleProtectedRoute>
                     }
@@ -175,7 +175,7 @@ function App() {
                   <Route
                     path="/gantt"
                     element={
-                      <RoleProtectedRoute role={role} allowed={['admin', 'technician', 'viewer']}>
+                      <RoleProtectedRoute role={role} allowed={['ADMIN', 'GESTOR_PROJETO', 'VISUALIZADOR']}>
                         <Gantt />
                       </RoleProtectedRoute>
                     }
@@ -183,7 +183,7 @@ function App() {
                   <Route
                     path="/calendario"
                     element={
-                      <RoleProtectedRoute role={role} allowed={['admin', 'technician', 'viewer']}>
+                      <RoleProtectedRoute role={role} allowed={['ADMIN', 'GESTOR_PROJETO', 'VISUALIZADOR']}>
                         <CalendarView />
                       </RoleProtectedRoute>
                     }
@@ -192,7 +192,7 @@ function App() {
                   <Route
                     path="/relatorios"
                     element={
-                      <RoleProtectedRoute role={role} allowed={['admin', 'technician', 'viewer']}>
+                      <RoleProtectedRoute role={role} allowed={['ADMIN', 'GESTOR_PROJETO', 'VISUALIZADOR']}>
                         <Reports />
                       </RoleProtectedRoute>
                     }
@@ -200,7 +200,7 @@ function App() {
                   <Route
                     path="/categorias"
                     element={
-                      <RoleProtectedRoute role={role} allowed={['admin']}>
+                      <RoleProtectedRoute role={role} allowed={['ADMIN']}>
                         <ManageCategories />
                       </RoleProtectedRoute>
                     }
@@ -208,7 +208,7 @@ function App() {
                   <Route
                     path="/prioridades"
                     element={
-                      <RoleProtectedRoute role={role} allowed={['admin']}>
+                      <RoleProtectedRoute role={role} allowed={['ADMIN']}>
                         <Priorities />
                       </RoleProtectedRoute>
                     }
@@ -217,7 +217,7 @@ function App() {
                   <Route
                     path="/clientes"
                     element={
-                      <RoleProtectedRoute role={role} allowed={['admin']}>
+                      <RoleProtectedRoute role={role} allowed={['ADMIN']}>
                         <Clients />
                       </RoleProtectedRoute>
                     }
@@ -226,7 +226,7 @@ function App() {
                   <Route
                     path="/anotacoes"
                     element={
-                      <RoleProtectedRoute role={role} allowed={['admin', 'technician']}>
+                      <RoleProtectedRoute role={role} allowed={['ADMIN', 'GESTOR_PROJETO']}>
                         <Notes />
                       </RoleProtectedRoute>
                     }
@@ -234,7 +234,7 @@ function App() {
                   <Route
                     path="/configuracoes"
                     element={
-                      <RoleProtectedRoute role={role} allowed={['admin']}>
+                      <RoleProtectedRoute role={role} allowed={['ADMIN']}>
                         <Settings />
                       </RoleProtectedRoute>
                     }

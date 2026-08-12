@@ -21,10 +21,10 @@ const Sidebar = ({ isOpen, onClose, role }) => {
   const location = useLocation();
 
   const isActive = (path) => location.pathname === path ? "nav-item active" : "nav-item";
-  const isAdmin = role === 'admin';
-  const isAdminOrTechnician = role === 'admin' || role === 'technician';
-  const isOperational = role === 'admin' || role === 'technician' || role === 'client';
-  const canSeeReportsGanttCalendar = role === 'admin' || role === 'technician' || role === 'viewer';
+  const isAdmin = role === 'ADMIN';
+  const isAdminOrTechnician = role === 'ADMIN' || role === 'GESTOR_PROJETO';
+  const isOperational = role === 'ADMIN' || role === 'GESTOR_PROJETO' || role === 'CLIENTE';
+  const canSeeReportsGanttCalendar = role === 'ADMIN' || role === 'GESTOR_PROJETO' || role === 'VISUALIZADOR';
 
   const handleNavClick = () => {
     if (onClose) onClose();

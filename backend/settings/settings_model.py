@@ -1,4 +1,5 @@
 from database.connect_database import get_db_connection
+from services.crypto_service import encrypt, decrypt
 
 class SettingsModel:
     @staticmethod
@@ -60,7 +61,7 @@ class SettingsModel:
         if row:
             return {
                 "email_user": row[0],
-                "email_password": row[1],
+                "email_password": decrypt(row[1]),
                 "smtp_host": row[2],
                 "smtp_port": row[3],
                 "imap_host": row[4],
@@ -84,6 +85,7 @@ class SettingsModel:
             UPDATE tbl_user_settings
             SET email_user = %s,
                 email_password = %s,
+                email_password_encrypted = TRUE,
                 smtp_host = %s,
                 smtp_port = %s,
                 imap_host = %s,
@@ -92,7 +94,7 @@ class SettingsModel:
             WHERE id = 1
         """, (
             data.get("email_user", ""),
-            data.get("email_password", ""),
+            encrypt(data.get("email_password", "")),
             data.get("smtp_host", ""),
             data.get("smtp_port", "587"),
             data.get("imap_host", ""),

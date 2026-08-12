@@ -11,7 +11,7 @@ department_bp = Blueprint(
 
 # Criar departamento — configuração, mesmo padrão de categoria/prioridade (admin)
 @department_bp.route("/", methods=["POST"])
-@require_role("admin")
+@require_role("ADMIN")
 def create_department():
     data = request.get_json()
     response, status = DepartmentController.create_department(data)

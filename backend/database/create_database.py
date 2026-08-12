@@ -147,7 +147,7 @@ def create_tables():
 
             access_type VARCHAR(20)
             NOT NULL
-            CHECK (access_type IN ('admin', 'technician', 'client', 'viewer')),
+            CHECK (access_type IN ('ADMIN', 'DIRETOR', 'GESTOR_PROJETO', 'APROVADOR', 'COLABORADOR', 'CLIENTE', 'VISUALIZADOR')),
 
             situation VARCHAR(1)
             NOT NULL DEFAULT 'A'
@@ -309,16 +309,36 @@ def create_tables():
         ALTER TABLE tbl_tickets ADD COLUMN IF NOT EXISTS pending_since TIMESTAMP;
 
         -- Migração RBAC: bancos criados antes desta versão têm o CHECK antigo
-        -- (só 'client'/'technician'). Recria o constraint para aceitar 'admin' e,
-        -- mais recentemente, 'viewer' (papel só-leitura de Gantt/Calendário/Relatórios).
+        -- de 4 papéis ('admin'/'technician'/'client'/'viewer'). Unificação pro
+        -- vocabulário de 7 papéis do módulo de gestão (Fase 0 da fusão com o
+        -- APPCNS) — dropar o constraint ANTES de converter os dados (senão o
+        -- UPDATE abaixo violaria o CHECK antigo no meio da transformação).
         ALTER TABLE tbl_users DROP CONSTRAINT IF EXISTS tbl_users_access_type_check;
-        ALTER TABLE tbl_users ADD CONSTRAINT tbl_users_access_type_check
-            CHECK (access_type IN ('admin', 'technician', 'client', 'viewer'));
 
-        -- Promove o usuário administrador padrão para o papel 'admin' de verdade
+        -- Mapeamento: admin→ADMIN, technician→GESTOR_PROJETO (preserva o nível de
+        -- acesso amplo que 'technician' já tem hoje — chamados, projetos, kanban,
+        -- gantt — em vez de rebaixar todo técnico pro papel mais restrito
+        -- COLABORADOR sem aviso prévio), client→CLIENTE, viewer→VISUALIZADOR.
+        -- Idempotente: depois da primeira execução bem-sucedida nenhuma linha
+        -- mais casa com o WHERE, então rodar de novo é um no-op.
+        UPDATE tbl_users SET access_type = CASE access_type
+            WHEN 'admin' THEN 'ADMIN'
+            WHEN 'technician' THEN 'GESTOR_PROJETO'
+            WHEN 'client' THEN 'CLIENTE'
+            WHEN 'viewer' THEN 'VISUALIZADOR'
+            ELSE access_type
+        END
+        WHERE access_type IN ('admin', 'technician', 'client', 'viewer');
+
+        -- DIRETOR e APROVADOR são papéis novos, sem equivalente no vocabulário
+        -- antigo — começam sem nenhum usuário, atribuídos manualmente depois.
+        ALTER TABLE tbl_users ADD CONSTRAINT tbl_users_access_type_check
+            CHECK (access_type IN ('ADMIN', 'DIRETOR', 'GESTOR_PROJETO', 'APROVADOR', 'COLABORADOR', 'CLIENTE', 'VISUALIZADOR'));
+
+        -- Promove o usuário administrador padrão para o papel ADMIN de verdade
         -- (bancos antigos o criaram como 'technician', sem distinção de papel).
-        UPDATE tbl_users SET access_type = 'admin'
-        WHERE email = 'admin@sistema.local' AND access_type != 'admin';
+        UPDATE tbl_users SET access_type = 'ADMIN'
+        WHERE email = 'admin@sistema.local' AND access_type != 'ADMIN';
 
 
 
@@ -384,6 +404,14 @@ def create_tables():
             check_interval INTEGER      NOT NULL DEFAULT 100,
             updated_at     TIMESTAMP    NOT NULL DEFAULT NOW()
         );
+
+        -- email_password era guardada em texto puro. A coluna abaixo marca,
+        -- por linha, se o valor atual já foi cifrado (Fernet) — permite ao
+        -- migrate_secrets.py (rodado logo após create_tables() no boot,
+        -- ver main.py::run_setup()) saber exatamente quais linhas ainda
+        -- precisam ser cifradas, sem depender de heurística sobre o
+        -- conteúdo do valor.
+        ALTER TABLE tbl_user_settings ADD COLUMN IF NOT EXISTS email_password_encrypted BOOLEAN NOT NULL DEFAULT FALSE;
 
         """
 

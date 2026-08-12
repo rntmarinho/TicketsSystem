@@ -52,7 +52,7 @@ const Kanban = () => {
       .then(([ticketData, userData, projectData]) => {
         setTickets(Array.isArray(ticketData) ? ticketData : []);
         const users = Array.isArray(userData) ? userData : [];
-        setStaff(users.filter(u => u.access_type === 'admin' || u.access_type === 'technician'));
+        setStaff(users.filter(u => u.access_type === 'ADMIN' || u.access_type === 'GESTOR_PROJETO'));
         setProjects(Array.isArray(projectData) ? projectData : []);
         setLoading(false);
       })

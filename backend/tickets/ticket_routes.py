@@ -15,27 +15,27 @@ ticket_bp = Blueprint(
 
 
 @ticket_bp.route("/", methods=["POST"])
-@require_role("admin", "technician", "client")
+@require_role("ADMIN", "GESTOR_PROJETO", "CLIENTE")
 def create_ticket():
     data = request.get_json()
 
-    # Um usuário 'client' só pode abrir chamado em nome de si mesmo — evita
+    # Um usuário 'CLIENTE' só pode abrir chamado em nome de si mesmo — evita
     # impersonar outro solicitante. Técnico/admin podem abrir em nome de terceiros
     # (fluxo de atendimento telefônico, ver NewTicket.jsx).
-    if get_current_role() == "client":
+    if get_current_role() == "CLIENTE":
         data["user_id"] = int(get_jwt_identity())
 
     response, status = TicketController.create_ticket(data)
     return jsonify(response), status
 
-# Rota para listar todos os tickets — 'client' só vê os próprios;
+# Rota para listar todos os tickets — 'CLIENTE' só vê os próprios;
 # ?project_id= filtra por projeto (usado pelo Kanban)
 # ?type= filtra chamado/tarefa (usado pra não misturar tarefa interna de
 # projeto com chamado de suporte nas telas voltadas a atendimento)
 @ticket_bp.route("/", methods=["GET"])
 @jwt_required()
 def list_tickets():
-    owner_id = int(get_jwt_identity()) if get_current_role() == "client" else None
+    owner_id = int(get_jwt_identity()) if get_current_role() == "CLIENTE" else None
 
     project_id = request.args.get("project_id")
     project_id = int(project_id) if project_id else None
@@ -46,18 +46,18 @@ def list_tickets():
         TicketController.list_tickets(owner_id=owner_id, project_id=project_id, ticket_type=ticket_type)
     )
 
-# Rota para obter detalhes de um ticket específico — 'client' só acessa o próprio
+# Rota para obter detalhes de um ticket específico — 'CLIENTE' só acessa o próprio
 @ticket_bp.route("/<int:ticket_id>", methods=["GET"])
 @jwt_required()
 def get_ticket(ticket_id):
     response, status = TicketController.get_ticket(ticket_id)
-    if status == 200 and get_current_role() == "client" and response.get("user_id") != int(get_jwt_identity()):
+    if status == 200 and get_current_role() == "CLIENTE" and response.get("user_id") != int(get_jwt_identity()):
         return jsonify({"success": False, "message": "Registro de chamado não encontrado."}), 404
     return jsonify(response), status
 
 # Rota para atualizar o status de um ticket (fluxo de atendimento — técnico/admin)
 @ticket_bp.route("/<int:ticket_id>/status", methods=["PUT"])
-@require_role("admin", "technician")
+@require_role("ADMIN", "GESTOR_PROJETO")
 def update_status(ticket_id):
     data = request.get_json()
     response = TicketController.update_status(ticket_id, data["status"])
@@ -65,7 +65,7 @@ def update_status(ticket_id):
 
 # Rota para deletar um ticket (técnico/admin)
 @ticket_bp.route("/<int:ticket_id>", methods=["DELETE"])
-@require_role("admin", "technician")
+@require_role("ADMIN", "GESTOR_PROJETO")
 def delete_ticket(ticket_id):
     response = TicketController.delete_ticket(ticket_id)
     return jsonify(response)
@@ -77,10 +77,10 @@ def list_messages(ticket_id):
 
     ticket, ticket_status = TicketController.get_ticket(ticket_id)
     role = get_current_role()
-    is_client = role == "client"
-    # 'viewer' não tem noção de "chamado próprio" (vê todos, só-leitura), mas
-    # também não deve enxergar notas internas — mesma regra de privacidade do 'client'.
-    hide_private = role in ("client", "viewer")
+    is_client = role == "CLIENTE"
+    # 'VISUALIZADOR' não tem noção de "chamado próprio" (vê todos, só-leitura), mas
+    # também não deve enxergar notas internas — mesma regra de privacidade do 'CLIENTE'.
+    hide_private = role in ("CLIENTE", "VISUALIZADOR")
 
     if is_client and (ticket_status != 200 or ticket.get("user_id") != int(get_jwt_identity())):
         return jsonify({"success": False, "message": "Registro de chamado não encontrado."}), 404
@@ -101,7 +101,7 @@ def list_messages(ticket_id):
 
 # Rota para criar uma nova mensagem/atividade em um ticket específico
 @ticket_bp.route("/<int:ticket_id>/messages", methods=["POST"])
-@require_role("admin", "technician", "client")
+@require_role("ADMIN", "GESTOR_PROJETO", "CLIENTE")
 def create_message(ticket_id):
     data = request.get_json()
 
@@ -109,7 +109,7 @@ def create_message(ticket_id):
     current_user_id = int(get_jwt_identity())
     claims = get_jwt()
     author_name = claims.get("name", "Sistema") # Pega o nome real do técnico/cliente
-    is_client = get_current_role() == "client"
+    is_client = get_current_role() == "CLIENTE"
 
     if not data or "message" not in data:
         return jsonify({"success": False, "message": "O campo 'message' é obrigatório"}), 400
@@ -170,7 +170,7 @@ def create_message(ticket_id):
     
 # Rota para fundir dois chamados (técnico/admin)
 @ticket_bp.route("/<int:parent_id>/merge", methods=["POST"])
-@require_role("admin", "technician")
+@require_role("ADMIN", "GESTOR_PROJETO")
 def merge_tickets(parent_id):
     data = request.get_json()
 
@@ -200,7 +200,7 @@ def handle_ticket_by_id(ticket_id):
         return jsonify(response), status
 # A rota PUT para atualizar um ticket específico (técnico/admin)
     elif request.method == "PUT":
-        if get_current_role() not in ("admin", "technician"):
+        if get_current_role() not in ("ADMIN", "GESTOR_PROJETO"):
             return jsonify({"success": False, "message": "Acesso negado: seu perfil não tem permissão para esta ação."}), 403
         data = request.get_json()
         # Delega os dados recebidos para a atualização no Controller

@@ -29,7 +29,7 @@ const ImageThumb = ({ url, nome }) => {
 const AnexoCard = ({ anexo, onDelete, ticketFechado }) => {
   const { icon, color } = getFileIcon(anexo.tipo_mime, anexo.nome_original);
   const isImage = anexo.tipo_mime?.startsWith('image/');
-  const downloadUrl = getDownloadUrl(anexo.nome_arquivo);
+  const downloadUrl = getDownloadUrl(anexo.ticket_id, anexo.nome_arquivo);
   const [confirm, setConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
 

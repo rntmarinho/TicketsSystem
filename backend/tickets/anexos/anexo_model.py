@@ -110,6 +110,39 @@ class AnexoModel:
         }
 
     @staticmethod
+    def get_by_nome_arquivo(nome_arquivo):
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            SELECT
+                id, ticket_id, nome_original, nome_arquivo,
+                caminho_arquivo, tipo_mime, tamanho_bytes,
+                data_upload, usuario_upload
+            FROM tbl_ticket_anexos
+            WHERE nome_arquivo = %s
+        """, (nome_arquivo,))
+
+        row = cursor.fetchone()
+        cursor.close()
+        conn.close()
+
+        if not row:
+            return None
+
+        return {
+            "id": row[0],
+            "ticket_id": row[1],
+            "nome_original": row[2],
+            "nome_arquivo": row[3],
+            "caminho_arquivo": row[4],
+            "tipo_mime": row[5],
+            "tamanho_bytes": row[6],
+            "data_upload": str(row[7]) if row[7] else None,
+            "usuario_upload": row[8]
+        }
+
+    @staticmethod
     def delete(anexo_id):
         conn = get_db_connection()
         cursor = conn.cursor()

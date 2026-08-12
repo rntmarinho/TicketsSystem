@@ -10,7 +10,7 @@ settings_bp = Blueprint(
 )
 
 @settings_bp.route("/email", methods=["GET"])
-@require_role("admin")
+@require_role("ADMIN")
 def get_email_settings():
     """
     Endpoint destinado à aquisição das credenciais e metadados de rede de correio.
@@ -19,7 +19,7 @@ def get_email_settings():
     return jsonify(response), status
 
 @settings_bp.route("/email", methods=["PUT"])
-@require_role("admin")
+@require_role("ADMIN")
 def update_email_settings():
     """
     Endpoint estruturado para a modificação integral dos parâmetros de rede de e-mail.

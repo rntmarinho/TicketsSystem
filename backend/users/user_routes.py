@@ -2,6 +2,7 @@ from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from users.user_controller import UserController
 from services.auth_decorators import require_role, require_self_or_roles, get_current_role
+from services.rate_limiter import limiter
 
 # Blueprint para as rotas de usuários
 user_bp = Blueprint(
@@ -21,7 +22,7 @@ def get_me():
 
 # Rota para criar um novo usuário (somente admin)
 @user_bp.route("/", methods=["POST"])
-@require_role("admin")
+@require_role("ADMIN")
 def create_user():
 
     data = request.get_json()
@@ -32,6 +33,7 @@ def create_user():
 
 # Rota para redefinição de senha (sem autenticação)
 @user_bp.route("/reset-password", methods=["POST"])
+@limiter.limit("5 per hour")
 def reset_password():
 
     data = request.get_json()
@@ -44,6 +46,7 @@ def reset_password():
 
 # Rota para login de usuário
 @user_bp.route("/login", methods=["POST"])
+@limiter.limit("10 per minute")
 def login():
 
     data = request.get_json()
@@ -58,7 +61,7 @@ def login():
 # Rota para listar todos os usuários (admin gerencia; técnico usa pra escolher
 # o solicitante ao abrir chamado em nome de um cliente — ver NewTicket.jsx)
 @user_bp.route("/", methods=["GET"])
-@require_role("admin", "technician")
+@require_role("ADMIN", "GESTOR_PROJETO")
 def get_users():
 
     return jsonify(
@@ -68,12 +71,12 @@ def get_users():
 # Rota para atualizar um usuário — o próprio usuário pode editar seu perfil,
 # mas só admin pode alterar papel (access_type), empresa (client_id) ou situação
 @user_bp.route("/<int:user_id>", methods=["PUT"])
-@require_self_or_roles("user_id", "admin")
+@require_self_or_roles("user_id", "ADMIN")
 def update_user(user_id):
 
     data = request.get_json()
 
-    if get_current_role() != "admin":
+    if get_current_role() != "ADMIN":
         # Impede que um usuário não-admin se auto-promova ou mude de empresa/situação
         data = {k: v for k, v in data.items() if k not in ("access_type", "client_id", "situation")}
 
@@ -86,7 +89,7 @@ def update_user(user_id):
 
 # Rota para deletar (inativar) um usuário (somente admin)
 @user_bp.route("/<int:user_id>", methods=["DELETE"])
-@require_role("admin")
+@require_role("ADMIN")
 def delete_user(user_id):
 
     response = UserController.delete_user(
@@ -98,13 +101,13 @@ def delete_user(user_id):
 
 # Rota para obter detalhes de um usuário específico — o próprio usuário ou admin
 @user_bp.route("/<int:user_id>", methods=["GET"])
-@require_self_or_roles("user_id", "admin")
+@require_self_or_roles("user_id", "ADMIN")
 def get_user(user_id):
     response, status = UserController.get_user(user_id)
     return jsonify(response), status
 
 @user_bp.route("/<int:user_id>/signature", methods=["PATCH"])
-@require_self_or_roles("user_id", "admin")
+@require_self_or_roles("user_id", "ADMIN")
 def upload_signature(user_id):
     # Validação da presença do arquivo no escopo da requisição
     if 'signature' not in request.files:
@@ -131,7 +134,7 @@ def upload_signature(user_id):
     
 # Adicione este bloco junto às demais rotas (somente admin ativa/inativa contas)
 @user_bp.route("/<int:user_id>/situation", methods=["PATCH"])
-@require_role("admin")
+@require_role("ADMIN")
 def update_situation(user_id):
     data = request.get_json()
     

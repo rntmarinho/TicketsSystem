@@ -12,7 +12,7 @@ priority_bp = Blueprint(
 
 # Configuração — somente admin
 @priority_bp.route("/", methods=["POST"])
-@require_role("admin")
+@require_role("ADMIN")
 def create_priority():
     data = request.get_json()
     response, status = PriorityController.create_priority(data)
@@ -27,7 +27,7 @@ def list_priorities():
 
 # Configuração — somente admin
 @priority_bp.route("/<int:priority_id>", methods=["PUT"])
-@require_role("admin")
+@require_role("ADMIN")
 def update_priority(priority_id):
     data = request.get_json()
     response, status = PriorityController.update_priority(priority_id, data)
@@ -35,7 +35,7 @@ def update_priority(priority_id):
 
 # Configuração — somente admin
 @priority_bp.route("/<int:priority_id>", methods=["DELETE"])
-@require_role("admin")
+@require_role("ADMIN")
 def delete_priority(priority_id):
     response, status = PriorityController.delete_priority(priority_id)
     return jsonify(response), status

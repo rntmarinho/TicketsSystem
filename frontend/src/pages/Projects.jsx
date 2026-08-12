@@ -44,8 +44,8 @@ const emptyTaskForm = { project_id: '', subject: '', category_id: '', priority_i
 
 const Projects = () => {
   const { role, user } = useAuth();
-  const isAdmin = role === 'admin';
-  const canEditTasks = role === 'admin' || role === 'technician';
+  const isAdmin = role === 'ADMIN';
+  const canEditTasks = role === 'ADMIN' || role === 'GESTOR_PROJETO';
 
   const [activeTab, setActiveTab] = useState('geral');
 
@@ -76,7 +76,7 @@ const Projects = () => {
       setProjects(Array.isArray(projectData) ? projectData : []);
       setTickets(Array.isArray(ticketData) ? ticketData : []);
       const users = Array.isArray(userData) ? userData : [];
-      setStaff(users.filter(u => u.access_type === 'admin' || u.access_type === 'technician'));
+      setStaff(users.filter(u => u.access_type === 'ADMIN' || u.access_type === 'GESTOR_PROJETO'));
       setPriorities(Array.isArray(priorityData) ? priorityData : []);
       setCategories(Array.isArray(categoryData) ? categoryData : []);
     } catch {

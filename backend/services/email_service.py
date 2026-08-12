@@ -13,6 +13,7 @@ from email.mime.multipart import MIMEMultipart
 from email.utils import make_msgid, parseaddr
 from werkzeug.utils import secure_filename
 from database.connect_database import get_db_connection
+from services.crypto_service import decrypt
 from tickets.ticket_model import TicketModel
 from tickets.messages.message_model import MessageModel
 from tickets.anexos.anexo_model import AnexoModel
@@ -56,7 +57,7 @@ def get_email_settings():
 
         return {
             "email_user":      row[0],
-            "email_password":  row[1],
+            "email_password":  decrypt(row[1]),
             "smtp_host":       row[2],
             "smtp_port":       int(row[3]) if row[3] else 587,
             "imap_host":       row[4],
@@ -480,7 +481,7 @@ def _default_project_id():
 def get_or_create_user_by_email(email_addr, display_name=None):
     """
     Busca o usuário pelo e-mail do remetente; se não existir (remetente
-    externo desconhecido), cria automaticamente como 'client' — antes,
+    externo desconhecido), cria automaticamente como 'CLIENTE' — antes,
     remetentes desconhecidos eram atribuídos ao usuário admin (id 1), o que
     misturava chamados de pessoas diferentes num único solicitante.
     """
@@ -502,7 +503,7 @@ def get_or_create_user_by_email(email_addr, display_name=None):
         "email": email_addr,
         "client_id": _default_client_id(),
         "password": password_hash,
-        "access_type": "client"
+        "access_type": "CLIENTE"
     })
 
     logging.info(f"Usuário criado automaticamente pra remetente desconhecido: {email_addr}")

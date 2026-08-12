@@ -65,7 +65,7 @@ const NotificationBell = () => {
   const notifiedRef = useRef(null);
   const dismissedRef = useRef(null);
 
-  const isStaff = role === 'admin' || role === 'technician';
+  const isStaff = role === 'ADMIN' || role === 'GESTOR_PROJETO';
   const seenKey = user?.id ? `notif_activity_seen_${user.id}` : null;
   const notifiedKey = user?.id ? `notif_sound_keys_${user.id}` : null;
   const dismissedKey = user?.id ? `notif_dismissed_${user.id}` : null;
@@ -197,7 +197,7 @@ const NotificationBell = () => {
               .map(t => ({ ...t, _tipo: 'nova_resposta' }));
 
             novaAtividade = [...novosChamados, ...novasRespostas];
-          } else if (role === 'client') {
+          } else if (role === 'CLIENTE') {
             novaAtividade = data
               .map(t => ({ ...t, _quando: parseDate(t.last_message_at) }))
               .filter(t => t._quando && t._quando > lastSeen && t.last_message_is_client === false)
