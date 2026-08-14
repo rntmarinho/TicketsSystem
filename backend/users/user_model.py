@@ -81,7 +81,12 @@ class UserModel:
                 u.access_type,
                 u.situation,
                 u.department_id,
-                d.name
+                d.name,
+                u.cargo,
+                u.ramal,
+                u.whatsapp,
+                u.nivel_hierarquico,
+                u.gestor_imediato_id
             FROM tbl_users u
             LEFT JOIN tbl_departments d ON d.id = u.department_id
             WHERE u.id = %s
@@ -109,7 +114,12 @@ class UserModel:
                 u.access_type,
                 u.situation,
                 u.department_id,
-                d.name
+                d.name,
+                u.cargo,
+                u.ramal,
+                u.whatsapp,
+                u.nivel_hierarquico,
+                u.gestor_imediato_id
             FROM tbl_users u
             LEFT JOIN tbl_departments d ON d.id = u.department_id
             ORDER BY u.name
@@ -136,7 +146,12 @@ class UserModel:
                 email = %s,
                 client_id = %s,
                 access_type = %s,
-                department_id = %s
+                department_id = %s,
+                cargo = %s,
+                ramal = %s,
+                whatsapp = %s,
+                nivel_hierarquico = %s,
+                gestor_imediato_id = %s
             WHERE id = %s
         """, (
             data["name"],
@@ -144,6 +159,11 @@ class UserModel:
             data.get("client_id"),
             data["access_type"],
             data.get("department_id"),
+            data.get("cargo"),
+            data.get("ramal"),
+            data.get("whatsapp"),
+            data.get("nivel_hierarquico"),
+            data.get("gestor_imediato_id"),
             user_id
         ))
 

@@ -1,15 +1,16 @@
 """
-Porte simplificado de permissions.ts (APPCNS) pra Fase 1. A regra completa de
-visibilidade por Núcleo/nível hierárquico (GERENCIA vê tudo, gerente de núcleo
-vê as equipes que contêm gente do núcleo dele, etc.) depende do modelo Nucleo
-e de User.nivelHierarquico, que só chegam na Fase 2 — aqui a visibilidade é
-só "ADMIN/DIRETOR veem tudo, os demais veem o que é da(s) equipe(s) de que
-participam, mais o que são owner/approver". Isso é seguro porque hoje só
-existe a equipe padrão "Geral" (ver gestao/bootstrap.py) com todo o staff
-como membro — a regra fica mais restritiva de verdade só quando a Fase 2
-criar equipes de verdade.
+Porte de permissions.ts (APPCNS). Desde a Fase 2, completo: ADMIN/DIRETOR e
+nível hierárquico GERENCIA veem tudo; gerente de núcleo (NucleoGerente) vê
+também as equipes que contêm gente dos núcleos que ele gerencia, além das
+equipes das quais participa; os demais só veem as próprias equipes.
+Simplificação mantida em relação ao APPCNS original: não modelamos
+`Project.diretores`/`coordenadores` (M:N direto projeto-pessoa) nem
+`Project.nucleos` (M:N direto projeto-núcleo) — não fazem parte do escopo
+combinado pra Fase 2; a visibilidade por núcleo passa só pela equipe.
 """
 from gestao.models.team_models import UserTeam
+from gestao.models.nucleo_models import NucleoGerente, NucleoMembro
+from gestao.models.legacy import LegacyUser
 
 STAFF_ROLES = ("ADMIN", "DIRETOR", "GESTOR_PROJETO", "APROVADOR", "COLABORADOR", "VISUALIZADOR")
 
@@ -26,12 +27,33 @@ def get_user_team_ids(session, user_id):
     return [r[0] for r in rows]
 
 
+def _nucleo_managed_user_ids(session, user_id):
+    """IDs de pessoas que pertencem a núcleos gerenciados por este usuário (NucleoGerente)."""
+    nucleo_ids = [r[0] for r in session.query(NucleoGerente.nucleo_id).filter(NucleoGerente.user_id == user_id).all()]
+    if not nucleo_ids:
+        return []
+    rows = session.query(NucleoMembro.user_id).filter(NucleoMembro.nucleo_id.in_(nucleo_ids)).all()
+    return [r[0] for r in rows]
+
+
 def visible_project_team_ids(session, user_id, role):
     """Retorna None se o usuário vê todos os projetos (sem filtro necessário),
     ou a lista de team_ids visíveis pra ele (pode ser vazia)."""
     if role in ("ADMIN", "DIRETOR"):
         return None
-    return get_user_team_ids(session, user_id)
+
+    user = session.query(LegacyUser).get(user_id)
+    if user and user.nivel_hierarquico == "GERENCIA":
+        return None
+
+    team_ids = set(get_user_team_ids(session, user_id))
+
+    nucleo_user_ids = _nucleo_managed_user_ids(session, user_id)
+    if nucleo_user_ids:
+        extra_rows = session.query(UserTeam.team_id).filter(UserTeam.user_id.in_(nucleo_user_ids)).all()
+        team_ids.update(r[0] for r in extra_rows)
+
+    return list(team_ids)
 
 
 def is_team_member(session, user_id, role, team_id):
@@ -58,6 +80,23 @@ def can_manage_team(session, user_id, role, team_id):
     if role == "ADMIN":
         return True
     return is_team_manager(session, user_id, team_id)
+
+
+def can_manage_org_structure(role):
+    """Criar/editar equipe nova ou núcleo — mudança de estrutura organizacional,
+    não gestão do dia a dia de uma equipe já existente (essa é can_manage_team)."""
+    return role in ("ADMIN", "DIRETOR")
+
+
+def is_nucleo_manager(session, user_id, role, nucleo_id):
+    if role in ("ADMIN", "DIRETOR"):
+        return True
+    return (
+        session.query(NucleoGerente)
+        .filter(NucleoGerente.user_id == user_id, NucleoGerente.nucleo_id == nucleo_id)
+        .first()
+        is not None
+    )
 
 
 def can_modify_task(role, is_assignee, locked):

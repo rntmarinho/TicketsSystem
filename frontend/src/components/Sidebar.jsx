@@ -11,6 +11,11 @@ import { LayoutDashboard,
   Briefcase,
   CalendarDays,
   StickyNote,
+  Network,
+  CheckSquare,
+  Target,
+  Gauge,
+  ScrollText,
   X } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import './Sidebar.css';
@@ -26,6 +31,7 @@ const Sidebar = ({ isOpen, onClose, role }) => {
   // Espelha services/gestao_permissions.py::can_access_gestao — CLIENTE ainda
   // não entra no módulo de gestão (chega na Fase 3, Portal do Cliente).
   const canSeeGestao = ['ADMIN', 'DIRETOR', 'GESTOR_PROJETO', 'APROVADOR', 'COLABORADOR', 'VISUALIZADOR'].includes(role);
+  const isAdminOrDiretor = role === 'ADMIN' || role === 'DIRETOR';
 
   const handleNavClick = () => {
     if (onClose) onClose();
@@ -69,6 +75,42 @@ const Sidebar = ({ isOpen, onClose, role }) => {
           {canSeeGestao && (
             <Link to="/gestao/projetos" className={isActive("/gestao/projetos")} onClick={handleNavClick}>
               <Briefcase size={20} /> Projetos
+            </Link>
+          )}
+
+          {canSeeGestao && (
+            <Link to="/gestao/equipes" className={isActive("/gestao/equipes")} onClick={handleNavClick}>
+              <Users size={20} /> Equipes
+            </Link>
+          )}
+
+          {canSeeGestao && (
+            <Link to="/gestao/organograma" className={isActive("/gestao/organograma")} onClick={handleNavClick}>
+              <Network size={20} /> Organograma
+            </Link>
+          )}
+
+          {canSeeGestao && (
+            <Link to="/gestao/aprovacoes" className={isActive("/gestao/aprovacoes")} onClick={handleNavClick}>
+              <CheckSquare size={20} /> Aprovações
+            </Link>
+          )}
+
+          {canSeeGestao && (
+            <Link to="/gestao/metas" className={isActive("/gestao/metas")} onClick={handleNavClick}>
+              <Target size={20} /> Metas
+            </Link>
+          )}
+
+          {canSeeGestao && (
+            <Link to="/gestao/indicadores" className={isActive("/gestao/indicadores")} onClick={handleNavClick}>
+              <Gauge size={20} /> Indicadores
+            </Link>
+          )}
+
+          {isAdminOrDiretor && (
+            <Link to="/gestao/auditoria" className={isActive("/gestao/auditoria")} onClick={handleNavClick}>
+              <ScrollText size={20} /> Auditoria
             </Link>
           )}
 

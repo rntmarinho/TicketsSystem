@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Plus, List, Kanban as KanbanIcon, GanttChartSquare } from 'lucide-react';
+import { ArrowLeft, Plus, List, Kanban as KanbanIcon, GanttChartSquare, ClipboardList } from 'lucide-react';
 import { DndContext, useDraggable, useDroppable, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { useAuth } from '../../context/AuthContext';
 import { getProject } from '../../services/gestao/projectService';
@@ -8,6 +8,7 @@ import { getTasks, createTask, updateTask } from '../../services/gestao/taskServ
 import { getStaff } from '../../services/gestao/teamService';
 import TaskDrawer from './components/TaskDrawer';
 import GestaoGanttView from './GestaoGanttView';
+import ProjectExtras from './components/ProjectExtras';
 import './styles/Gestao.css';
 
 const COLUMNS = [
@@ -61,6 +62,7 @@ const GestaoProjectDetail = () => {
   const [newTitle, setNewTitle] = useState('');
 
   const canCreateTask = !['CLIENTE', 'VISUALIZADOR'].includes(role);
+  const canManageExtras = ['ADMIN', 'DIRETOR', 'GESTOR_PROJETO'].includes(role);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
   const load = useCallback(async () => {
@@ -119,6 +121,7 @@ const GestaoProjectDetail = () => {
         <button className={view === 'kanban' ? 'active' : ''} onClick={() => setView('kanban')}><KanbanIcon size={15} /> Kanban</button>
         <button className={view === 'lista' ? 'active' : ''} onClick={() => setView('lista')}><List size={15} /> Lista</button>
         <button className={view === 'gantt' ? 'active' : ''} onClick={() => setView('gantt')}><GanttChartSquare size={15} /> Gantt</button>
+        <button className={view === 'extras' ? 'active' : ''} onClick={() => setView('extras')}><ClipboardList size={15} /> Marcos/Riscos/Decisões/Ideias</button>
       </div>
 
       {canCreateTask && (
@@ -161,6 +164,8 @@ const GestaoProjectDetail = () => {
       )}
 
       {view === 'gantt' && <GestaoGanttView tasks={topLevelTasks} />}
+
+      {view === 'extras' && <ProjectExtras projectId={id} canManage={canManageExtras} onTaskCreated={load} />}
 
       {openTaskId && (
         <TaskDrawer

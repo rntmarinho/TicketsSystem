@@ -340,6 +340,30 @@ def create_tables():
         UPDATE tbl_users SET access_type = 'ADMIN'
         WHERE email = 'admin@sistema.local' AND access_type != 'ADMIN';
 
+        -- Fase 2 da fusão com o APPCNS: campos de perfil usados pelo organograma
+        -- (cargo, ramal, whatsapp, nível hierárquico, gestor imediato). São
+        -- atributos do usuário de verdade (não do módulo de gestão), por isso
+        -- ficam em tbl_users mesmo — só o vínculo a Núcleo (tabela nova) é que
+        -- fica de fora daqui e vai para uma tabela de junção no módulo de
+        -- gestão (nucleo_membros/nucleo_gerentes), pra não criar uma FK de
+        -- tabela legada pra tabela gerida pelo Alembic.
+        ALTER TABLE tbl_users ADD COLUMN IF NOT EXISTS cargo VARCHAR(100);
+        ALTER TABLE tbl_users ADD COLUMN IF NOT EXISTS ramal VARCHAR(20);
+        ALTER TABLE tbl_users ADD COLUMN IF NOT EXISTS whatsapp VARCHAR(20);
+        ALTER TABLE tbl_users ADD COLUMN IF NOT EXISTS nivel_hierarquico VARCHAR(20);
+        ALTER TABLE tbl_users ADD COLUMN IF NOT EXISTS gestor_imediato_id INTEGER REFERENCES tbl_users(id);
+
+        DO $$
+        BEGIN
+            IF NOT EXISTS (
+                SELECT 1 FROM pg_constraint WHERE conname = 'tbl_users_nivel_hierarquico_check'
+            ) THEN
+                ALTER TABLE tbl_users ADD CONSTRAINT tbl_users_nivel_hierarquico_check
+                    CHECK (nivel_hierarquico IS NULL OR nivel_hierarquico IN
+                        ('DIRETORIA', 'GERENCIA', 'COORDENACAO', 'SUPERVISOR', 'COLABORADOR'));
+            END IF;
+        END $$;
+
 
 
         -- MENSAGENS

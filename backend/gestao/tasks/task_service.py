@@ -10,6 +10,7 @@ from services.gestao_permissions import (
 )
 from services.reschedule import reschedule_and_persist
 from services.rotina import generate_rotina_occurrences
+from gestao.notify import notify
 
 
 def _visible_project_ids(session, user_id, role):
@@ -124,6 +125,9 @@ def create_task(session, user_id, role, data):
     if data.get("duration_days") is not None and task.project_id:
         reschedule_and_persist(session, task.project_id)
 
+    if task.assignee_id and task.assignee_id != user_id:
+        notify(session, task.assignee_id, f"Você foi atribuído à tarefa \"{task.title}\"", type="TAREFA_ATRIBUIDA", link=f"/gestao/projetos/{task.project_id}" if task.project_id else None)
+
     session.commit()
     return {"success": True, "task": serialize_task(session, task)}, 201
 
@@ -178,7 +182,10 @@ def update_task(session, user_id, role, task_id, data):
             return {"success": False, "message": "Prioridade inválida."}, 422
         task.priority = data["priority"]
     if "assignee_id" in data:
+        assignee_changed = data["assignee_id"] != task.assignee_id
         task.assignee_id = data["assignee_id"]
+        if assignee_changed and task.assignee_id and task.assignee_id != user_id:
+            notify(session, task.assignee_id, f"Você foi atribuído à tarefa \"{task.title}\"", type="TAREFA_ATRIBUIDA", link=f"/gestao/projetos/{task.project_id}" if task.project_id else None)
     if "parent_task_id" in data:
         task.parent_task_id = data["parent_task_id"]
     if "is_entrega" in data:

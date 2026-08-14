@@ -20,7 +20,12 @@ const Users = () => {
     client_id: '',
     access_type: '',
     department_id: '',
-    senha: ''
+    senha: '',
+    cargo: '',
+    ramal: '',
+    whatsapp: '',
+    nivel_hierarquico: '',
+    gestor_imediato_id: ''
   });
 
   useEffect(() => {
@@ -75,7 +80,12 @@ const Users = () => {
       client_id: user.client_id || '',
       access_type: user.access_type || 'CLIENTE',  // valor padrão alinhado ao banco
       department_id: user.department_id || '',
-      senha: ''
+      senha: '',
+      cargo: user.cargo || '',
+      ramal: user.ramal || '',
+      whatsapp: user.whatsapp || '',
+      nivel_hierarquico: user.nivel_hierarquico || '',
+      gestor_imediato_id: user.gestor_imediato_id || ''
     });
     setIsModalOpen(true);
   };
@@ -83,7 +93,10 @@ const Users = () => {
   const closeModal = () => {
     setSelectedUser(null);
     setIsModalOpen(false);
-    setFormData({ name: '', email: '', client_id: '', access_type: '', department_id: '', senha: '' });
+    setFormData({
+      name: '', email: '', client_id: '', access_type: '', department_id: '', senha: '',
+      cargo: '', ramal: '', whatsapp: '', nivel_hierarquico: '', gestor_imediato_id: ''
+    });
   };
 
   const handleChange = (e) => {
@@ -99,7 +112,12 @@ const Users = () => {
         email: formData.email,
         access_type: formData.access_type,
         client_id: parseInt(formData.client_id),
-        department_id: formData.department_id ? Number(formData.department_id) : null
+        department_id: formData.department_id ? Number(formData.department_id) : null,
+        cargo: formData.cargo || null,
+        ramal: formData.ramal || null,
+        whatsapp: formData.whatsapp || null,
+        nivel_hierarquico: formData.nivel_hierarquico || null,
+        gestor_imediato_id: formData.gestor_imediato_id ? Number(formData.gestor_imediato_id) : null
       };
 
       if (formData.senha.trim()) {
@@ -305,6 +323,43 @@ const Users = () => {
                     <Plus size={16} />
                   </button>
                 </div>
+              </div>
+
+              <div className="form-group">
+                <label>Cargo</label>
+                <input type="text" name="cargo" value={formData.cargo} onChange={handleChange} placeholder="ex: Analista de Suprimentos" />
+              </div>
+
+              <div className="form-group">
+                <label>Nível Hierárquico (organograma)</label>
+                <select name="nivel_hierarquico" value={formData.nivel_hierarquico} onChange={handleChange}>
+                  <option value="">Não informado</option>
+                  <option value="DIRETORIA">Diretoria</option>
+                  <option value="GERENCIA">Gerência</option>
+                  <option value="COORDENACAO">Coordenação</option>
+                  <option value="SUPERVISOR">Supervisor</option>
+                  <option value="COLABORADOR">Colaborador</option>
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label>Gestor Imediato (organograma)</label>
+                <select name="gestor_imediato_id" value={formData.gestor_imediato_id} onChange={handleChange}>
+                  <option value="">Não informado</option>
+                  {users.filter(u => u.id !== selectedUser?.id).map(u => (
+                    <option key={u.id} value={u.id}>{u.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label>Ramal</label>
+                <input type="text" name="ramal" value={formData.ramal} onChange={handleChange} />
+              </div>
+
+              <div className="form-group">
+                <label>WhatsApp</label>
+                <input type="text" name="whatsapp" value={formData.whatsapp} onChange={handleChange} placeholder="(31) 90000-0000" />
               </div>
 
               <div className="form-group">

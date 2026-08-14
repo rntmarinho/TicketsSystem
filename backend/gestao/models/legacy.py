@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, String, ForeignKey
 from database.gestao_db import Base
 
 
@@ -16,3 +16,8 @@ class LegacyUser(Base):
     name = Column(String(255))
     email = Column(String(255))
     access_type = Column(String(20))
+    cargo = Column(String(100))
+    ramal = Column(String(20))
+    whatsapp = Column(String(20))
+    nivel_hierarquico = Column(String(20))
+    gestor_imediato_id = Column(Integer, ForeignKey("tbl_users.id"))

@@ -4,6 +4,7 @@ import { Bell } from 'lucide-react';
 import { apiFetch } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { normalizeStatus } from '../constants/ticketStatus';
+import { getNotifications, markNotificationRead } from '../services/gestao/notificationService';
 import './NotificationBell.css';
 
 const LIMIAR_HORAS = 24; // "prestes a vencer" — fixo por enquanto
@@ -56,6 +57,7 @@ const NotificationBell = () => {
   const { user, role } = useAuth();
   const [alerts, setAlerts] = useState([]);
   const [activity, setActivity] = useState([]);
+  const [gestaoNotifs, setGestaoNotifs] = useState([]);
   const [open, setOpen] = useState(false);
   const [desktopPermission, setDesktopPermission] = useState(
     typeof Notification !== 'undefined' ? Notification.permission : 'unsupported'
@@ -66,6 +68,7 @@ const NotificationBell = () => {
   const dismissedRef = useRef(null);
 
   const isStaff = role === 'ADMIN' || role === 'GESTOR_PROJETO';
+  const hasGestaoAccess = ['ADMIN', 'DIRETOR', 'GESTOR_PROJETO', 'APROVADOR', 'COLABORADOR', 'VISUALIZADOR'].includes(role);
   const seenKey = user?.id ? `notif_activity_seen_${user.id}` : null;
   const notifiedKey = user?.id ? `notif_sound_keys_${user.id}` : null;
   const dismissedKey = user?.id ? `notif_dismissed_${user.id}` : null;
@@ -240,9 +243,26 @@ const NotificationBell = () => {
       .catch(() => {});
   };
 
+  const loadGestao = () => {
+    if (!hasGestaoAccess) return;
+    getNotifications()
+      .then(data => {
+        if (Array.isArray(data)) setGestaoNotifs(data.filter(n => !n.read_at));
+      })
+      .catch(() => {});
+  };
+
+  const openGestaoNotif = async (n) => {
+    await markNotificationRead(n.id).catch(() => {});
+    setGestaoNotifs(prev => prev.filter(x => x.id !== n.id));
+    setOpen(false);
+    if (n.link) navigate(n.link);
+  };
+
   useEffect(() => {
     load();
-    const id = setInterval(load, INTERVALO_MS);
+    loadGestao();
+    const id = setInterval(() => { load(); loadGestao(); }, INTERVALO_MS);
     return () => clearInterval(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id, role]);
@@ -254,7 +274,7 @@ const NotificationBell = () => {
   }, []);
 
   const vencidos = alerts.filter(a => a._vencido).length;
-  const totalCount = alerts.length + activity.length;
+  const totalCount = alerts.length + activity.length + gestaoNotifs.length;
 
   const toggleOpen = () => {
     setOpen(o => {
@@ -339,6 +359,28 @@ const NotificationBell = () => {
                 </button>
               ))}
             </div>
+          )}
+
+          {hasGestaoAccess && (
+            <>
+              <div className="nb-dropdown-head">Gestão de Projetos</div>
+              {gestaoNotifs.length === 0 ? (
+                <div className="nb-empty">Nenhuma notificação nova.</div>
+              ) : (
+                <div className="nb-list">
+                  {gestaoNotifs.map(n => (
+                    <button
+                      key={`gestao-${n.id}`}
+                      className="nb-item nb-item--info"
+                      onClick={() => openGestaoNotif(n)}
+                    >
+                      <span className="nb-item-subject">{n.title}</span>
+                      {n.body && <span className="nb-item-sla">{n.body}</span>}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </>
           )}
 
           {desktopPermission === 'default' && (

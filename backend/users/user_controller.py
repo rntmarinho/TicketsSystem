@@ -115,7 +115,12 @@ class UserController:
                 "access_type": user[4],
                 "situation": user[5],
                 "department_id": user[6],
-                "department": user[7]
+                "department": user[7],
+                "cargo": user[8],
+                "ramal": user[9],
+                "whatsapp": user[10],
+                "nivel_hierarquico": user[11],
+                "gestor_imediato_id": user[12]
             })
 
         return result
@@ -134,7 +139,12 @@ class UserController:
             "email": data.get("email", current_user[2]),
             "client_id": data.get("client_id", current_user[3]),
             "access_type": data.get("access_type", current_user[4]),
-            "department_id": data.get("department_id", current_user[6])
+            "department_id": data.get("department_id", current_user[6]),
+            "cargo": data.get("cargo", current_user[8]),
+            "ramal": data.get("ramal", current_user[9]),
+            "whatsapp": data.get("whatsapp", current_user[10]),
+            "nivel_hierarquico": data.get("nivel_hierarquico", current_user[11]),
+            "gestor_imediato_id": data.get("gestor_imediato_id", current_user[12])
         }
 
         # 3. Executa a atualização dos dados principais
@@ -198,7 +208,12 @@ class UserController:
             "access_type": user[4],
             "situation": user[5],
             "department_id": user[6],
-            "department": user[7]
+            "department": user[7],
+            "cargo": user[8],
+            "ramal": user[9],
+            "whatsapp": user[10],
+            "nivel_hierarquico": user[11],
+            "gestor_imediato_id": user[12]
         }, 200
 
     @staticmethod

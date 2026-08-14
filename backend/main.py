@@ -24,6 +24,16 @@ from gestao.fields.field_routes import field_bp as gestao_field_bp
 from gestao.attachments.attachment_routes import attachment_bp as gestao_attachment_bp
 from gestao.folders.folder_routes import folder_bp as gestao_folder_bp
 from gestao.teams.team_routes import team_bp as gestao_team_bp
+from gestao.nucleos.nucleo_routes import nucleo_bp as gestao_nucleo_bp
+from gestao.approvals.approval_routes import approval_bp as gestao_approval_bp
+from gestao.goals.goal_routes import goal_bp as gestao_goal_bp
+from gestao.milestones.milestone_routes import milestone_bp as gestao_milestone_bp
+from gestao.risks.risk_routes import risk_bp as gestao_risk_bp
+from gestao.decisions.decision_routes import decision_bp as gestao_decision_bp
+from gestao.ideas.idea_routes import idea_bp as gestao_idea_bp
+from gestao.scorecard.scorecard_routes import scorecard_bp as gestao_scorecard_bp
+from gestao.audit.audit_routes import audit_bp as gestao_audit_bp
+from gestao.notifications.notification_routes import notification_bp as gestao_notification_bp
 from flask_cors import CORS
 from services.rate_limiter import limiter
 from database.create_database import create_database, create_tables
@@ -150,6 +160,16 @@ def create_app():
     app.register_blueprint(gestao_attachment_bp)
     app.register_blueprint(gestao_folder_bp)
     app.register_blueprint(gestao_team_bp)
+    app.register_blueprint(gestao_nucleo_bp)
+    app.register_blueprint(gestao_approval_bp)
+    app.register_blueprint(gestao_goal_bp)
+    app.register_blueprint(gestao_milestone_bp)
+    app.register_blueprint(gestao_risk_bp)
+    app.register_blueprint(gestao_decision_bp)
+    app.register_blueprint(gestao_idea_bp)
+    app.register_blueprint(gestao_scorecard_bp)
+    app.register_blueprint(gestao_audit_bp)
+    app.register_blueprint(gestao_notification_bp)
     # Health Check
     @app.route("/", methods=["GET"])
     def home():

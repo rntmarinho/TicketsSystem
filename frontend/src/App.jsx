@@ -14,6 +14,12 @@ import Users from './pages/Users';
 import AllTickets from './pages/AllTickets';
 import GestaoProjects from './pages/gestao/GestaoProjects';
 import GestaoProjectDetail from './pages/gestao/GestaoProjectDetail';
+import GestaoTeams from './pages/gestao/GestaoTeams';
+import GestaoOrgChart from './pages/gestao/GestaoOrgChart';
+import GestaoApprovals from './pages/gestao/GestaoApprovals';
+import GestaoGoals from './pages/gestao/GestaoGoals';
+import GestaoScorecard from './pages/gestao/GestaoScorecard';
+import GestaoAuditLog from './pages/gestao/GestaoAuditLog';
 import CalendarView from './pages/CalendarView';
 import TicketDetails from './pages/TicketDetails';
 import Reports from './pages/Reports';
@@ -113,7 +119,10 @@ function App() {
                   </button>
 
                   <div className="top-bar-actions">
-                    {(role === 'ADMIN' || role === 'GESTOR_PROJETO' || role === 'CLIENTE') && <NotificationBell />}
+                    {/* O componente decide sozinho o que mostrar por papel (alertas de SLA
+                        de chamado, atividade, e agora notificações do módulo de gestão) —
+                        sempre montado pra qualquer papel autenticado. */}
+                    <NotificationBell />
                     <button className="logout-btn-top" onClick={handleLogout}>
                       <LogOut size={18} /> Sair
                     </button>
@@ -183,6 +192,54 @@ function App() {
                     element={
                       <RoleProtectedRoute role={role} allowed={GESTAO_ROLES}>
                         <GestaoProjectDetail />
+                      </RoleProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/gestao/equipes"
+                    element={
+                      <RoleProtectedRoute role={role} allowed={GESTAO_ROLES}>
+                        <GestaoTeams />
+                      </RoleProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/gestao/organograma"
+                    element={
+                      <RoleProtectedRoute role={role} allowed={GESTAO_ROLES}>
+                        <GestaoOrgChart />
+                      </RoleProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/gestao/aprovacoes"
+                    element={
+                      <RoleProtectedRoute role={role} allowed={GESTAO_ROLES}>
+                        <GestaoApprovals />
+                      </RoleProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/gestao/metas"
+                    element={
+                      <RoleProtectedRoute role={role} allowed={GESTAO_ROLES}>
+                        <GestaoGoals />
+                      </RoleProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/gestao/indicadores"
+                    element={
+                      <RoleProtectedRoute role={role} allowed={GESTAO_ROLES}>
+                        <GestaoScorecard />
+                      </RoleProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/gestao/auditoria"
+                    element={
+                      <RoleProtectedRoute role={role} allowed={['ADMIN', 'DIRETOR']}>
+                        <GestaoAuditLog />
                       </RoleProtectedRoute>
                     }
                   />
