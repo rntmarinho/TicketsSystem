@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Send, ArrowLeft, Info, Users, Tag, AlertCircle, Briefcase, ListTodo, Paperclip, Upload, X } from 'lucide-react';
+import { Send, ArrowLeft, Info, Users, Tag, AlertCircle, Briefcase, Paperclip, Upload, X } from 'lucide-react';
 import { apiFetch } from '../services/api';
 import { getProjects } from '../services/projectService';
 import { uploadAnexo, formatBytes, MAX_SIZE_MB, EXTENSOES_PERMITIDAS } from '../services/anexoService';
@@ -168,22 +168,13 @@ const NewTicket = () => {
             </div>
           </div>
 
+          {/* O tipo 'tarefa' foi aposentado na Fase 1 da fusão com o APPCNS —
+              tarefa de projeto agora vive no módulo de Gestão (/gestao/projetos),
+              não mais como um chamado disfarçado. Todo chamado novo é 'chamado';
+              só o vínculo opcional com um projeto legado continua disponível
+              pra relatório/organização. */}
           {isStaff && (
             <div className="form-row">
-              <div className="form-group">
-                <label>Tipo</label>
-                <div className="input-with-icon">
-                  <ListTodo size={18} />
-                  <select
-                    value={formData.type}
-                    onChange={e => setFormData({ ...formData, type: e.target.value })}
-                  >
-                    <option value="chamado">Chamado</option>
-                    <option value="tarefa">Tarefa</option>
-                  </select>
-                </div>
-              </div>
-
               <div className="form-group">
                 <label>Projeto (opcional)</label>
                 <div className="input-with-icon">

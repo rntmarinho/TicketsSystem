@@ -1,0 +1,109 @@
+"""
+Porte simplificado de permissions.ts (APPCNS) pra Fase 1. A regra completa de
+visibilidade por Núcleo/nível hierárquico (GERENCIA vê tudo, gerente de núcleo
+vê as equipes que contêm gente do núcleo dele, etc.) depende do modelo Nucleo
+e de User.nivelHierarquico, que só chegam na Fase 2 — aqui a visibilidade é
+só "ADMIN/DIRETOR veem tudo, os demais veem o que é da(s) equipe(s) de que
+participam, mais o que são owner/approver". Isso é seguro porque hoje só
+existe a equipe padrão "Geral" (ver gestao/bootstrap.py) com todo o staff
+como membro — a regra fica mais restritiva de verdade só quando a Fase 2
+criar equipes de verdade.
+"""
+from gestao.models.team_models import UserTeam
+
+STAFF_ROLES = ("ADMIN", "DIRETOR", "GESTOR_PROJETO", "APROVADOR", "COLABORADOR", "VISUALIZADOR")
+
+
+def can_access_gestao(role):
+    """CLIENTE não tem acesso ao módulo de gestão ainda — chega na Fase 3 (Portal do Cliente),
+    isolado em blueprint próprio. Hoje (Fase 1) CLIENTE já não tinha acesso a
+    Projetos/Kanban/Gantt no TicketsSystem, então isso não é uma restrição nova."""
+    return role in STAFF_ROLES
+
+
+def get_user_team_ids(session, user_id):
+    rows = session.query(UserTeam.team_id).filter(UserTeam.user_id == user_id).all()
+    return [r[0] for r in rows]
+
+
+def visible_project_team_ids(session, user_id, role):
+    """Retorna None se o usuário vê todos os projetos (sem filtro necessário),
+    ou a lista de team_ids visíveis pra ele (pode ser vazia)."""
+    if role in ("ADMIN", "DIRETOR"):
+        return None
+    return get_user_team_ids(session, user_id)
+
+
+def is_team_member(session, user_id, role, team_id):
+    if role == "ADMIN":
+        return True
+    membership = (
+        session.query(UserTeam)
+        .filter(UserTeam.user_id == user_id, UserTeam.team_id == team_id)
+        .first()
+    )
+    return membership is not None
+
+
+def is_team_manager(session, user_id, team_id):
+    membership = (
+        session.query(UserTeam)
+        .filter(UserTeam.user_id == user_id, UserTeam.team_id == team_id)
+        .first()
+    )
+    return membership is not None and membership.role == "GESTOR"
+
+
+def can_manage_team(session, user_id, role, team_id):
+    if role == "ADMIN":
+        return True
+    return is_team_manager(session, user_id, team_id)
+
+
+def can_modify_task(role, is_assignee, locked):
+    """Quem pode editar uma tarefa: Admin e Gestor de Projeto sempre (se não
+    travada); Colaborador só se não travada e for responsável; demais nunca."""
+    if locked:
+        return role in ("ADMIN", "GESTOR_PROJETO")
+    if role in ("ADMIN", "GESTOR_PROJETO"):
+        return True
+    if role == "COLABORADOR":
+        return is_assignee
+    return False
+
+
+def can_delete_task(role):
+    return role in ("ADMIN", "GESTOR_PROJETO")
+
+
+def is_read_only_role(role):
+    return role in ("CLIENTE", "VISUALIZADOR")
+
+
+def can_view_project(session, user_id, role, project):
+    """project: instância de gestao.models.project_models.Project (ou None)."""
+    if project is None:
+        return False
+    if role in ("ADMIN", "DIRETOR"):
+        return True
+    team_ids = get_user_team_ids(session, user_id)
+    return project.team_id in team_ids or project.owner_id == user_id or project.approver_id == user_id
+
+
+def can_view_task(session, user_id, role, task):
+    """
+    Usado pela checagem de posse do anexo de tarefa (corrige o gap de IDOR que o
+    APPCNS tinha — lá, "leitura aberta a qualquer autenticado" pra anexo de
+    tarefa; aqui, precisa a mesma visibilidade da tarefa em si). Vê a tarefa
+    quem vê o projeto dela, mais quem é o responsável direto (tarefa pessoal,
+    sem visibilidade de equipe, ou responsável de fora da equipe do projeto).
+    """
+    if task is None:
+        return False
+    if role in ("ADMIN", "DIRETOR"):
+        return True
+    if task.assignee_id == user_id:
+        return True
+    if task.project_id is None:
+        return False
+    return can_view_project(session, user_id, role, task.project)

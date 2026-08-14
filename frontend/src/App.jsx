@@ -12,9 +12,8 @@ import Login from './pages/Login';
 import CreateUser from './pages/CreateUser';
 import Users from './pages/Users';
 import AllTickets from './pages/AllTickets';
-import Kanban from './pages/Kanban';
-import Projects from './pages/Projects';
-import Gantt from './pages/Gantt';
+import GestaoProjects from './pages/gestao/GestaoProjects';
+import GestaoProjectDetail from './pages/gestao/GestaoProjectDetail';
 import CalendarView from './pages/CalendarView';
 import TicketDetails from './pages/TicketDetails';
 import Reports from './pages/Reports';
@@ -54,6 +53,11 @@ const RoleProtectedRoute = ({ role, allowed, children }) => {
   }
   return children;
 };
+
+// Papéis com acesso ao módulo de Gestão de Projetos — espelha
+// services/gestao_permissions.py::can_access_gestao no backend. CLIENTE não
+// tem acesso ainda (chega na Fase 3, Portal do Cliente, em rota separada).
+const GESTAO_ROLES = ['ADMIN', 'DIRETOR', 'GESTOR_PROJETO', 'APROVADOR', 'COLABORADOR', 'VISUALIZADOR'];
 
 function App() {
   const navigate = useNavigate();
@@ -117,12 +121,12 @@ function App() {
                 </div>
 
                 <Routes>
-                  {/* 'VISUALIZADOR' não tem Painel Inicial — manda pro Gantt em vez de
+                  {/* 'VISUALIZADOR' não tem Painel Inicial — manda pros Projetos em vez de
                       usar RoleProtectedRoute aqui (que redireciona pra "/" e
                       criaria um loop infinito nesta rota específica). */}
                   <Route
                     path="/"
-                    element={role === 'VISUALIZADOR' ? <Navigate to="/gantt" replace /> : <Dashboard />}
+                    element={role === 'VISUALIZADOR' ? <Navigate to="/gestao/projetos" replace /> : <Dashboard />}
                   />
                   <Route
                     path="/novo-chamado"
@@ -156,27 +160,29 @@ function App() {
                       </RoleProtectedRoute>
                     }
                   />
-                  <Route
-                    path="/kanban"
-                    element={
-                      <RoleProtectedRoute role={role} allowed={['ADMIN', 'GESTOR_PROJETO']}>
-                        <Kanban />
-                      </RoleProtectedRoute>
-                    }
-                  />
+                  {/* Módulo antigo de projetos/kanban/gantt (chamados type='tarefa')
+                      aposentado na Fase 1 da fusão com o APPCNS — /kanban e /gantt
+                      redirecionam pra tela de Projetos do módulo de gestão novo, já
+                      que lá não existe mais "o" board único (é por projeto). */}
+                  <Route path="/kanban" element={<Navigate to="/gestao/projetos" replace />} />
+                  <Route path="/gantt" element={<Navigate to="/gestao/projetos" replace />} />
                   <Route
                     path="/projetos"
+                    element={<Navigate to="/gestao/projetos" replace />}
+                  />
+                  <Route
+                    path="/gestao/projetos"
                     element={
-                      <RoleProtectedRoute role={role} allowed={['ADMIN', 'GESTOR_PROJETO', 'VISUALIZADOR']}>
-                        <Projects />
+                      <RoleProtectedRoute role={role} allowed={GESTAO_ROLES}>
+                        <GestaoProjects />
                       </RoleProtectedRoute>
                     }
                   />
                   <Route
-                    path="/gantt"
+                    path="/gestao/projetos/:id"
                     element={
-                      <RoleProtectedRoute role={role} allowed={['ADMIN', 'GESTOR_PROJETO', 'VISUALIZADOR']}>
-                        <Gantt />
+                      <RoleProtectedRoute role={role} allowed={GESTAO_ROLES}>
+                        <GestaoProjectDetail />
                       </RoleProtectedRoute>
                     }
                   />

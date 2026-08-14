@@ -18,11 +18,18 @@ from reports.report_routes import reports_bp
 from projects.project_routes import project_bp
 from notes.note_routes import note_bp
 from departments.department_routes import department_bp
+from gestao.projects.project_routes import project_bp as gestao_project_bp
+from gestao.tasks.task_routes import task_bp as gestao_task_bp
+from gestao.fields.field_routes import field_bp as gestao_field_bp
+from gestao.attachments.attachment_routes import attachment_bp as gestao_attachment_bp
+from gestao.folders.folder_routes import folder_bp as gestao_folder_bp
+from gestao.teams.team_routes import team_bp as gestao_team_bp
 from flask_cors import CORS
 from services.rate_limiter import limiter
 from database.create_database import create_database, create_tables
 from database.migrate_secrets import encrypt_existing_settings
 from database.gestao_db import SessionLocal
+from gestao.bootstrap import bootstrap_default_team
 from seed_admin import create_default_client, create_admin_user
 
 # Carrega as variáveis de ambiente do arquivo .env
@@ -136,6 +143,13 @@ def create_app():
     app.register_blueprint(project_bp)
     app.register_blueprint(note_bp)
     app.register_blueprint(department_bp)
+    # Módulo de Gestão de Projetos (fusão com o APPCNS) — Fase 1
+    app.register_blueprint(gestao_project_bp)
+    app.register_blueprint(gestao_task_bp)
+    app.register_blueprint(gestao_field_bp)
+    app.register_blueprint(gestao_attachment_bp)
+    app.register_blueprint(gestao_folder_bp)
+    app.register_blueprint(gestao_team_bp)
     # Health Check
     @app.route("/", methods=["GET"])
     def home():
@@ -160,6 +174,7 @@ def create_app():
 # Executa setup antes de criar a aplicação Flask
 run_setup()
 run_alembic_upgrade()
+bootstrap_default_team()
 
 app = create_app()
 

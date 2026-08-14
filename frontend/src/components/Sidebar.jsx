@@ -8,9 +8,7 @@ import { LayoutDashboard,
   Settings,
   Tag,
   CircleAlert,
-  LayoutGrid,
   Briefcase,
-  GanttChartSquare,
   CalendarDays,
   StickyNote,
   X } from 'lucide-react';
@@ -25,6 +23,9 @@ const Sidebar = ({ isOpen, onClose, role }) => {
   const isAdminOrTechnician = role === 'ADMIN' || role === 'GESTOR_PROJETO';
   const isOperational = role === 'ADMIN' || role === 'GESTOR_PROJETO' || role === 'CLIENTE';
   const canSeeReportsGanttCalendar = role === 'ADMIN' || role === 'GESTOR_PROJETO' || role === 'VISUALIZADOR';
+  // Espelha services/gestao_permissions.py::can_access_gestao — CLIENTE ainda
+  // não entra no módulo de gestão (chega na Fase 3, Portal do Cliente).
+  const canSeeGestao = ['ADMIN', 'DIRETOR', 'GESTOR_PROJETO', 'APROVADOR', 'COLABORADOR', 'VISUALIZADOR'].includes(role);
 
   const handleNavClick = () => {
     if (onClose) onClose();
@@ -65,21 +66,9 @@ const Sidebar = ({ isOpen, onClose, role }) => {
             </Link>
           )}
 
-          {isAdminOrTechnician && (
-            <Link to="/kanban" className={isActive("/kanban")} onClick={handleNavClick}>
-              <LayoutGrid size={20} /> Kanban
-            </Link>
-          )}
-
-          {canSeeReportsGanttCalendar && (
-            <Link to="/projetos" className={isActive("/projetos")} onClick={handleNavClick}>
+          {canSeeGestao && (
+            <Link to="/gestao/projetos" className={isActive("/gestao/projetos")} onClick={handleNavClick}>
               <Briefcase size={20} /> Projetos
-            </Link>
-          )}
-
-          {canSeeReportsGanttCalendar && (
-            <Link to="/gantt" className={isActive("/gantt")} onClick={handleNavClick}>
-              <GanttChartSquare size={20} /> Gantt
             </Link>
           )}
 

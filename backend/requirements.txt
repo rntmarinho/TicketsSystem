@@ -16,6 +16,7 @@ psycopg2-binary>=2.9.9
 # em SQL cru via psycopg2, sem migração de ORM (ver plano de fusão).
 SQLAlchemy>=2.0.30
 alembic>=1.13.2
+python-dateutil>=2.9.0
 
 # Gerenciamento de Variáveis de Ambiente
 python-dotenv>=1.0.1

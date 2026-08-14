@@ -24,6 +24,17 @@ config.set_main_option("sqlalchemy.url", database_url())
 target_metadata = Base.metadata
 
 
+def include_object(object, name, type_, reflected, compare_to):
+    # Tabelas tbl_* são legadas — geridas por backend/database/create_database.py
+    # em SQL cru. LegacyUser (models/legacy.py) mapeia tbl_users só pra permitir
+    # FK/join a partir das tabelas novas; o Alembic nunca deve tentar criar,
+    # alterar ou versionar essas tabelas, mesmo que algum dia rodem
+    # `alembic revision --autogenerate` sem prestar atenção.
+    if type_ == "table" and name.startswith("tbl_"):
+        return False
+    return True
+
+
 def run_migrations_offline():
     url = config.get_main_option("sqlalchemy.url")
     context.configure(
@@ -31,6 +42,7 @@ def run_migrations_offline():
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
+        include_object=include_object,
     )
     with context.begin_transaction():
         context.run_migrations()
@@ -43,7 +55,7 @@ def run_migrations_online():
         poolclass=pool.NullPool,
     )
     with connectable.connect() as connection:
-        context.configure(connection=connection, target_metadata=target_metadata)
+        context.configure(connection=connection, target_metadata=target_metadata, include_object=include_object)
         with context.begin_transaction():
             context.run_migrations()
 

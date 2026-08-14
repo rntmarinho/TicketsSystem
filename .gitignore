@@ -14,6 +14,8 @@ node_modules/
 # Uploads de usuário (não são código-fonte)
 backend/public/anexos/*
 !backend/public/anexos/.gitkeep
+backend/public/gestao_anexos/*
+!backend/public/gestao_anexos/.gitkeep
 
 # Compose local de teste (portas/nomes isolados da instância em produção)
 docker-compose.test.yml

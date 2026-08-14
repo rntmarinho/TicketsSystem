@@ -62,6 +62,8 @@ services:
     volumes:
       # Persiste os anexos enviados pelos usuários
       - ./backend/public/anexos:/app/public/anexos
+      # Persiste os anexos do módulo de gestão (tarefas/projetos)
+      - ./backend/public/gestao_anexos:/app/public/gestao_anexos
     ports:
       - "5000:5000"
 

@@ -1,0 +1,298 @@
+.gestao-container {
+  padding: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.gestao-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 300px;
+}
+.gestao-loading .spin { animation: gestao-spin 1s linear infinite; }
+@keyframes gestao-spin { to { transform: rotate(360deg); } }
+
+.gestao-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+.gestao-header h1 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.5rem;
+  color: var(--text-h);
+  margin: 0;
+}
+
+.gestao-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.gestao-btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.gestao-empty {
+  color: var(--text);
+  opacity: 0.7;
+  padding: 40px 0;
+  text-align: center;
+  grid-column: 1 / -1;
+}
+
+.gestao-project-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.gestao-project-card {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 18px;
+  cursor: pointer;
+  transition: box-shadow 0.15s;
+  background: var(--bg);
+}
+.gestao-project-card:hover { box-shadow: var(--shadow); }
+
+.gestao-project-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+.gestao-project-card-header h3 { margin: 0; font-size: 1.05rem; color: var(--text-h); }
+
+.gestao-project-desc {
+  font-size: 0.85rem;
+  opacity: 0.75;
+  margin: 8px 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.gestao-badge {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.gestao-status-planejado { background: #e5e7eb; color: #374151; }
+.gestao-status-em_andamento { background: var(--accent-bg); color: var(--accent); }
+.gestao-status-pausado { background: #fef3c7; color: #92400e; }
+.gestao-status-concluido { background: #dcfce7; color: #166534; }
+
+.gestao-progress-bar {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--border);
+  overflow: hidden;
+  margin-top: 10px;
+}
+.gestao-progress-fill { height: 100%; background: var(--accent); }
+
+.gestao-project-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.78rem;
+  opacity: 0.75;
+  margin-top: 8px;
+}
+.gestao-overdue { color: #dc2626; font-weight: 600; }
+
+.gestao-modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.4);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1000;
+}
+.gestao-modal {
+  background: var(--bg);
+  border-radius: 12px;
+  padding: 24px;
+  width: 460px;
+  max-width: 92vw;
+  max-height: 88vh;
+  overflow-y: auto;
+}
+.gestao-modal h2 { margin-top: 0; color: var(--text-h); }
+.gestao-modal label { display: block; font-size: 0.82rem; font-weight: 600; margin: 12px 0 4px; }
+.gestao-modal input, .gestao-modal textarea, .gestao-modal select {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text-h);
+  font: inherit;
+  box-sizing: border-box;
+}
+.gestao-modal textarea { min-height: 70px; resize: vertical; }
+.gestao-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+.gestao-modal-actions button {
+  padding: 9px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-h);
+  cursor: pointer;
+}
+
+/* ── Detalhe do projeto ─────────────────────────────────────────────── */
+.gestao-project-tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 20px;
+}
+.gestao-project-tabs button {
+  padding: 10px 16px;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font-weight: 600;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+}
+.gestao-project-tabs button.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+/* ── Kanban ──────────────────────────────────────────────────────────── */
+.gestao-kanban {
+  display: flex;
+  gap: 14px;
+  overflow-x: auto;
+  padding-bottom: 10px;
+}
+.gestao-kanban-column {
+  flex: 0 0 280px;
+  background: var(--code-bg);
+  border-radius: 10px;
+  padding: 10px;
+  min-height: 200px;
+}
+.gestao-kanban-column-title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  opacity: 0.7;
+  padding: 4px 6px 10px;
+  display: flex;
+  justify-content: space-between;
+}
+.gestao-kanban-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  cursor: grab;
+  font-size: 0.85rem;
+}
+.gestao-kanban-card:active { cursor: grabbing; }
+.gestao-kanban-card.dragging { opacity: 0.5; }
+.gestao-kanban-card-title { font-weight: 600; color: var(--text-h); margin-bottom: 6px; }
+.gestao-kanban-card-meta { display: flex; justify-content: space-between; align-items: center; font-size: 0.72rem; opacity: 0.75; }
+.gestao-priority-baixa { color: #64748b; }
+.gestao-priority-media { color: #2563eb; }
+.gestao-priority-alta { color: #d97706; }
+.gestao-priority-urgente { color: #dc2626; font-weight: 700; }
+
+.gestao-add-task-inline {
+  width: 100%;
+  padding: 8px;
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+  font-size: 0.82rem;
+  cursor: pointer;
+  margin-top: 4px;
+}
+
+/* ── Lista de tarefas ────────────────────────────────────────────────── */
+.gestao-task-list { display: flex; flex-direction: column; gap: 2px; }
+.gestao-task-row {
+  display: grid;
+  grid-template-columns: 1fr 140px 100px 120px 40px;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+.gestao-task-row:hover { background: var(--code-bg); }
+.gestao-task-row-title { display: flex; align-items: center; gap: 8px; }
+.gestao-locked-icon { opacity: 0.6; }
+
+/* ── Drawer de detalhe de tarefa ─────────────────────────────────────── */
+.gestao-drawer-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.35);
+  z-index: 1000;
+  display: flex;
+  justify-content: flex-end;
+}
+.gestao-drawer {
+  width: 480px;
+  max-width: 94vw;
+  background: var(--bg);
+  height: 100%;
+  overflow-y: auto;
+  padding: 24px;
+  box-sizing: border-box;
+}
+.gestao-drawer-close {
+  float: right;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text);
+}
+.gestao-drawer h2 { margin: 0 0 16px; color: var(--text-h); font-size: 1.15rem; }
+.gestao-drawer-field { margin-bottom: 14px; }
+.gestao-drawer-field label { display: block; font-size: 0.78rem; font-weight: 600; opacity: 0.75; margin-bottom: 4px; }
+.gestao-drawer-section { margin-top: 22px; border-top: 1px solid var(--border); padding-top: 16px; }
+.gestao-drawer-section h4 { font-size: 0.85rem; margin: 0 0 10px; color: var(--text-h); }
+.gestao-comment { padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
+.gestao-comment-author { font-weight: 600; font-size: 0.78rem; opacity: 0.8; }
+.gestao-comment-form { display: flex; gap: 8px; margin-top: 10px; }
+.gestao-comment-form input { flex: 1; padding: 7px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--text-h); }
+.gestao-attachment-item, .gestao-dependency-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  font-size: 0.82rem;
+}
+
+/* ── Gantt ───────────────────────────────────────────────────────────── */
+.gestao-gantt-wrap { overflow-x: auto; }
+.gestao-gantt-row { display: flex; align-items: center; height: 32px; border-bottom: 1px solid var(--border); }
+.gestao-gantt-label { flex: 0 0 260px; font-size: 0.8rem; padding-left: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gestao-gantt-timeline { position: relative; height: 22px; }
+.gestao-gantt-bar { position: absolute; height: 18px; border-radius: 4px; top: 2px; background: var(--accent); }
+.gestao-gantt-bar.critical { background: #dc2626; }
