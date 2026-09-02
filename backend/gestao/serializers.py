@@ -1,6 +1,6 @@
 """Serialização compartilhada dos modelos do módulo de gestão pra JSON."""
 from database.gestao_db import SessionLocal
-from gestao.models.legacy import LegacyUser
+from gestao.models.legacy import LegacyUser, LegacyDepartment
 
 _user_cache_key = "_gestao_user_cache"
 
@@ -18,6 +18,13 @@ def user_brief(session, user_id):
     return {"id": user.id, "name": user.name, "email": user.email}
 
 
+def _department_name(session, department_id):
+    if department_id is None:
+        return None
+    dept = session.query(LegacyDepartment).get(department_id)
+    return dept.name if dept else None
+
+
 def serialize_project(session, project, percent_complete=None, overdue_count=None):
     data = {
         "id": project.id,
@@ -25,6 +32,8 @@ def serialize_project(session, project, percent_complete=None, overdue_count=Non
         "description": project.description,
         "status": project.status,
         "team_id": project.team_id,
+        "department_id": project.department_id,
+        "department": _department_name(session, project.department_id),
         "owner": user_brief(session, project.owner_id),
         "approver": user_brief(session, project.approver_id),
         "approval_status": project.approval_status,

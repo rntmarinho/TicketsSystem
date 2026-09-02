@@ -1,7 +1,7 @@
 from gestao.models.field_models import CustomField, CUSTOM_FIELD_TYPES
 from gestao.models.project_models import Project
 from gestao.serializers import serialize_custom_field
-from services.gestao_permissions import can_manage_team
+from services.gestao_permissions import can_manage_team, can_manage_project
 
 
 def list_fields(session, project_id):
@@ -18,7 +18,7 @@ def create_field(session, user_id, role, project_id, data):
     project = session.query(Project).get(project_id)
     if not project:
         return {"success": False, "message": "Projeto não encontrado."}, 404
-    if not can_manage_team(session, user_id, role, project.team_id):
+    if not can_manage_project(session, user_id, role, project):
         return {"success": False, "message": "Sem permissão."}, 403
 
     name = (data.get("name") or "").strip()
@@ -51,7 +51,7 @@ def update_field(session, user_id, role, field_id, data):
     if not field:
         return {"success": False, "message": "Campo não encontrado."}, 404
     project = session.query(Project).get(field.project_id)
-    if not can_manage_team(session, user_id, role, project.team_id):
+    if not can_manage_project(session, user_id, role, project):
         return {"success": False, "message": "Sem permissão."}, 403
 
     if "name" in data:
@@ -69,7 +69,7 @@ def delete_field(session, user_id, role, field_id):
     if not field:
         return {"success": False, "message": "Campo não encontrado."}, 404
     project = session.query(Project).get(field.project_id)
-    if not can_manage_team(session, user_id, role, project.team_id):
+    if not can_manage_project(session, user_id, role, project):
         return {"success": False, "message": "Sem permissão."}, 403
     session.delete(field)
     session.commit()

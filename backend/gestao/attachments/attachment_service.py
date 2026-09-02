@@ -6,7 +6,7 @@ from gestao.models.task_models import Task
 from gestao.models.project_models import Project
 from gestao.models.message_models import TeamMessage, DirectMessage
 from gestao.serializers import serialize_attachment
-from services.gestao_permissions import can_view_task, can_view_project, can_manage_team, is_team_member
+from services.gestao_permissions import can_view_task, can_view_project, can_manage_team, is_team_member, can_manage_project
 
 # Mesma lista de extensões permitidas do módulo de chamados (allowlist, não
 # blocklist — decisão deliberada de endurecimento em relação ao APPCNS
@@ -177,7 +177,7 @@ def delete_attachment(session, user_id, role, attachment_id):
         project = None
 
     is_uploader = attachment.uploaded_by == user_id
-    allowed = role == "ADMIN" or is_uploader or (project and can_manage_team(session, user_id, role, project.team_id))
+    allowed = role == "ADMIN" or is_uploader or (project and can_manage_project(session, user_id, role, project))
     if not allowed:
         return {"success": False, "message": "Sem permissão."}, 403
 

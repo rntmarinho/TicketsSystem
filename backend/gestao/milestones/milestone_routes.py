@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from database.gestao_db import SessionLocal
 from services.auth_decorators import get_current_role
-from services.gestao_permissions import can_access_gestao, can_manage_team
+from services.gestao_permissions import can_access_gestao, can_manage_team, can_manage_project
 from gestao.models.project_extras_models import Milestone
 from gestao.models.project_models import Project
 from gestao.utils import parse_datetime
@@ -26,7 +26,7 @@ def _project_or_403(session, user_id, role, project_id):
     project = session.query(Project).get(project_id)
     if not project:
         return None, (jsonify({"success": False, "message": "Projeto não encontrado."}), 404)
-    if not can_manage_team(session, user_id, role, project.team_id):
+    if not can_manage_project(session, user_id, role, project):
         return None, (jsonify({"success": False, "message": "Sem permissão."}), 403)
     return project, None
 

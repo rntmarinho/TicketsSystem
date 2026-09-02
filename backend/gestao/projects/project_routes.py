@@ -49,12 +49,12 @@ def create_project():
 @project_bp.route("/<string:project_id>", methods=["GET"])
 @jwt_required()
 def get_project(project_id):
-    _, _, err = _guard()
+    user_id, role, err = _guard()
     if err:
         return err
     session = SessionLocal()
     try:
-        response, status = project_service.get_project(session, project_id)
+        response, status = project_service.get_project(session, user_id, role, project_id)
         return jsonify(response), status
     finally:
         session.close()
@@ -92,12 +92,12 @@ def delete_project(project_id):
 @project_bp.route("/<string:project_id>/board", methods=["GET"])
 @jwt_required()
 def get_board(project_id):
-    _, _, err = _guard()
+    user_id, role, err = _guard()
     if err:
         return err
     session = SessionLocal()
     try:
-        response, status = project_service.get_board(session, project_id)
+        response, status = project_service.get_board(session, user_id, role, project_id)
         return jsonify(response), status
     finally:
         session.close()

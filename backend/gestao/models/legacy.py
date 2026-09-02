@@ -16,6 +16,7 @@ class LegacyUser(Base):
     name = Column(String(255))
     email = Column(String(255))
     access_type = Column(String(20))
+    situation = Column(String(1))  # 'A' ativo / 'I' inativo
     cargo = Column(String(100))
     ramal = Column(String(20))
     whatsapp = Column(String(20))

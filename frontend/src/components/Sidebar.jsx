@@ -81,9 +81,9 @@ const Sidebar = ({ isOpen, onClose, role }) => {
   // equipe de atendimento + autoatendimento (cliente e papéis internos da fusão com Gestão).
   const isOperational = ['ADMIN', 'GESTOR_PROJETO', 'CLIENTE', 'COLABORADOR', 'DIRETOR', 'APROVADOR', 'VISUALIZADOR'].includes(role);
   const canSeeReportsGanttCalendar = role === 'ADMIN' || role === 'GESTOR_PROJETO' || role === 'VISUALIZADOR';
-  // Espelha services/gestao_permissions.py::can_access_gestao — CLIENTE não
-  // entra no módulo de gestão; tem o Portal do Cliente (item próprio abaixo).
-  const canSeeGestao = ['ADMIN', 'DIRETOR', 'GESTOR_PROJETO', 'APROVADOR', 'COLABORADOR', 'VISUALIZADOR'].includes(role);
+  // Espelha services/gestao_permissions.py::can_access_gestao — desde 02/09/2026
+  // todo papel entra no módulo de gestão (visibilidade por setor no backend).
+  const canSeeGestao = ['ADMIN', 'DIRETOR', 'GESTOR_PROJETO', 'APROVADOR', 'COLABORADOR', 'VISUALIZADOR', 'CLIENTE'].includes(role);
   const isAdminOrDiretor = role === 'ADMIN' || role === 'DIRETOR';
 
   const handleNavClick = () => {
@@ -227,7 +227,9 @@ const Sidebar = ({ isOpen, onClose, role }) => {
             </Link>
           )}
 
-          {isAdmin && (
+          {/* Configurações agora é pra todo mundo (Meu Perfil: foto, assinatura, cargo);
+              a aba de E-mail continua só pra ADMIN, dentro da tela. */}
+          {isOperational && (
             <Link to="/configuracoes" className={isActive("/configuracoes")} onClick={handleNavClick}>
               <Settings size={20} /> Configurações
             </Link>

@@ -18,6 +18,10 @@ class Project(Base):
     description = Column(Text, nullable=True)
     status = Column(Enum(*PROJECT_STATUSES, name="project_status", native_enum=False), nullable=False, default="PLANEJADO")
     team_id = Column(String(36), ForeignKey("teams.id", ondelete="CASCADE"), nullable=False, index=True)
+    # Setor dono do projeto (02/09/2026) — base da visibilidade por setor, ver
+    # services/gestao_permissions.py. Nulo = só TI/diretoria/gerência, dono,
+    # aprovador e responsáveis por tarefa enxergam.
+    department_id = Column(Integer, ForeignKey("tbl_departments.id", ondelete="SET NULL"), nullable=True, index=True)
     owner_id = Column(Integer, ForeignKey("tbl_users.id"), nullable=False, index=True)
     approver_id = Column(Integer, ForeignKey("tbl_users.id"), nullable=True)
     approval_status = Column(Enum(*APPROVAL_STATUSES, name="approval_status", native_enum=False), nullable=False, default="NAO_REQUER")

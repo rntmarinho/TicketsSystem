@@ -59,7 +59,7 @@ def create_request():
     user_id, role, err = _guard()
     if err:
         return err
-    if role in ("CLIENTE", "VISUALIZADOR"):
+    if role == "VISUALIZADOR":
         return jsonify({"success": False, "message": "Seu perfil não pode criar solicitações de aprovação."}), 403
 
     data = request.get_json() or {}

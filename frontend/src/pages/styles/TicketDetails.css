@@ -791,3 +791,12 @@
     align-items: stretch;
   }
 }
+
+/* Assinatura do atendente no rodapé da resposta (Configurações > Meu Perfil) */
+.message-signature {
+  display: block;
+  max-height: 90px;
+  max-width: 260px;
+  margin-top: 10px;
+  opacity: 0.9;
+}

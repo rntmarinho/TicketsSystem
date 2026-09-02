@@ -10,6 +10,8 @@ import bcrypt
 from imap_tools import MailBox, AND
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from email.mime.image import MIMEImage
+from services.image_utils import sniff_image
 from email.utils import make_msgid, parseaddr
 from werkzeug.utils import secure_filename
 from database.connect_database import get_db_connection
@@ -83,7 +85,29 @@ def _parse_cc(cc):
 
 # ─── Envio de notificação por e-mail ─────────────────────────────────────────
 
-def send_email_notification(ticket, autor, conteudo, cc=None):
+def _assinatura_do_autor(autor_id):
+    """Assinatura (imagem) do autor da resposta, só pra quem atende chamado
+    (ADMIN/GESTOR_PROJETO). None se não houver — o e-mail sai como antes."""
+    if not autor_id:
+        return None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT signature, access_type FROM tbl_users WHERE id = %s", (autor_id,))
+        row = cursor.fetchone()
+        cursor.close()
+        conn.close()
+    except Exception as e:
+        logging.warning(f"Assinatura do autor não carregada: {e}")
+        return None
+    if not row or row[0] is None or row[1] not in ("ADMIN", "GESTOR_PROJETO"):
+        return None
+    data = bytes(row[0])
+    mime, _ = sniff_image(data)
+    return data if mime else None
+
+
+def send_email_notification(ticket, autor, conteudo, cc=None, autor_id=None):
 
     try:
         cfg = get_email_settings()
@@ -120,7 +144,9 @@ def send_email_notification(ticket, autor, conteudo, cc=None):
         destinatario = row[0]
         cc_lista = _parse_cc(cc)
 
-        msg = MIMEMultipart("alternative")
+        assinatura = _assinatura_do_autor(autor_id)
+        # Com assinatura: multipart/related (alternative + imagem inline via cid).
+        msg = MIMEMultipart("related" if assinatura else "alternative")
         msg["Subject"] = (
             f"[Chamado #{ticket['id']}] "
             f"{ticket['subject']}"
@@ -177,12 +203,24 @@ Mensagem:
                 border-radius:5px;">
                 {conteudo}
             </div>
+            {'<p style="margin-top:18px"><img src="cid:assinatura" alt="Assinatura" style="max-height:120px"></p>' if assinatura else ''}
         </body>
         </html>
         """
 
-        msg.attach(MIMEText(texto, "plain"))
-        msg.attach(MIMEText(html, "html"))
+        if assinatura:
+            alternativa = MIMEMultipart("alternative")
+            alternativa.attach(MIMEText(texto, "plain"))
+            alternativa.attach(MIMEText(html, "html"))
+            msg.attach(alternativa)
+            _, subtipo = sniff_image(assinatura)
+            imagem = MIMEImage(assinatura, _subtype=subtipo)
+            imagem.add_header("Content-ID", "<assinatura>")
+            imagem.add_header("Content-Disposition", "inline", filename=f"assinatura.{subtipo}")
+            msg.attach(imagem)
+        else:
+            msg.attach(MIMEText(texto, "plain"))
+            msg.attach(MIMEText(html, "html"))
 
         with smtplib.SMTP(smtp_host, smtp_port) as server:
             server.starttls()

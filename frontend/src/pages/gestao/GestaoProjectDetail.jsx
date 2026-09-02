@@ -3,9 +3,11 @@ import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Plus, List, Kanban as KanbanIcon, GanttChartSquare, ClipboardList } from 'lucide-react';
 import { DndContext, useDraggable, useDroppable, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { useAuth } from '../../context/AuthContext';
-import { getProject } from '../../services/gestao/projectService';
+import { getProject, updateProject } from '../../services/gestao/projectService';
 import { getTasks, createTask, updateTask } from '../../services/gestao/taskService';
 import { getStaff } from '../../services/gestao/teamService';
+import { getDepartments } from '../../services/departmentService';
+import { Building2 } from 'lucide-react';
 import TaskDrawer from './components/TaskDrawer';
 import GestaoGanttView from './GestaoGanttView';
 import ProjectExtras from './components/ProjectExtras';
@@ -53,17 +55,25 @@ const KanbanColumn = ({ column, tasks, onOpen }) => {
 
 const GestaoProjectDetail = () => {
   const { id } = useParams();
-  const { role } = useAuth();
+  const { role, user } = useAuth();
   const [project, setProject] = useState(null);
+  const [departments, setDepartments] = useState([]);
   const [tasks, setTasks] = useState([]);
   const [staff, setStaff] = useState([]);
   const [view, setView] = useState('kanban');
   const [openTaskId, setOpenTaskId] = useState(null);
   const [newTitle, setNewTitle] = useState('');
 
-  const canCreateTask = !['CLIENTE', 'VISUALIZADOR'].includes(role);
-  const canManageExtras = ['ADMIN', 'DIRETOR', 'GESTOR_PROJETO'].includes(role);
+  // Espelha services/gestao_permissions.py: só VISUALIZADOR é somente-leitura;
+  // gerencia o projeto quem é ADMIN/DIRETOR/GESTOR_PROJETO ou o dono.
+  const canCreateTask = role !== 'VISUALIZADOR';
+  const isPrivileged = ['ADMIN', 'DIRETOR', 'GESTOR_PROJETO'].includes(role);
+  const canManageExtras = isPrivileged || (project?.owner?.id != null && project.owner.id === user?.id);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+
+  useEffect(() => {
+    if (isPrivileged) getDepartments().then((d) => setDepartments(Array.isArray(d) ? d : []));
+  }, [isPrivileged]);
 
   const load = useCallback(async () => {
     const [projectData, tasksData, staffData] = await Promise.all([
@@ -114,6 +124,26 @@ const GestaoProjectDetail = () => {
       </Link>
       <header className="gestao-header">
         <h1>{project.name}</h1>
+        <div className="gestao-project-setor" title="Setor do projeto — define quem enxerga">
+          <Building2 size={14} />
+          {isPrivileged ? (
+            <select
+              className="gestao-select-inline"
+              value={project.department_id ?? ''}
+              onChange={async (e) => {
+                const department_id = e.target.value ? Number(e.target.value) : null;
+                const r = await updateProject(id, { department_id });
+                if (r.success === false) alert(r.message || 'Erro ao mudar o setor.');
+                load();
+              }}
+            >
+              <option value="">Sem setor</option>
+              {departments.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
+            </select>
+          ) : (
+            <span>{project.department || 'Sem setor'}</span>
+          )}
+        </div>
       </header>
       {project.description && <p style={{ opacity: 0.8, marginTop: -12 }}>{project.description}</p>}
 

@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from database.gestao_db import SessionLocal
 from services.auth_decorators import get_current_role
-from services.gestao_permissions import can_access_gestao, can_manage_team
+from services.gestao_permissions import can_access_gestao, can_manage_team, can_manage_project
 from gestao.models.scorecard_models import ScorecardItem, SCORECARD_SCOPES, SCORECARD_STATUS_COLORS
 from gestao.models.project_models import Project
 
@@ -32,7 +32,7 @@ def _can_manage(session, user_id, role, item):
         return item.user_id == user_id
     if item.scope == "PROJETO" and item.project_id:
         project = session.query(Project).get(item.project_id)
-        return project is not None and can_manage_team(session, user_id, role, project.team_id)
+        return project is not None and can_manage_project(session, user_id, role, project)
     if item.scope == "EQUIPE" and item.team_id:
         return can_manage_team(session, user_id, role, item.team_id)
     return False  # CORPORATIVO: só ADMIN/DIRETOR

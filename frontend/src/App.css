@@ -137,3 +137,14 @@
     display: none;
   }
 }
+
+/* ─── Avatar do usuário na barra superior (Configurações > Meu Perfil) ─── */
+.topbar-avatar {
+  display: inline-flex;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  transition: border-color 0.2s;
+}
+.topbar-avatar:hover {
+  border-color: #21967d;
+}

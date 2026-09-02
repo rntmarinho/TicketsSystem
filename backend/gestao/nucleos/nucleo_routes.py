@@ -234,7 +234,7 @@ def organograma():
     try:
         users = (
             session.query(LegacyUser)
-            .filter(LegacyUser.access_type.in_(STAFF_ROLES))
+            .filter(LegacyUser.access_type.in_(STAFF_ROLES), LegacyUser.situation == "A")
             .order_by(LegacyUser.name.asc())
             .all()
         )

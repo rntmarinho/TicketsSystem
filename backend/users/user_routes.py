@@ -1,4 +1,6 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, Response
+from users.user_model import UserModel
+from services.image_utils import sniff_image, validate_image_upload
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from users.user_controller import UserController
 from services.auth_decorators import require_role, require_self_or_roles, get_current_role
@@ -77,8 +79,13 @@ def update_user(user_id):
     data = request.get_json()
 
     if get_current_role() != "ADMIN":
-        # Impede que um usuário não-admin se auto-promova ou mude de empresa/situação
-        data = {k: v for k, v in data.items() if k not in ("access_type", "client_id", "situation")}
+        # Quem não é ADMIN só edita o próprio perfil: nome, e-mail, senha, cargo,
+        # ramal e whatsapp. Papel, empresa, situação, SETOR (base da visibilidade
+        # de projetos desde 02/09/2026), nível hierárquico e gestor imediato ficam
+        # de fora — antes era uma blocklist e o próprio usuário conseguia trocar
+        # de setor.
+        permitidos = ("nome", "name", "email", "senha", "password", "cargo", "ramal", "whatsapp")
+        data = {k: v for k, v in (data or {}).items() if k in permitidos}
 
     response = UserController.update_user(
         user_id,
@@ -106,32 +113,82 @@ def get_user(user_id):
     response, status = UserController.get_user(user_id)
     return jsonify(response), status
 
+# ── Foto de perfil e assinatura (02/09/2026) ─────────────────────────────────
+# Leitura liberada pra qualquer usuário autenticado (a foto aparece no chat e
+# nas mensagens de chamado de todo mundo; a assinatura, no rodapé das respostas
+# de atendimento). Como <img src> não manda header Authorization, aceita o JWT
+# também por querystring (?token=), mesmo padrão do download de anexo.
+# Escrita/remoção: só o próprio usuário ou ADMIN.
+MAX_PICTURE_BYTES = 2 * 1024 * 1024
+MAX_SIGNATURE_BYTES = 1 * 1024 * 1024
+
+
+def _serve_image(data):
+    if not data:
+        return jsonify({"success": False, "message": "Imagem não cadastrada."}), 404
+    mime, _ = sniff_image(data)
+    resp = Response(data, mimetype=mime or "application/octet-stream")
+    resp.headers["Cache-Control"] = "private, max-age=300"
+    return resp
+
+
+def _receive_image(field, max_bytes):
+    if field not in request.files:
+        return None, (jsonify({"success": False, "message": f"Campo '{field}' ausente."}), 400)
+    data, _, erro = validate_image_upload(request.files[field], max_bytes)
+    if erro:
+        return None, (jsonify({"success": False, "message": erro}), 400)
+    return data, None
+
+
+@user_bp.route("/<int:user_id>/signature", methods=["GET"])
+@jwt_required(locations=["headers", "query_string"])
+def get_signature(user_id):
+    return _serve_image(UserModel.get_signature(user_id))
+
+
 @user_bp.route("/<int:user_id>/signature", methods=["PATCH"])
 @require_self_or_roles("user_id", "ADMIN")
+@limiter.limit("20 per minute")
 def upload_signature(user_id):
-    # Validação da presença do arquivo no escopo da requisição
-    if 'signature' not in request.files:
-        return jsonify({"success": False, "message": "Nenhum artefato de assinatura foi submetido."}), 400
-    
-    file = request.files['signature']
-    
-    if file.filename == '':
-        return jsonify({"success": False, "message": "Arquivo nulo ou ausente."}), 400
+    data, erro = _receive_image("signature", MAX_SIGNATURE_BYTES)
+    if erro:
+        return erro
+    UserModel.update_signature(user_id, data)
+    return jsonify({"success": True, "message": "Assinatura salva."}), 200
 
-    try:
-        # Extração do fluxo binário do artefato
-        signature_bytes = file.read()
-        
-        # Invocação direta ao modelo para persistência
-        # Nota: Pode ser devidamente encapsulado no UserController para maior abstração
-        from users.user_model import UserModel
-        UserModel.update_signature(user_id, signature_bytes)
-        
-        return jsonify({"success": True, "message": "Assinatura registrada com êxito na base de dados."}), 200
 
-    except Exception as e:
-        return jsonify({"success": False, "message": f"Falha sistêmica durante o processamento do artefato: {str(e)}"}), 500
-    
+@user_bp.route("/<int:user_id>/signature", methods=["DELETE"])
+@require_self_or_roles("user_id", "ADMIN")
+def delete_signature(user_id):
+    UserModel.clear_signature(user_id)
+    return jsonify({"success": True, "message": "Assinatura removida."}), 200
+
+
+@user_bp.route("/<int:user_id>/picture", methods=["GET"])
+@jwt_required(locations=["headers", "query_string"])
+def get_picture(user_id):
+    return _serve_image(UserModel.get_picture(user_id))
+
+
+@user_bp.route("/<int:user_id>/picture", methods=["PATCH"])
+@require_self_or_roles("user_id", "ADMIN")
+@limiter.limit("20 per minute")
+def upload_picture(user_id):
+    data, erro = _receive_image("picture", MAX_PICTURE_BYTES)
+    if erro:
+        return erro
+    UserModel.update_picture(user_id, data)
+    return jsonify({"success": True, "message": "Foto de perfil salva."}), 200
+
+
+@user_bp.route("/<int:user_id>/picture", methods=["DELETE"])
+@require_self_or_roles("user_id", "ADMIN")
+def delete_picture(user_id):
+    UserModel.clear_picture(user_id)
+    return jsonify({"success": True, "message": "Foto de perfil removida."}), 200
+
+
 # Adicione este bloco junto às demais rotas (somente admin ativa/inativa contas)
 @user_bp.route("/<int:user_id>/situation", methods=["PATCH"])
 @require_role("ADMIN")

@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useNavigate, Link } from 'react-router-dom';
 import { LogOut, Menu } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from './context/AuthContext';
@@ -8,6 +8,7 @@ import { isDepartment } from './utils/department';
 import Sidebar from './components/Sidebar';
 import NotificationBell from './components/NotificationBell';
 import PresenceAndCalls from './components/PresenceAndCalls';
+import UserAvatar from './components/UserAvatar';
 import Dashboard from './pages/Dashboard';
 import NewTicket from './pages/NewTicket';
 import Login from './pages/Login';
@@ -30,7 +31,6 @@ import CalendarView from './pages/CalendarView';
 import TicketDetails from './pages/TicketDetails';
 import Reports from './pages/Reports';
 import ManageCategories from './pages/ManageCategories';
-import Profile from './pages/Profile';
 import Priorities from './pages/Priority';
 import Clients from './pages/Clients';
 import Settings from './pages/Settings';
@@ -78,9 +78,10 @@ const DepartmentProtectedRoute = ({ role, department, userDepartment, children }
 };
 
 // Papéis com acesso ao módulo de Gestão de Projetos — espelha
-// services/gestao_permissions.py::can_access_gestao no backend. CLIENTE não
-// entra aqui — tem o Portal do Cliente (/portal-cliente), rota e backend separados.
-const GESTAO_ROLES = ['ADMIN', 'DIRETOR', 'GESTOR_PROJETO', 'APROVADOR', 'COLABORADOR', 'VISUALIZADOR'];
+// services/gestao_permissions.py::can_access_gestao no backend. Desde 02/09/2026
+// TODO papel entra (inclusive CLIENTE, que aqui é o funcionário que abre chamado
+// pro TI): a visibilidade dentro do módulo é por SETOR, no backend.
+const GESTAO_ROLES = ['ADMIN', 'DIRETOR', 'GESTOR_PROJETO', 'APROVADOR', 'COLABORADOR', 'VISUALIZADOR', 'CLIENTE'];
 
 // Papéis com acesso a Chamados — equipe de atendimento (ADMIN/GESTOR_PROJETO)
 // + autoatendimento (CLIENTE + papéis internos da fusão com Gestão, que até
@@ -149,6 +150,10 @@ function App() {
                     {/* Fase 3: heartbeat de presença + aviso de chamada chegando (só papéis
                         com acesso ao módulo de gestão — o componente decide sozinho). */}
                     <PresenceAndCalls />
+                    {/* Foto/iniciais do usuário — atalho pra Configurações > Meu Perfil */}
+                    <Link to="/configuracoes" className="topbar-avatar" title="Meu perfil">
+                      <UserAvatar userId={user?.id} name={user?.name} hasPicture={user?.has_picture} size={34} />
+                    </Link>
                     <button className="logout-btn-top" onClick={handleLogout}>
                       <LogOut size={18} /> Sair
                     </button>
@@ -336,7 +341,8 @@ function App() {
                       </RoleProtectedRoute>
                     }
                   />
-                  <Route path="/perfil" element={<Profile />} />
+                  {/* /perfil (tela antiga, órfã) → Configurações > Meu Perfil, que agora é pra todo mundo */}
+                  <Route path="/perfil" element={<Navigate to="/configuracoes" replace />} />
                   <Route
                     path="/clientes"
                     element={
@@ -354,10 +360,12 @@ function App() {
                       </RoleProtectedRoute>
                     }
                   />
+                  {/* Configurações: aba Meu Perfil pra todo papel; a aba de E-mail só
+                      aparece pra ADMIN (filtro dentro de Settings.jsx). */}
                   <Route
                     path="/configuracoes"
                     element={
-                      <RoleProtectedRoute role={role} allowed={['ADMIN']}>
+                      <RoleProtectedRoute role={role} allowed={TICKET_ROLES}>
                         <Settings />
                       </RoleProtectedRoute>
                     }

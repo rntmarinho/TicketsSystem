@@ -167,6 +167,7 @@ def create_message(ticket_id):
                     send_email_notification(
                         ticket=ticket_data,
                         autor=author_name,
+                        autor_id=current_user_id,
                         conteudo=payload["message"],
                         cc=data.get("cc")
                     )

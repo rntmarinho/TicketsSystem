@@ -38,7 +38,7 @@ def list_presence():
     session = SessionLocal()
     try:
         cutoff = datetime.now(timezone.utc) - timedelta(seconds=ONLINE_WINDOW_SECONDS)
-        users = session.query(LegacyUser).filter(LegacyUser.access_type.in_(STAFF_ROLES)).all()
+        users = session.query(LegacyUser).filter(LegacyUser.access_type.in_(STAFF_ROLES), LegacyUser.situation == "A").all()
         result = []
         for u in users:
             last_seen = u.last_seen_at

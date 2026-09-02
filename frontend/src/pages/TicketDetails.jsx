@@ -22,6 +22,8 @@ import {
 import TicketAnexos from './TicketAnexos';
 import { apiFetch } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import UserAvatar from '../components/UserAvatar';
+import { getSignatureUrl } from '../services/userService';
 import { STATUS_OPTIONS, normalizeStatus } from '../constants/ticketStatus';
 import './styles/TicketDetails.css';
 
@@ -849,16 +851,20 @@ const TicketDetails = () => {
                         key={message.id || index}
                       >
 
-                        <div
-                          className="message-avatar"
-                          style={{
-                            backgroundColor: color
-                          }}
-                        >
-                          {author
-                            .charAt(0)
-                            .toUpperCase()}
-                        </div>
+                        {message.author_has_picture && message.sender ? (
+                          <UserAvatar userId={message.sender} name={author} hasPicture size={44} className="message-avatar" />
+                        ) : (
+                          <div
+                            className="message-avatar"
+                            style={{
+                              backgroundColor: color
+                            }}
+                          >
+                            {author
+                              .charAt(0)
+                              .toUpperCase()}
+                          </div>
+                        )}
 
                         <div className="message-content">
 
@@ -887,6 +893,16 @@ const TicketDetails = () => {
                               message
                             )}
                           </p>
+
+                          {/* Assinatura da equipe de atendimento no rodapé da resposta (não em nota interna) */}
+                          {message.author_has_signature && message.sender && !message.private
+                            && ['ADMIN', 'GESTOR_PROJETO'].includes(message.author_role) && (
+                            <img
+                              src={getSignatureUrl(message.sender)}
+                              alt={`Assinatura de ${author}`}
+                              className="message-signature"
+                            />
+                          )}
 
                         </div>
 

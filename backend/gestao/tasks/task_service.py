@@ -6,7 +6,8 @@ from gestao.models.field_models import TaskCustomFieldValue
 from gestao.models.project_models import Project
 from gestao.serializers import serialize_task, serialize_task_comment
 from services.gestao_permissions import (
-    visible_project_team_ids, can_modify_task, can_delete_task, can_manage_team,
+    can_manage_project, can_view_project,
+    visible_project_ids, can_modify_task, can_delete_task,
 )
 from services.reschedule import reschedule_and_persist
 from services.rotina import generate_rotina_occurrences
@@ -14,14 +15,9 @@ from gestao.notify import notify
 
 
 def _visible_project_ids(session, user_id, role):
-    """None = sem filtro (vê todo projeto). Lista (possivelmente vazia) = só esses projetos."""
-    team_ids = visible_project_team_ids(session, user_id, role)
-    if team_ids is None:
-        return None
-    if not team_ids:
-        return []
-    rows = session.query(Project.id).filter(Project.team_id.in_(team_ids)).all()
-    return [r[0] for r in rows]
+    """None = sem filtro (vê todo projeto). Lista (possivelmente vazia) = só esses projetos.
+    Desde 02/09/2026 a regra é por SETOR (ver services/gestao_permissions.py)."""
+    return visible_project_ids(session, user_id, role)
 
 
 def list_tasks(session, user_id, role, project_id=None, assignee_id=None, only_top_level=False):
@@ -53,8 +49,15 @@ def _next_order(session, project_id):
 
 
 def create_task(session, user_id, role, data):
-    if role in ("CLIENTE", "VISUALIZADOR"):
+    if role == "VISUALIZADOR":
         return {"success": False, "message": "Seu perfil não pode criar tarefas."}, 403
+
+    # Só cria tarefa em projeto que enxerga (setor/dono/aprovador/responsável) —
+    # antes qualquer usuário do módulo criava tarefa em qualquer projeto pelo id.
+    if data.get("project_id"):
+        project = session.query(Project).get(data["project_id"])
+        if not project or not can_view_project(session, user_id, role, project):
+            return {"success": False, "message": "Projeto não encontrado."}, 404
 
     title = (data.get("title") or "").strip()
     if len(title) < 2 or len(title) > 200:
@@ -290,7 +293,7 @@ def _can_manage_schedule(session, user_id, role, task):
     project = session.query(Project).get(task.project_id)
     if not project:
         return False
-    return can_manage_team(session, user_id, role, project.team_id)
+    return can_manage_project(session, user_id, role, project)
 
 
 def _has_path(from_id, to_id, adjacency):

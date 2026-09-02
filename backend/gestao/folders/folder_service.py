@@ -1,7 +1,7 @@
 from gestao.models.attachment_models import Folder
 from gestao.models.project_models import Project
 from gestao.serializers import serialize_folder
-from services.gestao_permissions import can_view_project, can_manage_team
+from services.gestao_permissions import can_view_project, can_manage_team, can_manage_project
 
 
 def list_folders(session, user_id, role, project_id):
@@ -16,7 +16,7 @@ def create_folder(session, user_id, role, project_id, data):
     project = session.query(Project).get(project_id)
     if not project:
         return {"success": False, "message": "Projeto não encontrado."}, 404
-    if not can_manage_team(session, user_id, role, project.team_id):
+    if not can_manage_project(session, user_id, role, project):
         return {"success": False, "message": "Sem permissão."}, 403
     name = (data.get("name") or "").strip()
     if not name:
@@ -32,7 +32,7 @@ def delete_folder(session, user_id, role, folder_id):
     if not folder:
         return {"success": False, "message": "Pasta não encontrada."}, 404
     project = session.query(Project).get(folder.project_id) if folder.project_id else None
-    if not project or not can_manage_team(session, user_id, role, project.team_id):
+    if not project or not can_manage_project(session, user_id, role, project):
         return {"success": False, "message": "Sem permissão."}, 403
     session.delete(folder)
     session.commit()

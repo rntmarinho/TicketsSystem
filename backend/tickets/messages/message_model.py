@@ -52,7 +52,10 @@ class MessageModel:
                 m.sender,
                 m.private,
                 m.creation,
-                u.name AS author_name
+                u.name AS author_name,
+                u.access_type AS author_role,
+                (u.signature IS NOT NULL) AS author_has_signature,
+                (u.picture IS NOT NULL) AS author_has_picture
             FROM tbl_messages m
             LEFT JOIN tbl_users u ON u.id = m.sender
             WHERE m.ticket_id = %s
@@ -72,6 +75,9 @@ class MessageModel:
                 "private":     row[4],
                 "creation":    str(row[5]) if row[5] else None,
                 "author_name": row[6] or "Sistema",
+                "author_role": row[7],
+                "author_has_signature": bool(row[8]),
+                "author_has_picture": bool(row[9]),
             }
             for row in rows
         ]

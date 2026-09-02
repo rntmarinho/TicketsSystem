@@ -484,3 +484,8 @@
   max-width: 280px; min-width: 200px; white-space: normal; overflow-wrap: break-word; line-height: 1.4;
 }
 .suprimentos-table-wrap .gestao-table td.suprimentos-col-prazo { white-space: nowrap; }
+
+/* ── Projetos por setor (02/09/2026) ── */
+.gestao-project-setor { display: inline-flex; align-items: center; gap: 6px; font-size: 0.78rem; color: var(--text); opacity: 0.85; margin: 2px 0 8px; }
+.gestao-select-inline { padding: 4px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--text-h); font-size: 0.82rem; }
+.gestao-hint { font-size: 0.8rem; opacity: 0.75; margin: 4px 0 10px; display: block; }

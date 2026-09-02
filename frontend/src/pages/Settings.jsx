@@ -7,11 +7,11 @@ import {
   Clock,
   Settings as SettingsIcon,
   ShieldCheck,
-  User,
-  Lock,
-  PenTool
+  User
 } from 'lucide-react';
 import { apiFetch } from '../services/api';
+import { useAuth } from '../context/AuthContext';
+import ProfileSettings from '../components/ProfileSettings';
 import './styles/Settings.css';
 
 // ─── Aba: Configurações de E-mail ────────────────────────────────────────────
@@ -188,142 +188,18 @@ const EmailSettings = () => {
   );
 };
 
-// ─── Aba: Perfil do Utilizador ────────────────────────────────────────────────
-
-const ProfileSettings = () => {
-  const [user, setUser] = useState(null);
-  const [signatureFile, setSignatureFile] = useState(null);
-  const [formData, setFormData] = useState({ nome: '', email: '', senha: '' });
-
-  useEffect(() => {
-    const loggedUser = JSON.parse(localStorage.getItem('user'));
-    if (loggedUser) {
-      setUser(loggedUser);
-      setFormData({ nome: loggedUser.nome || '', email: loggedUser.email || '', senha: '' });
-      loadUserData(loggedUser.id);
-    }
-  }, []);
-
-  const loadUserData = async (userId) => {
-    try {
-      const response = await apiFetch(`/users/${userId}`);
-      const data = await response.json();
-      setUser(data);
-      setFormData({ nome: data.nome || '', email: data.email || '', senha: '' });
-    } catch (error) {
-      console.error('Erro ao carregar perfil:', error);
-    }
-  };
-
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  const handleFileChange = (e) => {
-    if (e.target.files && e.target.files.length > 0) {
-      setSignatureFile(e.target.files[0]);
-    }
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      const payload = { nome: formData.nome, email: formData.email };
-      if (formData.senha.trim() !== '') payload.senha = formData.senha;
-
-      const response = await apiFetch(`/users/${user.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-
-      if (!response.ok) throw new Error('Erro ao atualizar dados de texto do perfil');
-
-      if (signatureFile) {
-        const signatureData = new FormData();
-        signatureData.append('signature', signatureFile);
-
-        const signatureResponse = await apiFetch(`/users/${user.id}/signature`, {
-          method: 'PATCH',
-          body: signatureData
-        });
-
-        if (!signatureResponse.ok) {
-          const errorPayload = await signatureResponse.json();
-          throw new Error(errorPayload.message || 'Erro sistêmico ao realizar upload do arquivo de assinatura.');
-        }
-      }
-
-      alert('Perfil atualizado com sucesso!');
-
-      const updatedUser = { ...user, nome: formData.nome, email: formData.email };
-      localStorage.setItem('user', JSON.stringify(updatedUser));
-      setUser(updatedUser);
-      setFormData({ ...formData, senha: '' });
-      setSignatureFile(null);
-      document.getElementById('signatureInput').value = '';
-    } catch (error) {
-      console.error(error);
-      alert('Erro ao atualizar perfil. Tente novamente.');
-    }
-  };
-
-  if (!user) return <div className="profile-loading">Carregando perfil...</div>;
-
-  return (
-    <div className="profile-card">
-      <div className="profile-header">
-        <div className="profile-avatar">
-          <User size={42} />
-        </div>
-        <div className="profile-info">
-          <h1>{user.nome}</h1>
-          <p>{user.solicitante === 'sim' ? 'Usuário Comum' : 'Técnico'}</p>
-        </div>
-      </div>
-
-      <form className="profile-form" onSubmit={handleSubmit}>
-        <div className="form-group">
-          <label><User size={16} /> Nome</label>
-          <input type="text" name="nome" value={formData.nome} onChange={handleChange} required />
-        </div>
-
-        <div className="form-group">
-          <label><Mail size={16} /> E-mail</label>
-          <input type="email" name="email" value={formData.email} onChange={handleChange} required />
-        </div>
-
-        <div className="form-group">
-          <label><Lock size={16} /> Nova Senha</label>
-          <input type="password" name="senha" placeholder="Digite apenas se quiser alterar"
-            value={formData.senha} onChange={handleChange} />
-        </div>
-
-        <div className="form-group">
-          <label><PenTool size={16} /> Assinatura (Imagem)</label>
-          <input id="signatureInput" type="file" accept="image/png, image/jpeg, image/jpg"
-            onChange={handleFileChange} className="file-input" />
-          <small style={{ color: '#666', marginTop: '4px', display: 'block' }}>
-            Selecione uma imagem (.png, .jpg) caso deseje atualizar sua assinatura digital.
-          </small>
-        </div>
-
-        <button type="submit" className="btn-save-profile">
-          <Save size={18} /> Salvar Alterações
-        </button>
-      </form>
-    </div>
-  );
-};
-
 // ─── Componente Principal com Abas ────────────────────────────────────────────
 
-const TABS = [
-  { id: 'profile', label: 'Meu Perfil', icon: User },
-  { id: 'email', label: 'Configurações de E-mail', icon: SettingsIcon }
+// Aba de E-mail (credenciais SMTP/IMAP do suporte) é só pra ADMIN — o backend
+// já bloqueia /settings/email pros demais; aqui só escondemos a aba.
+const ALL_TABS = [
+  { id: 'profile', label: 'Meu Perfil', icon: User, roles: null },
+  { id: 'email', label: 'Configurações de E-mail', icon: SettingsIcon, roles: ['ADMIN'] }
 ];
 
 const Settings = () => {
+  const { role } = useAuth();
+  const TABS = ALL_TABS.filter((t) => !t.roles || t.roles.includes(role));
   const [activeTab, setActiveTab] = useState('profile');
 
   return (
@@ -365,7 +241,7 @@ const Settings = () => {
 
         {/* Conteúdo da aba activa */}
         {activeTab === 'profile' && <ProfileSettings />}
-        {activeTab === 'email'   && <EmailSettings />}
+        {activeTab === 'email' && role === 'ADMIN' && <EmailSettings />}
       </div>
     </div>
   );

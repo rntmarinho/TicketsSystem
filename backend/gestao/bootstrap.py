@@ -1,7 +1,7 @@
 """
 Roda a cada boot (ver main.py::run_setup(), depois de run_alembic_upgrade()).
-Garante que existe uma equipe padrão "Geral" e que todo usuário de staff
-(qualquer papel exceto CLIENTE) é membro dela — necessário porque `Project.team_id`
+Garante que existe uma equipe padrão "Geral" e que todo usuário ativo
+(qualquer papel, inclusive CLIENTE — funcionário, desde 02/09/2026) é membro dela — necessário porque `Project.team_id`
 é obrigatório no schema e a Fase 1 não tem UI de gestão de equipe ainda (chega
 na Fase 2). Idempotente: só cria o que ainda não existe.
 """
@@ -27,7 +27,7 @@ def bootstrap_default_team():
 
         staff = (
             session.query(LegacyUser)
-            .filter(LegacyUser.access_type != "CLIENTE")
+            .filter(LegacyUser.situation == "A")  # desde 02/09: todo ativo, inclusive CLIENTE (funcionário)
             .all()
         )
         existing_member_ids = {

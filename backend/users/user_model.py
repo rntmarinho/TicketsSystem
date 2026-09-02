@@ -86,7 +86,9 @@ class UserModel:
                 u.ramal,
                 u.whatsapp,
                 u.nivel_hierarquico,
-                u.gestor_imediato_id
+                u.gestor_imediato_id,
+                (u.signature IS NOT NULL) AS has_signature,
+                (u.picture IS NOT NULL) AS has_picture
             FROM tbl_users u
             LEFT JOIN tbl_departments d ON d.id = u.department_id
             WHERE u.id = %s
@@ -302,3 +304,48 @@ class UserModel:
         conn.commit()
         cursor.close()
         conn.close()
+
+    # ── Mídia de perfil (02/09/2026): foto e assinatura como BYTEA ──────────
+    # Colunas signature/picture já existiam em tbl_users; picture nunca tinha
+    # sido usada e signature só era gravada (nunca lida). O tipo da imagem é
+    # detectado pelos bytes na hora de servir (services/image_utils.py).
+    @staticmethod
+    def _get_blob(user_id, column):
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute(f"SELECT {column} FROM tbl_users WHERE id = %s", (user_id,))
+        row = cursor.fetchone()
+        cursor.close()
+        conn.close()
+        if not row or row[0] is None:
+            return None
+        return bytes(row[0])
+
+    @staticmethod
+    def _set_blob(user_id, column, data):
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute(f"UPDATE tbl_users SET {column} = %s WHERE id = %s", (data, user_id))
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+    @staticmethod
+    def get_signature(user_id):
+        return UserModel._get_blob(user_id, "signature")
+
+    @staticmethod
+    def get_picture(user_id):
+        return UserModel._get_blob(user_id, "picture")
+
+    @staticmethod
+    def update_picture(user_id, picture_bytes):
+        UserModel._set_blob(user_id, "picture", picture_bytes)
+
+    @staticmethod
+    def clear_picture(user_id):
+        UserModel._set_blob(user_id, "picture", None)
+
+    @staticmethod
+    def clear_signature(user_id):
+        UserModel._set_blob(user_id, "signature", None)

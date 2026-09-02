@@ -194,12 +194,25 @@ class UserController:
             if not user:
                 return {"success": False, "message": "Usuário não encontrado."}, 404
             
-            # Adapte os índices/chaves de acordo com o retorno da sua base de dados
+            # Mesmo formato de get_me (+ 'nome' mantido por compatibilidade com
+            # telas antigas). 'solicitante' não existe mais no schema.
             return {
                 "id": user[0],
                 "nome": user[1],
+                "name": user[1],
                 "email": user[2],
-                "solicitante": user[3] # Exemplo
+                "client_id": user[3],
+                "access_type": user[4],
+                "situation": user[5],
+                "department_id": user[6],
+                "department": user[7],
+                "cargo": user[8],
+                "ramal": user[9],
+                "whatsapp": user[10],
+                "nivel_hierarquico": user[11],
+                "gestor_imediato_id": user[12],
+                "has_signature": bool(user[13]),
+                "has_picture": bool(user[14]),
             }, 200
         except Exception as e:
             return {"success": False, "message": f"Erro: {str(e)}"}, 500
@@ -224,7 +237,9 @@ class UserController:
             "ramal": user[9],
             "whatsapp": user[10],
             "nivel_hierarquico": user[11],
-            "gestor_imediato_id": user[12]
+            "gestor_imediato_id": user[12],
+            "has_signature": bool(user[13]),
+            "has_picture": bool(user[14]),
         }, 200
 
     @staticmethod

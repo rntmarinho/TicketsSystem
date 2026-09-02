@@ -9,7 +9,7 @@ import '../pages/gestao/styles/Gestao.css';
 const HEARTBEAT_MS = 30000;
 const CALL_POLL_MS = 5000;
 
-const GESTAO_ROLES = ['ADMIN', 'DIRETOR', 'GESTOR_PROJETO', 'APROVADOR', 'COLABORADOR', 'VISUALIZADOR'];
+const GESTAO_ROLES = ['ADMIN', 'DIRETOR', 'GESTOR_PROJETO', 'APROVADOR', 'COLABORADOR', 'VISUALIZADOR', 'CLIENTE'];
 
 /**
  * Componente global (montado em App.jsx, igual ao NotificationBell): manda

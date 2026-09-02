@@ -68,7 +68,7 @@ const NotificationBell = () => {
   const dismissedRef = useRef(null);
 
   const isStaff = role === 'ADMIN' || role === 'GESTOR_PROJETO';
-  const hasGestaoAccess = ['ADMIN', 'DIRETOR', 'GESTOR_PROJETO', 'APROVADOR', 'COLABORADOR', 'VISUALIZADOR'].includes(role);
+  const hasGestaoAccess = ['ADMIN', 'DIRETOR', 'GESTOR_PROJETO', 'APROVADOR', 'COLABORADOR', 'VISUALIZADOR', 'CLIENTE'].includes(role);
   const seenKey = user?.id ? `notif_activity_seen_${user.id}` : null;
   const notifiedKey = user?.id ? `notif_sound_keys_${user.id}` : null;
   const dismissedKey = user?.id ? `notif_dismissed_${user.id}` : null;
