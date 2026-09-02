@@ -109,7 +109,7 @@ const Sidebar = ({ isOpen, onClose, role }) => {
 
   const projetosItems = [
     canSeeGestao && { to: '/gestao/projetos', icon: Briefcase, label: 'Visão Geral' },
-    canSeeGestao && { to: '/kanban', icon: Columns3, label: 'Kanban' },
+    canSeeGestao && { to: '/gestao/kanban', icon: Columns3, label: 'Kanban' },
     canSeeGestao && { to: '/gestao/metas', icon: Target, label: 'Metas' },
     canSeeGestao && { to: '/gestao/indicadores', icon: Gauge, label: 'Indicadores' },
   ].filter(Boolean);

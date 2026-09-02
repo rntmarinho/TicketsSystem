@@ -25,6 +25,7 @@ import GestaoScorecard from './pages/gestao/GestaoScorecard';
 import GestaoAuditLog from './pages/gestao/GestaoAuditLog';
 import GestaoSuprimentos from './pages/gestao/GestaoSuprimentos';
 import GestaoChat from './pages/gestao/GestaoChat';
+import GestaoKanbanGeral from './pages/gestao/GestaoKanbanGeral';
 import PortalCliente from './pages/portal-cliente/PortalCliente';
 import PortalClienteProject from './pages/portal-cliente/PortalClienteProject';
 import CalendarView from './pages/CalendarView';
@@ -204,7 +205,17 @@ function App() {
                       aposentado na Fase 1 da fusão com o APPCNS — /kanban e /gantt
                       redirecionam pra tela de Projetos do módulo de gestão novo, já
                       que lá não existe mais "o" board único (é por projeto). */}
-                  <Route path="/kanban" element={<Navigate to="/gestao/projetos" replace />} />
+                  {/* /kanban: desde 02/09/2026 é o Kanban geral de tarefas (todos os projetos
+                      visíveis por setor), não mais um redirect pra lista de projetos. */}
+                  <Route path="/kanban" element={<Navigate to="/gestao/kanban" replace />} />
+                  <Route
+                    path="/gestao/kanban"
+                    element={
+                      <RoleProtectedRoute role={role} allowed={GESTAO_ROLES}>
+                        <GestaoKanbanGeral />
+                      </RoleProtectedRoute>
+                    }
+                  />
                   <Route path="/gantt" element={<Navigate to="/gestao/projetos" replace />} />
                   <Route
                     path="/projetos"
