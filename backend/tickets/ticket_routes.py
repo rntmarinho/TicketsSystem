@@ -13,16 +13,27 @@ ticket_bp = Blueprint(
     url_prefix="/tickets"
 )
 
+# Papéis de autoatendimento: abrem/comentam chamado só em nome de si mesmos
+# (nunca em nome de terceiro) e nunca criam nota privada — mesma regra que já
+# existia só pra CLIENTE, estendida aos papéis internos da fusão com Gestão de
+# Projetos (antes deles, só ADMIN/GESTOR_PROJETO/CLIENTE abriam chamado).
+SELF_SERVICE_ROLES = ("CLIENTE", "COLABORADOR", "DIRETOR", "APROVADOR", "VISUALIZADOR")
+
+# Dentro do autoatendimento, restringe "só vê o próprio chamado" — VISUALIZADOR
+# fica de fora de propósito: é papel de oversight, enxerga todos os chamados em
+# modo só-leitura (comportamento já existente em list_tickets/list_messages).
+SELF_ONLY_VIEW_ROLES = ("CLIENTE", "COLABORADOR", "DIRETOR", "APROVADOR")
+
 
 @ticket_bp.route("/", methods=["POST"])
-@require_role("ADMIN", "GESTOR_PROJETO", "CLIENTE")
+@require_role("ADMIN", "GESTOR_PROJETO", *SELF_SERVICE_ROLES)
 def create_ticket():
     data = request.get_json()
 
-    # Um usuário 'CLIENTE' só pode abrir chamado em nome de si mesmo — evita
+    # Autoatendimento só pode abrir chamado em nome de si mesmo — evita
     # impersonar outro solicitante. Técnico/admin podem abrir em nome de terceiros
     # (fluxo de atendimento telefônico, ver NewTicket.jsx).
-    if get_current_role() == "CLIENTE":
+    if get_current_role() in SELF_SERVICE_ROLES:
         data["user_id"] = int(get_jwt_identity())
 
     response, status = TicketController.create_ticket(data)
@@ -35,7 +46,7 @@ def create_ticket():
 @ticket_bp.route("/", methods=["GET"])
 @jwt_required()
 def list_tickets():
-    owner_id = int(get_jwt_identity()) if get_current_role() == "CLIENTE" else None
+    owner_id = int(get_jwt_identity()) if get_current_role() in SELF_ONLY_VIEW_ROLES else None
 
     project_id = request.args.get("project_id")
     project_id = int(project_id) if project_id else None
@@ -51,7 +62,7 @@ def list_tickets():
 @jwt_required()
 def get_ticket(ticket_id):
     response, status = TicketController.get_ticket(ticket_id)
-    if status == 200 and get_current_role() == "CLIENTE" and response.get("user_id") != int(get_jwt_identity()):
+    if status == 200 and get_current_role() in SELF_ONLY_VIEW_ROLES and response.get("user_id") != int(get_jwt_identity()):
         return jsonify({"success": False, "message": "Registro de chamado não encontrado."}), 404
     return jsonify(response), status
 
@@ -77,12 +88,12 @@ def list_messages(ticket_id):
 
     ticket, ticket_status = TicketController.get_ticket(ticket_id)
     role = get_current_role()
-    is_client = role == "CLIENTE"
-    # 'VISUALIZADOR' não tem noção de "chamado próprio" (vê todos, só-leitura), mas
-    # também não deve enxergar notas internas — mesma regra de privacidade do 'CLIENTE'.
-    hide_private = role in ("CLIENTE", "VISUALIZADOR")
+    is_self_only_view = role in SELF_ONLY_VIEW_ROLES
+    # Nota interna (privada) é exclusiva de quem atende chamado — todo mundo
+    # que não é ADMIN/GESTOR_PROJETO fica de fora, autoatendimento e oversight.
+    hide_private = role not in ("ADMIN", "GESTOR_PROJETO")
 
-    if is_client and (ticket_status != 200 or ticket.get("user_id") != int(get_jwt_identity())):
+    if is_self_only_view and (ticket_status != 200 or ticket.get("user_id") != int(get_jwt_identity())):
         return jsonify({"success": False, "message": "Registro de chamado não encontrado."}), 404
 
     try:
@@ -101,7 +112,7 @@ def list_messages(ticket_id):
 
 # Rota para criar uma nova mensagem/atividade em um ticket específico
 @ticket_bp.route("/<int:ticket_id>/messages", methods=["POST"])
-@require_role("ADMIN", "GESTOR_PROJETO", "CLIENTE")
+@require_role("ADMIN", "GESTOR_PROJETO", *SELF_SERVICE_ROLES)
 def create_message(ticket_id):
     data = request.get_json()
 
@@ -109,12 +120,14 @@ def create_message(ticket_id):
     current_user_id = int(get_jwt_identity())
     claims = get_jwt()
     author_name = claims.get("name", "Sistema") # Pega o nome real do técnico/cliente
-    is_client = get_current_role() == "CLIENTE"
+    role = get_current_role()
+    is_self_only_view = role in SELF_ONLY_VIEW_ROLES
+    is_self_service = role in SELF_SERVICE_ROLES
 
     if not data or "message" not in data:
         return jsonify({"success": False, "message": "O campo 'message' é obrigatório"}), 400
 
-    if is_client:
+    if is_self_only_view:
         ticket, ticket_status = TicketController.get_ticket(ticket_id)
         if ticket_status != 200 or ticket.get("user_id") != current_user_id:
             return jsonify({"success": False, "message": "Registro de chamado não encontrado."}), 404
@@ -123,8 +136,9 @@ def create_message(ticket_id):
         "ticket_id": ticket_id,
         "message": data.get("message"),
         "sender": current_user_id, # Agora é garantidamente um número Inteiro
-        # Cliente nunca cria mensagem privada (nota interna é exclusiva de técnico/admin)
-        "private": False if is_client else data.get("private", False)
+        # Autoatendimento/oversight nunca cria mensagem privada (nota interna é
+        # exclusiva de quem atende chamado, ADMIN/GESTOR_PROJETO)
+        "private": False if is_self_service else data.get("private", False)
     }
 
     try:

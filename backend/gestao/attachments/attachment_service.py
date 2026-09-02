@@ -4,8 +4,9 @@ from werkzeug.utils import secure_filename
 from gestao.models.attachment_models import Attachment
 from gestao.models.task_models import Task
 from gestao.models.project_models import Project
+from gestao.models.message_models import TeamMessage, DirectMessage
 from gestao.serializers import serialize_attachment
-from services.gestao_permissions import can_view_task, can_view_project, can_manage_team
+from services.gestao_permissions import can_view_task, can_view_project, can_manage_team, is_team_member
 
 # Mesma lista de extensões permitidas do módulo de chamados (allowlist, não
 # blocklist — decisão deliberada de endurecimento em relação ao APPCNS
@@ -71,6 +72,71 @@ def upload_task_attachment(session, user_id, role, task_id, file_storage):
     return {"success": True, "attachment": serialize_attachment(session, attachment)}, 201
 
 
+def _save_upload(file_storage):
+    """Valida e grava o arquivo em disco, devolve (stored_name, original_name, size, mime) ou (None, message, status, None)."""
+    if not file_storage or file_storage.filename == "":
+        return None, "Nenhum arquivo enviado.", 400, None
+    if not _extensao_valida(file_storage.filename):
+        return None, "Extensão de arquivo não permitida.", 400, None
+
+    original_name = file_storage.filename
+    ext = original_name.rsplit(".", 1)[1].lower()
+    stored_name = f"{uuid.uuid4().hex}.{ext}"
+
+    pasta = anexos_dir()
+    os.makedirs(pasta, exist_ok=True)
+    caminho_fisico = os.path.join(pasta, stored_name)
+    file_storage.save(caminho_fisico)
+
+    tamanho = os.path.getsize(caminho_fisico)
+    if tamanho > TAMANHO_MAXIMO:
+        os.remove(caminho_fisico)
+        return None, "Arquivo excede o limite de 50 MB.", 400, None
+
+    return stored_name, secure_filename(original_name), tamanho, (file_storage.mimetype or "application/octet-stream")
+
+
+def upload_team_message_attachment(session, user_id, role, team_id, file_storage):
+    if not is_team_member(session, user_id, role, team_id):
+        return {"success": False, "message": "Sem permissão."}, 403
+    stored_name, name_or_msg, size_or_status, mime = _save_upload(file_storage)
+    if stored_name is None:
+        return {"success": False, "message": name_or_msg}, size_or_status
+
+    from gestao.models.message_models import TeamMessage as _TeamMessage
+    # Cada anexo vira sua própria mensagem no chat, com o nome do arquivo como corpo visível.
+    message = _TeamMessage(team_id=team_id, sender_id=user_id, body=f"📎 {name_or_msg}")
+    session.add(message)
+    session.flush()
+
+    attachment = Attachment(
+        team_message_id=message.id, file_name=name_or_msg, file_path=stored_name,
+        file_size=size_or_status, mime_type=mime, uploaded_by=user_id,
+    )
+    session.add(attachment)
+    session.commit()
+    return {"success": True, "message_id": message.id, "attachment": serialize_attachment(session, attachment)}, 201
+
+
+def upload_direct_message_attachment(session, user_id, role, receiver_id, file_storage):
+    stored_name, name_or_msg, size_or_status, mime = _save_upload(file_storage)
+    if stored_name is None:
+        return {"success": False, "message": name_or_msg}, size_or_status
+
+    from gestao.models.message_models import DirectMessage as _DirectMessage
+    message = _DirectMessage(sender_id=user_id, receiver_id=receiver_id, body=f"📎 {name_or_msg}")
+    session.add(message)
+    session.flush()
+
+    attachment = Attachment(
+        direct_message_id=message.id, file_name=name_or_msg, file_path=stored_name,
+        file_size=size_or_status, mime_type=mime, uploaded_by=user_id,
+    )
+    session.add(attachment)
+    session.commit()
+    return {"success": True, "message_id": message.id, "attachment": serialize_attachment(session, attachment)}, 201
+
+
 def get_attachment_for_download(session, user_id, role, attachment_id):
     """Retorna (attachment, None) se o usuário pode baixar, ou (None, (response, status)) se não."""
     attachment = session.query(Attachment).get(attachment_id)
@@ -83,6 +149,12 @@ def get_attachment_for_download(session, user_id, role, attachment_id):
     elif attachment.project_id:
         project = session.query(Project).get(attachment.project_id)
         allowed = can_view_project(session, user_id, role, project)
+    elif attachment.team_message_id:
+        msg = session.query(TeamMessage).get(attachment.team_message_id)
+        allowed = msg is not None and is_team_member(session, user_id, role, msg.team_id)
+    elif attachment.direct_message_id:
+        msg = session.query(DirectMessage).get(attachment.direct_message_id)
+        allowed = msg is not None and user_id in (msg.sender_id, msg.receiver_id)
     else:
         allowed = False
 

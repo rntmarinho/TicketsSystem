@@ -1,8 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Send, ArrowLeft, Info, Users, Tag, AlertCircle, Briefcase, Paperclip, Upload, X } from 'lucide-react';
+import { Send, ArrowLeft, Info, Users, Tag, AlertCircle, Paperclip, Upload, X } from 'lucide-react';
 import { apiFetch } from '../services/api';
-import { getProjects } from '../services/projectService';
 import { uploadAnexo, formatBytes, MAX_SIZE_MB, EXTENSOES_PERMITIDAS } from '../services/anexoService';
 import { useAuth } from '../context/AuthContext';
 import './styles/NewTicket.css';
@@ -15,7 +14,6 @@ const NewTicket = () => {
   const [users, setUsers] = useState([]);
   const [categories, setCategories] = useState([]);
   const [priorities, setPriorities] = useState([]); // Novo estado para prioridades
-  const [projects, setProjects] = useState([]);
 
   const [formData, setFormData] = useState({
     subject: '',
@@ -24,7 +22,6 @@ const NewTicket = () => {
     category_id: '',
     user_id: '',
     type: 'chamado',
-    project_id: ''
   });
 
   const [files, setFiles] = useState([]);
@@ -65,13 +62,11 @@ const NewTicket = () => {
       isStaff ? apiFetch('/users/').then(res => res.json()) : Promise.resolve([]),
       apiFetch('/categories/').then(res => res.json()),
       apiFetch('/priorities/').then(res => res.json()), // Assumindo existência do endpoint
-      isStaff ? getProjects() : Promise.resolve([]) // Projetos são uso interno da equipe
     ])
-    .then(([userData, categoryData, priorityData, projectData]) => {
+    .then(([userData, categoryData, priorityData]) => {
       setUsers(Array.isArray(userData) ? userData : []);
       setCategories(Array.isArray(categoryData) ? categoryData : []);
       setPriorities(Array.isArray(priorityData) ? priorityData : []);
-      setProjects(Array.isArray(projectData) ? projectData : []);
 
       const loggedUser = JSON.parse(localStorage.getItem('user'));
       if (loggedUser) {
@@ -86,15 +81,10 @@ const NewTicket = () => {
     setSubmitting(true);
 
     try {
-      const payload = {
-        ...formData,
-        project_id: formData.project_id ? Number(formData.project_id) : null
-      };
-
       const response = await apiFetch('/tickets/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(formData)
       });
 
       if (!response.ok) {
@@ -170,30 +160,7 @@ const NewTicket = () => {
 
           {/* O tipo 'tarefa' foi aposentado na Fase 1 da fusão com o APPCNS —
               tarefa de projeto agora vive no módulo de Gestão (/gestao/projetos),
-              não mais como um chamado disfarçado. Todo chamado novo é 'chamado';
-              só o vínculo opcional com um projeto legado continua disponível
-              pra relatório/organização. */}
-          {isStaff && (
-            <div className="form-row">
-              <div className="form-group">
-                <label>Projeto (opcional)</label>
-                <div className="input-with-icon">
-                  <Briefcase size={18} />
-                  <select
-                    value={formData.project_id}
-                    onChange={e => setFormData({ ...formData, project_id: e.target.value })}
-                  >
-                    <option value="">Sem projeto vinculado</option>
-                    {projects
-                      .filter(p => p.status !== 'archived')
-                      .map(p => (
-                        <option key={p.id} value={p.id}>{p.name}</option>
-                      ))}
-                  </select>
-                </div>
-              </div>
-            </div>
-          )}
+              não mais como um chamado disfarçado. Todo chamado novo é 'chamado'. */}
 
           <div className="form-group">
             <label>Assunto</label>

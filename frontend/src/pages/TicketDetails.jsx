@@ -16,7 +16,6 @@ import {
   GitMerge,
   Search,
   X,
-  Briefcase,
   ListTodo
 } from 'lucide-react';
 
@@ -39,8 +38,6 @@ const emptyFormData = {
   creation: '',
   sla: '',
   start_date: '',
-  project: '',
-  project_id: '',
   type: 'chamado'
 };
 
@@ -81,10 +78,13 @@ const TicketDetails = () => {
   const navigate = useNavigate();
   const { role } = useAuth();
   const isReadOnly = role === 'VISUALIZADOR';
-  // Cliente participa da conversa (mensagens) mas não edita metadados do
-  // chamado nem exclui/funde — só admin/técnico gerenciam o chamado em si.
+  // Autoatendimento (cliente + papéis internos) participa da conversa
+  // (mensagens) mas não edita metadados do chamado nem exclui/funde — só
+  // admin/técnico gerenciam o chamado em si. VISUALIZADOR fica de fora (só
+  // leitura, ver isReadOnly acima). Espelha
+  // backend/tickets/ticket_routes.py::SELF_SERVICE_ROLES.
   const canEditMetadata = role === 'ADMIN' || role === 'GESTOR_PROJETO';
-  const canMessage = role === 'ADMIN' || role === 'GESTOR_PROJETO' || role === 'CLIENTE';
+  const canMessage = ['ADMIN', 'GESTOR_PROJETO', 'CLIENTE', 'COLABORADOR', 'DIRETOR', 'APROVADOR'].includes(role);
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -97,7 +97,6 @@ const TicketDetails = () => {
   const [users, setUsers] = useState([]);
   const [categories, setCategories] = useState([]);
   const [priorities, setPriorities] = useState([]);
-  const [projects, setProjects] = useState([]);
   const [messages, setMessages] = useState([]);
 
   const [newMessage, setNewMessage] = useState('');
@@ -183,7 +182,6 @@ const TicketDetails = () => {
         userData,
         categoryData,
         priorityData,
-        projectData,
         messageData
       ] = await Promise.all([
         requestJson(`/tickets/${id}`),
@@ -193,7 +191,6 @@ const TicketDetails = () => {
         requestJson('/users/').catch(() => []),
         requestJson('/categories/'),
         requestJson('/priorities/'),
-        requestJson('/projects/').catch(() => []),
         requestJson(`/tickets/${id}/messages`)
       ]);
 
@@ -209,10 +206,6 @@ const TicketDetails = () => {
         ? priorityData
         : priorityData?.data || [];
 
-      const projectsData = Array.isArray(projectData)
-        ? projectData
-        : projectData?.data || [];
-
       const messagesData = Array.isArray(messageData)
         ? messageData
         : messageData?.data || [];
@@ -220,7 +213,6 @@ const TicketDetails = () => {
       setUsers(usersData);
       setCategories(categoriesData);
       setPriorities(prioritiesData);
-      setProjects(projectsData);
       setMessages(messagesData);
 
       const matchedCategory = categoriesData.find(
@@ -259,8 +251,6 @@ const TicketDetails = () => {
         creation: ticketData.creation || '',
         sla: ticketData.sla || '',
         start_date: ticketData.start_date || '',
-        project: ticketData.project || '',
-        project_id: ticketData.project_id || '',
         type: ticketData.type || 'chamado'
       });
     } catch (err) {
@@ -327,10 +317,6 @@ const TicketDetails = () => {
       formData.assigned_to === ''
         ? null
         : Number(formData.assigned_to),
-    project_id:
-      formData.project_id === ''
-        ? null
-        : Number(formData.project_id),
     creation: formData.creation || null,
     sla: formData.sla || null,
     start_date: formData.start_date || null
@@ -614,15 +600,7 @@ const TicketDetails = () => {
         </button>
 
         <div className="header-title">
-          <span className="header-eyebrow">
-            {formData.project ? (
-              <>
-                <Briefcase size={13} /> {formData.project} <span className="header-eyebrow-sep">/</span> #{id}
-              </>
-            ) : (
-              <>TicketSystem</>
-            )}
-          </span>
+          <span className="header-eyebrow">TicketSystem</span>
 
           <h1>
             Chamado #{id}
@@ -1130,41 +1108,6 @@ const TicketDetails = () => {
                   value={category.id}
                 >
                   {category.name}
-                </option>
-              ))}
-            </select>
-
-          </div>
-
-          <div className="info-group">
-
-            <label>
-              <Briefcase size={16} />
-              Projeto
-            </label>
-
-            <select
-              value={formData.project_id}
-              disabled={!canEditMetadata}
-              onChange={e =>
-                handleFieldChange(
-                  'project_id',
-                  normalizeId(e.target.value)
-                )
-              }
-            >
-              <option value="">
-                Nenhum
-              </option>
-
-              {projects
-                .filter(project => project.status !== 'archived' || Number(project.id) === Number(formData.project_id))
-                .map(project => (
-                <option
-                  key={project.id}
-                  value={project.id}
-                >
-                  {project.name}{project.status === 'archived' ? ' [ARQUIVADO]' : ''}
                 </option>
               ))}
             </select>

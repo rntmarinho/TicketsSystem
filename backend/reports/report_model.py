@@ -217,22 +217,6 @@ class ReportModel:
                 for r in cursor.fetchall()
             ]
 
-            cursor.execute(f"""
-                SELECT
-                    COALESCE(pr.name, 'Sem Projeto') AS nome,
-                    AVG(EXTRACT(EPOCH FROM (t.close_time - t.creation))) / 3600.0 AS horas,
-                    COUNT(*) AS qtd
-                FROM tbl_tickets t
-                LEFT JOIN tbl_projects pr ON pr.id = t.project_id
-                WHERE t.type = 'chamado' AND t.close_time IS NOT NULL {period_sql}
-                GROUP BY nome
-                ORDER BY horas DESC
-            """, period_params)
-            tempo_medio_projeto = [
-                {"nome": r[0], "horas": round(float(r[1]), 1), "qtd": int(r[2])}
-                for r in cursor.fetchall()
-            ]
-
             # ── 7. Lista de chamados ─────────────────────────────────────────
             cursor.execute(f"""
                 SELECT
@@ -283,7 +267,6 @@ class ReportModel:
                 "tempo_medio_geral_horas": tempo_medio_geral,
                 "tempo_medio_categoria":   tempo_medio_categoria,
                 "tempo_medio_prioridade":  tempo_medio_prioridade,
-                "tempo_medio_projeto":     tempo_medio_projeto,
             }
 
         finally:

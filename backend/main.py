@@ -15,7 +15,6 @@ from services.email_service import iniciar_daemon_email
 from tickets.anexos.anexo_routes import anexo_bp
 from settings.settings_routes import settings_bp
 from reports.report_routes import reports_bp
-from projects.project_routes import project_bp
 from notes.note_routes import note_bp
 from departments.department_routes import department_bp
 from gestao.projects.project_routes import project_bp as gestao_project_bp
@@ -34,6 +33,12 @@ from gestao.ideas.idea_routes import idea_bp as gestao_idea_bp
 from gestao.scorecard.scorecard_routes import scorecard_bp as gestao_scorecard_bp
 from gestao.audit.audit_routes import audit_bp as gestao_audit_bp
 from gestao.notifications.notification_routes import notification_bp as gestao_notification_bp
+
+from gestao.suprimentos.suprimentos_routes import suprimentos_bp as gestao_suprimentos_bp
+# Fase 3 da fusão com o APPCNS — chat/chamadas, presença online e Portal do Cliente
+from gestao.messages.message_routes import message_bp as gestao_message_bp
+from gestao.presence.presence_routes import presence_bp as gestao_presence_bp
+from portal_cliente.portal_routes import portal_bp
 from flask_cors import CORS
 from services.rate_limiter import limiter
 from database.create_database import create_database, create_tables
@@ -150,7 +155,6 @@ def create_app():
     app.register_blueprint(anexo_bp)
     app.register_blueprint(settings_bp)
     app.register_blueprint(reports_bp)
-    app.register_blueprint(project_bp)
     app.register_blueprint(note_bp)
     app.register_blueprint(department_bp)
     # Módulo de Gestão de Projetos (fusão com o APPCNS) — Fase 1
@@ -170,6 +174,14 @@ def create_app():
     app.register_blueprint(gestao_scorecard_bp)
     app.register_blueprint(gestao_audit_bp)
     app.register_blueprint(gestao_notification_bp)
+    # Módulo Suprimentos — restrito por departamento (services/department_access.py),
+    # não por access_type como o resto do gestao_*.
+    app.register_blueprint(gestao_suprimentos_bp)
+    # Fase 3 — chat de equipe/direto + chamadas (Jitsi), presença (heartbeat)
+    # e Portal do Cliente (blueprint separado, só CLIENTE vinculado por project_clients).
+    app.register_blueprint(gestao_message_bp)
+    app.register_blueprint(gestao_presence_bp)
+    app.register_blueprint(portal_bp)
     # Health Check
     @app.route("/", methods=["GET"])
     def home():

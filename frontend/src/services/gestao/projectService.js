@@ -43,3 +43,18 @@ export async function updateBoard(id, content) {
   });
   return r.json();
 }
+
+export async function getProjectClients(id) {
+  const r = await apiFetch(`/gestao/projects/${id}/clients`);
+  return r.json();
+}
+
+export async function addProjectClient(id, userId) {
+  const r = await apiFetch(`/gestao/projects/${id}/clients`, { method: 'POST', body: JSON.stringify({ user_id: userId }) });
+  return r.json();
+}
+
+export async function removeProjectClient(id, userId) {
+  const r = await apiFetch(`/gestao/projects/${id}/clients/${userId}`, { method: 'DELETE' });
+  return r.json();
+}

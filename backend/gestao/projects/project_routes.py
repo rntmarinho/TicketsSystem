@@ -116,3 +116,46 @@ def update_board(project_id):
         return jsonify(response), status
     finally:
         session.close()
+
+
+@project_bp.route("/<string:project_id>/clients", methods=["GET"])
+@jwt_required()
+def list_project_clients(project_id):
+    user_id, role, err = _guard()
+    if err:
+        return err
+    session = SessionLocal()
+    try:
+        result, status = project_service.list_project_clients(session, user_id, role, project_id)
+        return jsonify(result), status
+    finally:
+        session.close()
+
+
+@project_bp.route("/<string:project_id>/clients", methods=["POST"])
+@jwt_required()
+def add_project_client(project_id):
+    user_id, role, err = _guard()
+    if err:
+        return err
+    client_user_id = (request.get_json() or {}).get("user_id")
+    session = SessionLocal()
+    try:
+        response, status = project_service.add_project_client(session, user_id, role, project_id, client_user_id)
+        return jsonify(response), status
+    finally:
+        session.close()
+
+
+@project_bp.route("/<string:project_id>/clients/<int:client_user_id>", methods=["DELETE"])
+@jwt_required()
+def remove_project_client(project_id, client_user_id):
+    user_id, role, err = _guard()
+    if err:
+        return err
+    session = SessionLocal()
+    try:
+        response, status = project_service.remove_project_client(session, user_id, role, project_id, client_user_id)
+        return jsonify(response), status
+    finally:
+        session.close()

@@ -26,3 +26,6 @@ imap_tools>=0.7.0
 
 # Sanitização de HTML (módulo de Anotações — conteúdo rico exibido pra outros usuários)
 bleach>=6.1.0
+
+# Leitura de planilha .xlsx (módulo Suprimentos — importação da exportação do ERP Senior)
+openpyxl>=3.1.2

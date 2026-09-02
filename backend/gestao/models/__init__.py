@@ -17,3 +17,4 @@ from gestao.models.idea_models import Idea, IdeaComment  # noqa: F401
 from gestao.models.scorecard_models import ScorecardItem  # noqa: F401
 from gestao.models.audit_models import AuditLog  # noqa: F401
 from gestao.models.notification_models import Notification  # noqa: F401
+from gestao.models.message_models import DirectMessage, TeamMessage, TeamMessageRead, ProjectClient  # noqa: F401

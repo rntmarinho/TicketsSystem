@@ -2,10 +2,12 @@ import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { LogOut, Menu } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from './context/AuthContext';
+import { isDepartment } from './utils/department';
 
 // Componentes e Páginas
 import Sidebar from './components/Sidebar';
 import NotificationBell from './components/NotificationBell';
+import PresenceAndCalls from './components/PresenceAndCalls';
 import Dashboard from './pages/Dashboard';
 import NewTicket from './pages/NewTicket';
 import Login from './pages/Login';
@@ -20,6 +22,10 @@ import GestaoApprovals from './pages/gestao/GestaoApprovals';
 import GestaoGoals from './pages/gestao/GestaoGoals';
 import GestaoScorecard from './pages/gestao/GestaoScorecard';
 import GestaoAuditLog from './pages/gestao/GestaoAuditLog';
+import GestaoSuprimentos from './pages/gestao/GestaoSuprimentos';
+import GestaoChat from './pages/gestao/GestaoChat';
+import PortalCliente from './pages/portal-cliente/PortalCliente';
+import PortalClienteProject from './pages/portal-cliente/PortalClienteProject';
 import CalendarView from './pages/CalendarView';
 import TicketDetails from './pages/TicketDetails';
 import Reports from './pages/Reports';
@@ -60,14 +66,31 @@ const RoleProtectedRoute = ({ role, allowed, children }) => {
   return children;
 };
 
+// Guarda por departamento: usada pelo módulo Suprimentos, restrito a
+// usuários do setor "Suprimentos" (tbl_users.department_id) — ADMIN sempre
+// passa, mesma convenção de "vê tudo" usada no resto do sistema. Espelha
+// services/department_access.py::require_department no backend.
+const DepartmentProtectedRoute = ({ role, department, userDepartment, children }) => {
+  if (role !== 'ADMIN' && !isDepartment(userDepartment, department)) {
+    return <Navigate to="/" replace />;
+  }
+  return children;
+};
+
 // Papéis com acesso ao módulo de Gestão de Projetos — espelha
 // services/gestao_permissions.py::can_access_gestao no backend. CLIENTE não
-// tem acesso ainda (chega na Fase 3, Portal do Cliente, em rota separada).
+// entra aqui — tem o Portal do Cliente (/portal-cliente), rota e backend separados.
 const GESTAO_ROLES = ['ADMIN', 'DIRETOR', 'GESTOR_PROJETO', 'APROVADOR', 'COLABORADOR', 'VISUALIZADOR'];
+
+// Papéis com acesso a Chamados — equipe de atendimento (ADMIN/GESTOR_PROJETO)
+// + autoatendimento (CLIENTE + papéis internos da fusão com Gestão, que até
+// aqui não tinham como abrir chamado nenhum). Espelha
+// backend/tickets/ticket_routes.py::SELF_SERVICE_ROLES.
+const TICKET_ROLES = ['ADMIN', 'GESTOR_PROJETO', 'CLIENTE', 'COLABORADOR', 'DIRETOR', 'APROVADOR', 'VISUALIZADOR'];
 
 function App() {
   const navigate = useNavigate();
-  const { isAuthenticated, role, loading, logout } = useAuth();
+  const { isAuthenticated, role, user, loading, logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const handleLogout = () => {
@@ -123,6 +146,9 @@ function App() {
                         de chamado, atividade, e agora notificações do módulo de gestão) —
                         sempre montado pra qualquer papel autenticado. */}
                     <NotificationBell />
+                    {/* Fase 3: heartbeat de presença + aviso de chamada chegando (só papéis
+                        com acesso ao módulo de gestão — o componente decide sozinho). */}
+                    <PresenceAndCalls />
                     <button className="logout-btn-top" onClick={handleLogout}>
                       <LogOut size={18} /> Sair
                     </button>
@@ -140,7 +166,7 @@ function App() {
                   <Route
                     path="/novo-chamado"
                     element={
-                      <RoleProtectedRoute role={role} allowed={['ADMIN', 'GESTOR_PROJETO', 'CLIENTE']}>
+                      <RoleProtectedRoute role={role} allowed={TICKET_ROLES}>
                         <NewTicket />
                       </RoleProtectedRoute>
                     }
@@ -164,7 +190,7 @@ function App() {
                   <Route
                     path="/tickets"
                     element={
-                      <RoleProtectedRoute role={role} allowed={['ADMIN', 'GESTOR_PROJETO', 'CLIENTE']}>
+                      <RoleProtectedRoute role={role} allowed={TICKET_ROLES}>
                         <AllTickets />
                       </RoleProtectedRoute>
                     }
@@ -241,6 +267,40 @@ function App() {
                       <RoleProtectedRoute role={role} allowed={['ADMIN', 'DIRETOR']}>
                         <GestaoAuditLog />
                       </RoleProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/gestao/chat"
+                    element={
+                      <RoleProtectedRoute role={role} allowed={GESTAO_ROLES}>
+                        <GestaoChat />
+                      </RoleProtectedRoute>
+                    }
+                  />
+                  {/* Portal do Cliente (Fase 3): leitura dos projetos vinculados em
+                      project_clients — só CLIENTE; backend em /portal-cliente/*. */}
+                  <Route
+                    path="/portal-cliente"
+                    element={
+                      <RoleProtectedRoute role={role} allowed={['CLIENTE']}>
+                        <PortalCliente />
+                      </RoleProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/portal-cliente/projetos/:id"
+                    element={
+                      <RoleProtectedRoute role={role} allowed={['CLIENTE']}>
+                        <PortalClienteProject />
+                      </RoleProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/gestao/suprimentos"
+                    element={
+                      <DepartmentProtectedRoute role={role} department="Suprimentos" userDepartment={user?.department}>
+                        <GestaoSuprimentos />
+                      </DepartmentProtectedRoute>
                     }
                   />
                   <Route

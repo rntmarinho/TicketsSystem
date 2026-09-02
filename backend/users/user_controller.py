@@ -85,15 +85,26 @@ class UserController:
             }
         )
 
+        # O 'user' retornado aqui (via get_by_email) não tem department — só
+        # id/name/email/client_id/password/access_type/situation/failed_attempts/
+        # locked_until. Sem isso, o front só ganhava user.department depois de
+        # um F5 completo (loadSession→GET /users/me no mount do AuthProvider),
+        # nunca só com o login por SPA (Login.jsx navega sem reload). Busca o
+        # perfil completo (mesma fonte que /users/me) pra devolver já no login.
+        full_profile = UserModel.get_by_id(user_id)
+
         return {
             "success": True,
             "token": token,
             "user": {
-                "id": user[0],
-                "name": user[1],
-                "email": user[2],
-                "client_id": user[3],
-                "access_type": user[5]
+                "id": full_profile[0],
+                "name": full_profile[1],
+                "email": full_profile[2],
+                "client_id": full_profile[3],
+                "access_type": full_profile[4],
+                "situation": full_profile[5],
+                "department_id": full_profile[6],
+                "department": full_profile[7],
             }
         }, 200
 

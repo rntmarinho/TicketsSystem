@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react';
 import { apiFetch } from '../services/api';
-import { getProjects } from '../services/projectService';
 import { getStatusMeta } from '../constants/ticketStatus';
 import './styles/CalendarView.css';
 
@@ -24,7 +23,6 @@ const dayKey = (d) => `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
 const CalendarView = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const projectFilter = searchParams.get('project') || '';
   const typeFilter = searchParams.get('type') || '';
 
   const [cursor, setCursor] = useState(() => {
@@ -33,28 +31,22 @@ const CalendarView = () => {
   });
 
   const [tickets, setTickets] = useState([]);
-  const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     setLoading(true);
     const params = new URLSearchParams();
-    if (projectFilter) params.set('project_id', projectFilter);
     if (typeFilter) params.set('type', typeFilter);
     const qs = params.toString();
     const endpoint = qs ? `/tickets/?${qs}` : '/tickets/';
 
-    Promise.all([
-      apiFetch(endpoint).then(r => r.json()),
-      getProjects().catch(() => [])
-    ])
-      .then(([ticketData, projectData]) => {
+    apiFetch(endpoint).then(r => r.json())
+      .then((ticketData) => {
         setTickets(Array.isArray(ticketData) ? ticketData : []);
-        setProjects(Array.isArray(projectData) ? projectData : []);
         setLoading(false);
       })
       .catch(() => setLoading(false));
-  }, [projectFilter, typeFilter]);
+  }, [typeFilter]);
 
   const updateParam = (key, value) => {
     const next = new URLSearchParams(searchParams);
@@ -103,19 +95,6 @@ const CalendarView = () => {
           <CalendarDays size={24} />
           <h1>Calendário</h1>
         </div>
-
-        <select
-          className="cal-project-select"
-          value={projectFilter}
-          onChange={e => updateParam('project', e.target.value)}
-        >
-          <option value="">Todos os projetos</option>
-          {projects
-            .filter(p => p.status !== 'archived' || String(p.id) === projectFilter)
-            .map(p => (
-            <option key={p.id} value={p.id}>{p.name}</option>
-          ))}
-        </select>
 
         <select
           className="cal-project-select"

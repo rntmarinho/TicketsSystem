@@ -8,7 +8,7 @@ import { useAuth } from '../context/AuthContext';
 import './styles/Login.css';
 
 const Login = () => {
-  const { login: setSession } = useAuth();
+  const { login: setSession, refresh } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [erro, setErro] = useState('');
@@ -28,6 +28,11 @@ const Login = () => {
       // Validação defensiva assegurando a integridade do objeto 'data'
       if (data && data.success) {
         setSession(data.token, data.user);
+        // Login por SPA não recarrega a página (navigate, não window.location) —
+        // sem isso, campos que só o /users/me carrega (ex: department) ficavam
+        // ausentes até o próximo F5 completo. Reforço defensivo: já existe fix
+        // na resposta do login também, mas isso cobre qualquer campo futuro.
+        refresh();
 
         // 'VISUALIZADOR' não tem acesso ao Painel Inicial (só Gantt/Calendário/Relatórios)
         navigate(data.user.access_type === 'VISUALIZADOR' ? '/gantt' : '/');

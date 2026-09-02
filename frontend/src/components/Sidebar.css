@@ -57,6 +57,69 @@
   color: #e83338;
 }
 
+/* ─── Grupo de menu com submenus (ex: Chamados, Projetos) ──────────── */
+.nav-group-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  color: #4b4b52;
+  background: transparent;
+  border: none;
+  text-decoration: none;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 5px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  font-family: inherit;
+}
+
+.nav-group-header:hover,
+.nav-group-header.active {
+  background: rgba(232, 51, 56, 0.08);
+  color: #e83338;
+}
+
+.nav-group-header span {
+  flex: 1;
+  text-align: left;
+}
+
+.nav-group-chevron {
+  transition: transform 0.15s;
+}
+
+.nav-group-chevron.open {
+  transform: rotate(90deg);
+}
+
+.nav-group-children {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 5px;
+}
+
+.nav-subitem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #4b4b52;
+  text-decoration: none;
+  padding: 10px 12px 10px 34px;
+  border-radius: 8px;
+  margin-bottom: 2px;
+  font-size: 0.88rem;
+  transition: background 0.15s, color 0.15s;
+}
+
+.nav-subitem.active,
+.nav-subitem:hover {
+  background: rgba(232, 51, 56, 0.08);
+  color: #e83338;
+}
+
 /* Overlay escuro quando sidebar está aberta no mobile */
 .sidebar-overlay {
   display: none;

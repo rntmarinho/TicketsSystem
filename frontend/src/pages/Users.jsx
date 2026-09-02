@@ -286,12 +286,12 @@ const Users = () => {
             </div>
 
             <form className="modal-form" onSubmit={handleUpdateUser}>
-              <div className="form-group">
+              <div className="form-group form-group--full">
                 <label>Nome Completo</label>
                 <input type="text" name="name" value={formData.name} onChange={handleChange} required />
               </div>
 
-              <div className="form-group">
+              <div className="form-group form-group--full">
                 <label>E-mail</label>
                 <input type="email" name="email" value={formData.email} onChange={handleChange} required />
               </div>
@@ -374,7 +374,7 @@ const Users = () => {
                 />
               </div>
 
-              <div className="form-group">
+              <div className="form-group form-group--full">
                 <label>Cliente Vinculado</label>
                 <select name="client_id" value={formData.client_id} onChange={handleChange} required>
                   <option value="" disabled>Selecione um cliente...</option>

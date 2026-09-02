@@ -2,7 +2,8 @@ from datetime import datetime, timezone
 from gestao.models.project_models import Project, ProjectBoard, PROJECT_STATUSES
 from gestao.models.team_models import Team
 from gestao.models.task_models import Task
-from gestao.serializers import serialize_project
+from gestao.models.message_models import ProjectClient
+from gestao.serializers import serialize_project, user_brief
 from services.gestao_permissions import visible_project_team_ids, can_manage_team
 from services.progress import compute_percent_complete
 
@@ -148,4 +149,48 @@ def update_board(session, user_id, role, project_id, content):
     else:
         board.content = content or ""
     session.commit()
+    return {"success": True}, 200
+
+
+def list_project_clients(session, user_id, role, project_id):
+    project = session.query(Project).get(project_id)
+    if not project:
+        return {"success": False, "message": "Projeto não encontrado."}, 404
+    if not can_manage_team(session, user_id, role, project.team_id):
+        return {"success": False, "message": "Sem permissão."}, 403
+    rows = session.query(ProjectClient).filter(ProjectClient.project_id == project_id).all()
+    return [user_brief(session, r.user_id) for r in rows], 200
+
+
+def add_project_client(session, user_id, role, project_id, client_user_id):
+    project = session.query(Project).get(project_id)
+    if not project:
+        return {"success": False, "message": "Projeto não encontrado."}, 404
+    if not can_manage_team(session, user_id, role, project.team_id):
+        return {"success": False, "message": "Sem permissão."}, 403
+    existing = (
+        session.query(ProjectClient)
+        .filter(ProjectClient.project_id == project_id, ProjectClient.user_id == client_user_id)
+        .first()
+    )
+    if not existing:
+        session.add(ProjectClient(project_id=project_id, user_id=client_user_id))
+        session.commit()
+    return {"success": True}, 200
+
+
+def remove_project_client(session, user_id, role, project_id, client_user_id):
+    project = session.query(Project).get(project_id)
+    if not project:
+        return {"success": False, "message": "Projeto não encontrado."}, 404
+    if not can_manage_team(session, user_id, role, project.team_id):
+        return {"success": False, "message": "Sem permissão."}, 403
+    row = (
+        session.query(ProjectClient)
+        .filter(ProjectClient.project_id == project_id, ProjectClient.user_id == client_user_id)
+        .first()
+    )
+    if row:
+        session.delete(row)
+        session.commit()
     return {"success": True}, 200

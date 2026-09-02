@@ -6,6 +6,8 @@ import {
   getDecisions, createDecision, deleteDecision,
   getIdeas, createIdea, updateIdea, convertIdea,
 } from '../../../services/gestao/projectExtrasService';
+import { getProjectClients, addProjectClient, removeProjectClient } from '../../../services/gestao/projectService';
+import { apiFetch } from '../../../services/api';
 
 const RISK_LEVELS = ['BAIXO', 'MEDIO', 'ALTO'];
 const IDEA_STATUS_LABELS = { NOVA: 'Nova', EM_ANALISE: 'Em análise', APROVADA: 'Aprovada', REJEITADA: 'Rejeitada', CONVERTIDA: 'Convertida' };
@@ -28,18 +30,37 @@ const ProjectExtras = ({ projectId, canManage, onTaskCreated }) => {
   const [risks, setRisks] = useState([]);
   const [decisions, setDecisions] = useState([]);
   const [ideas, setIdeas] = useState([]);
+  const [clients, setClients] = useState([]);
+  const [candidateClients, setCandidateClients] = useState([]);
+  const [pickClient, setPickClient] = useState('');
 
   const load = async () => {
-    const [m, r, d, i] = await Promise.all([
+    const [m, r, d, i, c] = await Promise.all([
       getMilestones(projectId), getRisks(projectId), getDecisions(projectId), getIdeas(projectId),
+      getProjectClients(projectId),
     ]);
     setMilestones(Array.isArray(m) ? m : []);
     setRisks(Array.isArray(r) ? r : []);
     setDecisions(Array.isArray(d) ? d : []);
     setIdeas(Array.isArray(i) ? i : []);
+    setClients(Array.isArray(c) ? c : []);
   };
 
   useEffect(() => { load(); }, [projectId]);
+
+  useEffect(() => {
+    if (!canManage) return;
+    apiFetch('/users/').then((r) => r.json()).then((data) => {
+      if (Array.isArray(data)) setCandidateClients(data.filter((u) => u.access_type === 'CLIENTE'));
+    });
+  }, [canManage]);
+
+  const handleAddClient = async () => {
+    if (!pickClient) return;
+    await addProjectClient(projectId, Number(pickClient));
+    setPickClient('');
+    load();
+  };
 
   return (
     <div className="gestao-extras-grid">
@@ -107,6 +128,28 @@ const ProjectExtras = ({ projectId, canManage, onTaskCreated }) => {
         {ideas.length === 0 && <p className="gestao-empty">Nenhuma ideia registrada.</p>}
         <MiniForm placeholder="Nova ideia..." onSubmit={async (title) => { await createIdea(projectId, { title }); load(); }} />
       </section>
+
+      {canManage && (
+        <section className="gestao-extras-section">
+          <h4>Clientes com acesso ao Portal</h4>
+          {clients.map((c) => (
+            <div key={c.id} className="gestao-attachment-item">
+              <span>{c.name}</span>
+              <button className="gestao-icon-btn" onClick={async () => { await removeProjectClient(projectId, c.id); load(); }}><Trash2 size={13} /></button>
+            </div>
+          ))}
+          {clients.length === 0 && <p className="gestao-empty">Nenhum cliente vinculado.</p>}
+          <div className="gestao-inline-form">
+            <select value={pickClient} onChange={(e) => setPickClient(e.target.value)}>
+              <option value="">Selecione um cliente...</option>
+              {candidateClients.filter((c) => !clients.some((x) => x.id === c.id)).map((c) => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
+            <button className="gestao-btn-primary" onClick={handleAddClient}><Plus size={14} /></button>
+          </div>
+        </section>
+      )}
     </div>
   );
 };

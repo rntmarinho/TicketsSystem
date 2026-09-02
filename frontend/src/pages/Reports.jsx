@@ -3,10 +3,15 @@ import {
   BarChart3, Users, Tag, AlertCircle, CheckCircle2,
   Clock, TrendingUp, Activity, Award, Zap, Filter,
   ChevronDown, Download, RefreshCw, ArrowUp, ArrowDown,
-  FileText, FileSpreadsheet, X, Check, Circle, Building2, Timer
+  FileText, FileSpreadsheet, X, Check, Circle, Building2, Timer, Package
 } from 'lucide-react';
 import { apiFetch } from '../services/api';
+import { getStatusMeta } from '../constants/suprimentosStatus';
 import './styles/Reports.css';
+// Reaproveita as classes de tabela do módulo (.gestao-table, .suprimentos-*)
+// pra visualização de Suprimentos aqui ficar "igual a do módulo" (pedido da
+// Renata, 25/08), em vez de duplicar o CSS de tabela inteiro.
+import './gestao/styles/Gestao.css';
 
 /* ─────────────────────────────────────────────
    HELPERS
@@ -366,7 +371,7 @@ const METRICAS_VAZIAS = {
   prioridades: [], clientes: [],
   categorias: [], usuarios: [], por_dia: [], tickets: [],
   tempo_medio_geral_horas: null,
-  tempo_medio_categoria: [], tempo_medio_prioridade: [], tempo_medio_projeto: [],
+  tempo_medio_categoria: [], tempo_medio_prioridade: [],
 };
 
 /* Formata horas decimais em "X dias Y horas" (ou só horas se < 24h) */
@@ -379,12 +384,27 @@ const fmtDuracao = (horas) => {
   return `${dias}d ${resto}h`;
 };
 
+/* Métricas vazias do dashboard de Suprimentos */
+const SUPRIMENTOS_VAZIO = {
+  total: 0, valor_total: 0, por_status: [], por_comprador: [], por_centro_custo: [],
+  centros_custo_disponiveis: [], itens: [],
+};
+
 const Reports = () => {
   const [m, setM]                   = useState(METRICAS_VAZIAS);
   const [loading, setLoading]       = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [tab, setTab]               = useState('geral');
   const [periodo, setPeriodo]       = useState('todos');
+
+  /* ── Suprimentos: estado separado, carregado só quando a aba é aberta ── */
+  const [msup, setMsup]             = useState(SUPRIMENTOS_VAZIO);
+  const [supLoading, setSupLoading] = useState(false);
+  const [supLoaded, setSupLoaded]   = useState(false);
+  const [supExporting, setSupExporting] = useState(false);
+  const [supDe, setSupDe]           = useState('');
+  const [supAte, setSupAte]         = useState('');
+  const [supCentroCusto, setSupCentroCusto] = useState('');
 
   /* ── fetch ── */
   const fetchData = (p = periodo) => {
@@ -405,6 +425,84 @@ const Reports = () => {
 
   /* Busca inicial e re-fetch automático quando o período muda */
   useEffect(() => { fetchData(periodo); }, [periodo]);
+
+  /* ── Suprimentos: fetch + export ── */
+  const fetchSuprimentos = (de = supDe, ate = supAte, centroCusto = supCentroCusto) => {
+    setSupLoading(true);
+    const params = new URLSearchParams();
+    if (de) params.set('inicio', de);
+    if (ate) params.set('fim', ate);
+    if (centroCusto) params.set('centro_custo', centroCusto);
+    apiFetch(`/reports/suprimentos/summary?${params.toString()}`)
+      .then(r => r.json())
+      .then(data => {
+        setMsup({ ...SUPRIMENTOS_VAZIO, ...data });
+        setSupLoaded(true);
+        setSupLoading(false);
+      })
+      .catch(err => {
+        console.error('Erro ao carregar relatório de Suprimentos:', err);
+        setSupLoading(false);
+      });
+  };
+
+  /* Carrega sob demanda, só na primeira vez que a aba é aberta */
+  useEffect(() => { if (tab === 'suprimentos' && !supLoaded) fetchSuprimentos(); }, [tab]);
+
+  const handleExportSuprimentos = async () => {
+    setSupExporting(true);
+    try {
+      const params = new URLSearchParams();
+      if (supDe) params.set('inicio', supDe);
+      if (supAte) params.set('fim', supAte);
+      if (supCentroCusto) params.set('centro_custo', supCentroCusto);
+      const r = await apiFetch(`/reports/suprimentos/export?${params.toString()}`);
+      if (!r.ok) throw new Error('Falha ao exportar');
+      const blob = await r.blob();
+      downloadBlob(blob, `suprimentos_${formatDateFilename()}.xlsx`);
+    } catch (err) {
+      console.error('Erro ao exportar Suprimentos:', err);
+      alert('Erro ao exportar planilha de Suprimentos.');
+    } finally {
+      setSupExporting(false);
+    }
+  };
+
+  const maxSupStatus = Math.max(...msup.por_status.map(s => s.qtd), 1);
+  const maxSupComprador = Math.max(...msup.por_comprador.map(c => c.qtd), 1);
+  const maxSupCentroCusto = Math.max(...msup.por_centro_custo.map(c => c.qtd), 1);
+  const fmtMoeda = (v) => (v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+  // Mesmo cálculo de prazo (72h) usado em GestaoSuprimentos.jsx — duplicado
+  // aqui de propósito (função pequena, evita criar um módulo compartilhado
+  // só pra isso).
+  const formatPrazo = (prazoISO) => {
+    if (!prazoISO) return { label: 'Sem prazo', bg: '#f3f4f6', color: '#374151' };
+    const limite = new Date(`${prazoISO}T23:59:59`);
+    const diffHoras = (limite.getTime() - Date.now()) / 3_600_000;
+    if (diffHoras < 0) return { label: `Atrasado (${Math.round(Math.abs(diffHoras))}h)`, bg: '#fee2e2', color: '#991b1b' };
+    if (diffHoras < 24) return { label: `${Math.max(1, Math.round(diffHoras))}h restantes`, bg: '#fef3c7', color: '#b45309' };
+    const dias = Math.floor(diffHoras / 24);
+    return { label: `${dias}d restantes`, bg: '#dcfce7', color: '#166534' };
+  };
+
+  // Mesma lógica de GestaoSuprimentos.jsx — o ERP exporta "0" (não vazio) em
+  // pedido/seq_pedido enquanto a solicitação ainda não virou ordem de compra.
+  const formatPedido = (pedido, seqPedido) => {
+    const numPedido = String(pedido ?? '').trim();
+    if (!numPedido || numPedido === '0') return '—';
+    const numSeq = String(seqPedido ?? '').trim();
+    return numSeq && numSeq !== '0' ? `${numPedido}/${numSeq}` : numPedido;
+  };
+
+  // Mesma lógica de GestaoSuprimentos.jsx — Numeric(14,4) serializado cru
+  // ("1.0000") parece errado na tela; formata como BR, sem zeros à direita.
+  const formatDecimalDisplay = (value, { grouping = false } = {}) => {
+    if (value === null || value === undefined || value === '') return '';
+    const numero = Number(value);
+    if (Number.isNaN(numero)) return String(value);
+    return numero.toLocaleString('pt-BR', { maximumFractionDigits: 4, useGrouping: grouping });
+  };
 
   /* maxDia para escala do gráfico de barras */
   const maxDia = Math.max(...(m.por_dia || []).map(d => d.count), 1);
@@ -445,6 +543,7 @@ const Reports = () => {
     { id: 'categorias', label: 'Categorias',          icon: Tag        },
     { id: 'equipe',     label: 'Equipe',              icon: Users      },
     { id: 'clientes',   label: 'Clientes',            icon: Building2  },
+    { id: 'suprimentos', label: 'Suprimentos',        icon: Package    },
   ];
 
   /* ── loading ── */
@@ -761,25 +860,6 @@ const Reports = () => {
                 </div>
               )}
             </div>
-
-            <div className="rp-card">
-              <h3 className="rp-card-title"><Building2 size={16} /> Por Projeto</h3>
-              {(m.tempo_medio_projeto || []).length === 0 ? (
-                <div className="rp-empty">Nenhum chamado fechado no período.</div>
-              ) : (
-                <div className="prio-hbars">
-                  {m.tempo_medio_projeto.map((p, i) => (
-                    <HBar
-                      key={p.nome}
-                      label={`${p.nome} (${fmtDuracao(p.horas)})`}
-                      value={p.horas}
-                      max={Math.max(...m.tempo_medio_projeto.map(x => x.horas), 1)}
-                      color={COR_CAT[(i + 5) % COR_CAT.length]}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
           </div>
         </div>
       )}
@@ -1070,6 +1150,139 @@ const Reports = () => {
             {(m.clientes?.length ?? 0) === 0 && <div className="rp-empty">Nenhum dado de clientes no período.</div>}
           </div>
 
+        </div>
+      )}
+
+      {/* ════════════════════════════════════════
+          ABA: SUPRIMENTOS
+      ════════════════════════════════════════ */}
+      {tab === 'suprimentos' && (
+        <div className="rp-fade">
+
+          {/* Filtro de período (Data Limite p/ Compra) + exportação — separado
+              do seletor de período global, que é relativo a "hoje" para
+              criação de chamado e não se aplica a essa data-limite do ERP. */}
+          <div className="rp-card rp-card--full sup-toolbar">
+            <div className="sup-toolbar-dates">
+              <label>Data Limite de
+                <input type="date" value={supDe} onChange={e => setSupDe(e.target.value)} />
+              </label>
+              <label>até
+                <input type="date" value={supAte} onChange={e => setSupAte(e.target.value)} />
+              </label>
+              <label>Centro de Custo
+                <select value={supCentroCusto} onChange={e => setSupCentroCusto(e.target.value)}>
+                  <option value="">Todos</option>
+                  {msup.centros_custo_disponiveis.map(cc => <option key={cc} value={cc}>{cc}</option>)}
+                </select>
+              </label>
+              <button className="rp-btn rp-btn--primary" onClick={() => fetchSuprimentos()} disabled={supLoading}>
+                <RefreshCw size={15} className={supLoading ? 'spinning' : ''} />
+                Aplicar
+              </button>
+            </div>
+            <button className="rp-btn" onClick={handleExportSuprimentos} disabled={supExporting}>
+              <FileSpreadsheet size={15} />
+              {supExporting ? 'Exportando...' : 'Exportar Suprimentos (.xlsx)'}
+            </button>
+          </div>
+
+          {supLoading ? (
+            <div className="rp-empty">Carregando dados de Suprimentos…</div>
+          ) : (
+            <>
+              {/* KPIs */}
+              <div className="kpi-grid">
+                <KpiCard title="Total de Linhas" value={msup.total} sub="no período selecionado" icon={Package} color="#6366f1" />
+                <KpiCard title="Valor Total" value={fmtMoeda(msup.valor_total)} sub="Σ Preço Sol. × Qtde Solicitada" icon={BarChart3} color="#14b8a6" />
+                {msup.por_status.filter(s => s.status === 'ATRASADO').map(s => (
+                  <KpiCard key="atrasado" title="Atrasados" value={s.qtd} sub="status Atrasado" icon={AlertCircle} color="#ef4444" />
+                ))}
+                {msup.por_status.filter(s => s.status === 'PENDENTE').map(s => (
+                  <KpiCard key="pendente" title="Pendentes" value={s.qtd} sub="status Pendente" icon={Clock} color="#f59e0b" />
+                ))}
+              </div>
+
+              <div className="rp-row-3">
+                <div className="rp-card">
+                  <h3 className="rp-card-title"><Activity size={16} /> Por Status</h3>
+                  {msup.por_status.map(s => (
+                    <HBar key={s.status} label={s.label} value={s.qtd} max={maxSupStatus} color={getStatusMeta(s.status).color} />
+                  ))}
+                </div>
+                <div className="rp-card">
+                  <h3 className="rp-card-title"><Users size={16} /> Por Comprador</h3>
+                  {msup.por_comprador.length === 0 && <div className="rp-empty">Sem dados no período.</div>}
+                  {msup.por_comprador.map((c, i) => (
+                    <HBar key={c.nome} label={c.nome} value={c.qtd} max={maxSupComprador} color={COR_CAT[i % COR_CAT.length]} />
+                  ))}
+                </div>
+                <div className="rp-card">
+                  <h3 className="rp-card-title"><Building2 size={16} /> Por Centro de Custo</h3>
+                  {msup.por_centro_custo.length === 0 && <div className="rp-empty">Sem dados no período.</div>}
+                  {msup.por_centro_custo.map((c, i) => (
+                    <HBar key={c.nome} label={c.nome} value={c.qtd} max={maxSupCentroCusto} color={COR_CAT[i % COR_CAT.length]} />
+                  ))}
+                </div>
+              </div>
+
+              {/* Visualização detalhada — mesma tabela do módulo de trabalho
+                  (GestaoSuprimentos), mas com TODAS as linhas, sem restrição
+                  de comprador (pedido da Renata, 25/08). Só leitura aqui —
+                  edição continua sendo feita no módulo. */}
+              <div className="rp-card rp-card--full">
+                <h3 className="rp-card-title"><Package size={16} /> Linhas de Suprimentos ({msup.itens.length})</h3>
+                <div className="gestao-table-wrap suprimentos-table-wrap">
+                  <table className="gestao-table">
+                    <thead>
+                      <tr>
+                        <th>Produto</th>
+                        <th>Descrição</th>
+                        <th>Quantidade</th>
+                        <th>Centro de Custo</th>
+                        <th>Solicitação</th>
+                        <th>Ordem de Compra</th>
+                        <th>Status da OC</th>
+                        <th>Data Limite p/ Compra</th>
+                        <th>Prazo</th>
+                        <th>Status</th>
+                        <th>Justificativa</th>
+                        <th>Comprador</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {msup.itens.length === 0 ? (
+                        <tr><td colSpan={12} className="gestao-empty">Nenhuma linha no período/filtro selecionado.</td></tr>
+                      ) : (
+                        msup.itens.map(item => {
+                          const meta = getStatusMeta(item.status);
+                          const prazoMeta = formatPrazo(item.prazo);
+                          return (
+                            <tr key={item.id}>
+                              <td className="suprimentos-col-wrap">{item.produto || '—'}</td>
+                              <td className="suprimentos-col-wrap">{item.descricao_complementar_produto || '—'}</td>
+                              <td className="suprimentos-col-qtd">{formatDecimalDisplay(item.qtde_solicitada, { grouping: true }) || '—'}</td>
+                              <td className="suprimentos-col-wrap">{item.descricao_centro_custo || item.centro_custo || '—'}</td>
+                              <td>{item.solicitacao || '—'}{item.seq_solicitacao ? `/${item.seq_solicitacao}` : ''}</td>
+                              <td>{formatPedido(item.pedido, item.seq_pedido)}</td>
+                              <td className="suprimentos-col-wrap">{item.status_pedido || '—'}</td>
+                              <td>{item.data_limite_compra || '—'}</td>
+                              <td className="suprimentos-col-prazo">
+                                <span className="suprimentos-badge" style={{ background: prazoMeta.bg, color: prazoMeta.color }}>{prazoMeta.label}</span>
+                              </td>
+                              <td><span className="suprimentos-badge" style={{ background: meta.bg, color: meta.color }}>{meta.label}</span></td>
+                              <td className="suprimentos-col-justificativa">{item.justificativa || '—'}</td>
+                              <td>{item.comprador?.name || '—'}</td>
+                            </tr>
+                          );
+                        })
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </>
+          )}
         </div>
       )}
 
