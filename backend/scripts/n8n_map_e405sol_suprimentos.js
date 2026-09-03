@@ -88,4 +88,11 @@ const rows = sol.map((r) => {
   };
 });
 
-return [{ json: { rows, total: rows.length, nao_cotadas_ativas: rows.filter((r) => r.erp_nao_cotada_ativa).length } }];
+// Lotes de 400 linhas por POST (≈300 KB cada) — o HTTP Request roda uma vez por item.
+const LOTE = 400;
+const total = rows.length, naoCotadasAtivas = rows.filter((r) => r.erp_nao_cotada_ativa).length;
+const itens = [];
+for (let i = 0; i < rows.length; i += LOTE) {
+  itens.push({ json: { rows: rows.slice(i, i + LOTE), lote: Math.floor(i / LOTE) + 1, lotes: Math.ceil(rows.length / LOTE), total, nao_cotadas_ativas: naoCotadasAtivas } });
+}
+return itens.length ? itens : [{ json: { rows: [], lote: 0, lotes: 0, total: 0, nao_cotadas_ativas: 0 } }];

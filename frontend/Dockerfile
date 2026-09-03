@@ -29,6 +29,7 @@ RUN echo 'server { \
     listen 80; \
     root /usr/share/nginx/html; \
     index index.html; \
+    client_max_body_size 200m; \
     location /api/ { \
         proxy_pass http://backend:5000/; \
         proxy_set_header Host $host; \
