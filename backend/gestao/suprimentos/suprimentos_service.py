@@ -1,7 +1,7 @@
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone, date
 from sqlalchemy import func
 from gestao.models.suprimentos_models import (
-    SuprimentosSolicitacao, PLANILHA_COLUNAS, PLANILHA_COLUNAS_NUMERICAS, SUPRIMENTOS_STATUSES,
+    SuprimentosSolicitacao, PLANILHA_COLUNAS, PLANILHA_COLUNAS_NUMERICAS, PLANILHA_COLUNAS_DATA, SUPRIMENTOS_STATUSES,
     SUPRIMENTOS_STATUS_LABELS, CAMPOS_ACOMPANHAMENTO, PRAZO_PADRAO_HORAS,
 )
 from gestao.models.legacy import LegacyUser, LegacyDepartment
@@ -56,12 +56,15 @@ def serialize_item(session, item):
 
 
 def _visible_query(session, user_id, role, owner_id_param=None):
+    """Desde 03/09/2026 (decisão da Renata, junto com a importação automática
+    do Senior): quem chega aqui já passou por require_department('Suprimentos'),
+    e TODO o setor enxerga TODAS as linhas — o filtro por comprador é feito na
+    tela. Antes a linha era visível só pro dono/comprador, o que não faz sentido
+    com linhas criadas pelo robô (dono = usuário de integração)."""
     query = session.query(SuprimentosSolicitacao)
-    if role == "ADMIN":
-        if owner_id_param:
-            query = query.filter(_VISIVEL_PARA == owner_id_param)
-        return query
-    return query.filter(_VISIVEL_PARA == user_id)
+    if owner_id_param:
+        query = query.filter(_VISIVEL_PARA == owner_id_param)
+    return query
 
 
 def list_items(session, user_id, role, owner_id_param=None):
@@ -76,11 +79,8 @@ def _get_visible(session, user_id, role, item_id):
     chamador deve tratar os dois casos como 404, pra não vazar existência de
     linha de outro dono (mesmo padrão de tickets/ticket_routes.py)."""
     item = session.query(SuprimentosSolicitacao).get(item_id)
-    if not item:
-        return None
-    visivel_para = item.comprador_id if item.comprador_id is not None else item.owner_id
-    if role != "ADMIN" and visivel_para != user_id:
-        return None
+    # Visibilidade por setor (ver _visible_query) — o require_department da rota
+    # já garante que só gente do Suprimentos (ou ADMIN) chega aqui.
     return item
 
 
@@ -239,3 +239,109 @@ def list_compradores(session, department_name="Suprimentos"):
         return []
     usuarios = session.query(LegacyUser).filter(LegacyUser.department_id == dept.id).order_by(LegacyUser.name).all()
     return [{"id": u.id, "name": u.name} for u in usuarios]
+
+
+# ── Importação automática a partir do ERP Senior (n8n → POST /gestao/suprimentos/sync) ──
+# Decisões da Renata (03/09/2026): traz só as solicitações NÃO COTADAS ATIVAS
+# como linhas novas; linhas já existentes (de qualquer dono, inclusive as
+# importadas por planilha) têm as colunas do ERP atualizadas; o robô só mexe no
+# status de acompanhamento em dois casos — cancelada no ERP → CANCELADO, gerou
+# pedido/OC → COMPRADO — registrando no histórico como o usuário de integração.
+_SITUACAO_CANCELADA = "Cancelada"
+
+
+def _coerce_row(dados):
+    """Normaliza o payload JSON do n8n pros tipos do modelo: datas ISO → date,
+    numéricos via parse_numeric (aceita '9,1492'), texto vazio → None."""
+    limpo = {}
+    for atributo in ATRIBUTOS_PLANILHA:
+        if atributo not in dados:
+            continue
+        valor = dados[atributo]
+        if atributo in PLANILHA_COLUNAS_NUMERICAS:
+            limpo[atributo] = parse_numeric(valor)
+        elif atributo in PLANILHA_COLUNAS_DATA:
+            if isinstance(valor, str) and valor.strip():
+                try:
+                    limpo[atributo] = date.fromisoformat(valor.strip()[:10])
+                except ValueError:
+                    limpo[atributo] = None
+            else:
+                limpo[atributo] = None
+        else:
+            if valor is None:
+                limpo[atributo] = None
+            else:
+                texto = str(valor).strip()
+                limpo[atributo] = texto if texto else None
+    return limpo
+
+
+def sync_from_erp(session, bot_user_id, rows):
+    if not isinstance(rows, list):
+        return {"success": False, "message": "Payload deve ter a lista 'rows'."}, 400
+
+    inserted = updated = skipped_new = 0
+    status_auto = {"CANCELADO": 0, "COMPRADO": 0}
+    erros = []
+    prazo_padrao = (datetime.now(timezone.utc) + timedelta(hours=PRAZO_PADRAO_HORAS)).date()
+
+    for i, bruto in enumerate(rows):
+        dados = _coerce_row(bruto)
+        solicitacao = dados.get("solicitacao")
+        seq = dados.get("seq_solicitacao")
+        if not solicitacao or not seq:
+            erros.append(f"Linha {i}: sem solicitacao/seq_solicitacao, ignorada.")
+            continue
+
+        erp_cancelada = bool(bruto.get("erp_cancelada"))
+        erp_comprada = bool(bruto.get("erp_comprada"))
+        erp_nao_cotada_ativa = bool(bruto.get("erp_nao_cotada_ativa"))
+
+        # Chave de negócio GLOBAL (qualquer dono): a unicidade por dono existia pra
+        # planilhas paralelas; com visibilidade por setor e um robô alimentando,
+        # a mesma solicitação/sequência não pode virar duas linhas.
+        existente = (
+            session.query(SuprimentosSolicitacao)
+            .filter(
+                SuprimentosSolicitacao.solicitacao == solicitacao,
+                SuprimentosSolicitacao.seq_solicitacao == seq,
+            )
+            .order_by(SuprimentosSolicitacao.created_at.asc())
+            .first()
+        )
+
+        if existente:
+            for atributo, valor in dados.items():
+                setattr(existente, atributo, valor)
+            updated += 1
+            item = existente
+        else:
+            if not erp_nao_cotada_ativa:
+                skipped_new += 1  # cotada/cancelada/comprada e ainda não acompanhada aqui: não entra
+                continue
+            item = SuprimentosSolicitacao(owner_id=bot_user_id, prazo=prazo_padrao, **dados)
+            session.add(item)
+            inserted += 1
+
+        # Status automático — só cancelado e comprado; nunca desfaz um manual.
+        if erp_cancelada and item.status != "CANCELADO":
+            _registrar_mudanca_status(session, item, bot_user_id, "CANCELADO")
+            item.status = "CANCELADO"
+            status_auto["CANCELADO"] += 1
+        elif erp_comprada and item.status not in ("COMPRADO", "CANCELADO"):
+            _registrar_mudanca_status(session, item, bot_user_id, "COMPRADO")
+            item.status = "COMPRADO"
+            status_auto["COMPRADO"] += 1
+
+    session.commit()
+    return {
+        "success": True,
+        "received": len(rows),
+        "inserted": inserted,
+        "updated": updated,
+        "skipped_not_tracked": skipped_new,
+        "status_auto": status_auto,
+        "errors": erros[:50],
+        "errors_total": len(erros),
+    }, 200

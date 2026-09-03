@@ -1,3 +1,5 @@
+import os
+import hmac
 from datetime import date
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import get_jwt_identity
@@ -5,6 +7,8 @@ from database.gestao_db import SessionLocal
 from services.auth_decorators import get_current_role
 from services.department_access import require_department
 from gestao.models.suprimentos_models import PLANILHA_COLUNAS_DATA
+from gestao.models.legacy import LegacyUser
+from services.rate_limiter import limiter
 from gestao.suprimentos import suprimentos_service
 
 suprimentos_bp = Blueprint("gestao_suprimentos_bp", __name__, url_prefix="/gestao/suprimentos")
@@ -104,6 +108,36 @@ def delete_item(item_id):
     session = SessionLocal()
     try:
         response, status = suprimentos_service.delete_item(session, user_id, role, item_id)
+        return jsonify(response), status
+    finally:
+        session.close()
+
+
+# ── Sincronização automática vinda do ERP (n8n) ───────────────────────────────
+# Não usa JWT de usuário: o n8n manda o header X-Sync-Token, comparado em tempo
+# constante com SUPRIMENTOS_SYNC_TOKEN (env do backend). As linhas ficam com
+# dono = usuário de integração (SUPRIMENTOS_SYNC_USER_EMAIL, um usuário INATIVO
+# do setor Suprimentos — não faz login, só serve de "autor" do robô).
+@suprimentos_bp.route("/sync", methods=["POST"])
+@limiter.limit("30 per hour")
+def sync_from_erp():
+    esperado = os.getenv("SUPRIMENTOS_SYNC_TOKEN", "")
+    recebido = request.headers.get("X-Sync-Token", "")
+    if not esperado or not hmac.compare_digest(esperado, recebido):
+        return jsonify({"success": False, "message": "Token de sincronização inválido."}), 403
+
+    payload = request.get_json(silent=True) or {}
+    rows = payload.get("rows")
+    if not isinstance(rows, list):
+        return jsonify({"success": False, "message": "Payload deve ter a lista 'rows'."}), 400
+    email_bot = os.getenv("SUPRIMENTOS_SYNC_USER_EMAIL", "integracao.senior@consominas.local")
+
+    session = SessionLocal()
+    try:
+        bot = session.query(LegacyUser).filter(LegacyUser.email == email_bot).first()
+        if not bot:
+            return jsonify({"success": False, "message": f"Usuário de integração '{email_bot}' não existe em tbl_users."}), 500
+        response, status = suprimentos_service.sync_from_erp(session, bot.id, rows)
         return jsonify(response), status
     finally:
         session.close()
