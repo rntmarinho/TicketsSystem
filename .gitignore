@@ -19,3 +19,7 @@ backend/public/gestao_anexos/*
 
 # Compose local de teste (portas/nomes isolados da instância em produção)
 docker-compose.test.yml
+
+# Metadados do Google Drive/Windows (o clone local fica numa pasta sincronizada)
+desktop.ini
+Thumbs.db
