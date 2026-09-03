@@ -44,6 +44,8 @@ def serialize_project(session, project, percent_complete=None, overdue_count=Non
         "kanban_columns": project.kanban_columns,
         "horizon": project.horizon,
         "orcamento": project.orcamento,
+        "archived_at": _iso(project.archived_at),
+        "task_count": len(project.tasks),
         "created_at": _iso(project.created_at),
         "updated_at": _iso(project.updated_at),
     }

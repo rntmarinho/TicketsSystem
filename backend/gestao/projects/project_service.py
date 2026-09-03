@@ -18,9 +18,11 @@ def _default_team_id(session):
     return team.id if team else None
 
 
-def list_projects(session, user_id, role):
+def list_projects(session, user_id, role, include_archived=False):
     ids = visible_project_ids(session, user_id, role)
     query = session.query(Project)
+    if not include_archived:
+        query = query.filter(Project.archived_at.is_(None))
     if ids is not None:
         if not ids:
             return []
@@ -123,6 +125,11 @@ def update_project(session, user_id, role, project_id, data):
         project.department_id = data["department_id"]
     if "kanban_columns" in data:
         project.kanban_columns = data["kanban_columns"]
+    if "archived" in data:
+        if data["archived"] and not project.archived_at:
+            project.archived_at = datetime.now(timezone.utc)
+        elif not data["archived"]:
+            project.archived_at = None
     if "approver_id" in data and data["approver_id"] != project.approver_id:
         project.approver_id = data["approver_id"]
         project.approval_status = "PENDENTE" if data["approver_id"] else "NAO_REQUER"
@@ -149,9 +156,33 @@ def delete_project(session, user_id, role, project_id):
         return {"success": False, "message": "Projeto não encontrado."}, 404
     if not can_manage_project(session, user_id, role, project):
         return {"success": False, "message": "Sem permissão."}, 403
+    # Excluir é definitivo e leva junto as tarefas do projeto (tasks.project_id é
+    # SET NULL no banco — sem isso elas virariam tarefas órfãs "sem projeto"),
+    # com comentários/anexos/campos (cascade do ORM) e os arquivos físicos dos
+    # anexos. Marcos, riscos, decisões, ideias, metas, quadro, pastas e vínculo
+    # com clientes do portal caem por ON DELETE CASCADE no banco.
+    from gestao.attachments.attachment_service import anexos_dir
+    from gestao.models.attachment_models import Attachment
+    import os
+    arquivos = [a.file_path for a in session.query(Attachment).filter(Attachment.project_id == project_id).all()]
+    tarefas = list(project.tasks)
+    for t in tarefas:
+        arquivos += [a.file_path for a in t.attachments]
+    # subtarefas primeiro (parent_task_id é CASCADE no banco, mas o ORM precisa da ordem)
+    for t in sorted(tarefas, key=lambda x: 0 if x.parent_task_id else 1):
+        session.delete(t)
+    session.flush()
     session.delete(project)
     session.commit()
-    return {"success": True}, 200
+    pasta = anexos_dir()
+    for nome in arquivos:
+        caminho = os.path.join(pasta, nome)
+        if os.path.exists(caminho):
+            try:
+                os.remove(caminho)
+            except OSError:
+                pass
+    return {"success": True, "deleted_tasks": len(tarefas)}, 200
 
 
 def get_board(session, user_id, role, project_id):

@@ -1,13 +1,17 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Plus, List, Kanban as KanbanIcon, GanttChartSquare, ClipboardList } from 'lucide-react';
+import { useParams, Link, useNavigate } from 'react-router-dom';
+import { ArrowLeft, Plus, List, Kanban as KanbanIcon, GanttChartSquare, ClipboardList, Pencil, Archive, ArchiveRestore, Trash2, User, CalendarDays } from 'lucide-react';
 import { DndContext, useDraggable, useDroppable, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { useAuth } from '../../context/AuthContext';
-import { getProject, updateProject } from '../../services/gestao/projectService';
+import { getProject, updateProject, deleteProject, createProject } from '../../services/gestao/projectService';
+import ProjectFormModal from './components/ProjectFormModal';
 import { getTasks, createTask, updateTask } from '../../services/gestao/taskService';
 import { getStaff } from '../../services/gestao/teamService';
 import { getDepartments } from '../../services/departmentService';
 import { Building2 } from 'lucide-react';
+
+const STATUS_LABELS = { PLANEJADO: 'Planejado', EM_ANDAMENTO: 'Em andamento', PAUSADO: 'Pausado', CONCLUIDO: 'Concluído' };
+const fmtDate = (iso) => (iso ? new Date(iso).toLocaleDateString('pt-BR') : null);
 import TaskDrawer from './components/TaskDrawer';
 import GestaoGanttView from './GestaoGanttView';
 import ProjectExtras from './components/ProjectExtras';
@@ -55,7 +59,9 @@ const KanbanColumn = ({ column, tasks, onOpen }) => {
 
 const GestaoProjectDetail = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { role, user } = useAuth();
+  const [editOpen, setEditOpen] = useState(false);
   const [project, setProject] = useState(null);
   const [departments, setDepartments] = useState([]);
   const [tasks, setTasks] = useState([]);
@@ -69,6 +75,24 @@ const GestaoProjectDetail = () => {
   const canCreateTask = role !== 'VISUALIZADOR';
   const isPrivileged = ['ADMIN', 'DIRETOR', 'GESTOR_PROJETO'].includes(role);
   const canManageExtras = isPrivileged || (project?.owner?.id != null && project.owner.id === user?.id);
+  const canManage = canManageExtras;
+  const isArchived = !!project?.archived_at;
+
+  const handleArchive = async () => {
+    const acao = isArchived ? 'desarquivar' : 'arquivar';
+    if (!window.confirm(`Deseja ${acao} o projeto "${project.name}"?${isArchived ? '' : ' Ele some da lista e do Kanban geral, mas pode ser desarquivado depois.'}`)) return;
+    const r = await updateProject(id, { archived: !isArchived });
+    if (r.success === false) alert(r.message || `Não foi possível ${acao}.`);
+    load();
+  };
+
+  const handleDelete = async () => {
+    const n = tasks.length;
+    if (!window.confirm(`Excluir o projeto "${project.name}"?\n\nIsso apaga o projeto${n ? ` e suas ${n} tarefa(s)` : ''}, com comentários, anexos, marcos, riscos, decisões e ideias. Não dá pra desfazer.\n\nSe a ideia é só tirar da lista, use "Arquivar".`)) return;
+    const r = await deleteProject(id);
+    if (r.success === false) { alert(r.message || 'Não foi possível excluir.'); return; }
+    navigate('/gestao/projetos');
+  };
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
   useEffect(() => {
@@ -122,28 +146,67 @@ const GestaoProjectDetail = () => {
       <Link to="/gestao/projetos" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginBottom: 12, color: 'var(--text)' }}>
         <ArrowLeft size={16} /> Projetos
       </Link>
-      <header className="gestao-header">
-        <h1>{project.name}</h1>
-        <div className="gestao-project-setor" title="Setor do projeto — define quem enxerga">
-          <Building2 size={14} />
-          {isPrivileged ? (
-            <select
-              className="gestao-select-inline"
-              value={project.department_id ?? ''}
-              onChange={async (e) => {
-                const department_id = e.target.value ? Number(e.target.value) : null;
-                const r = await updateProject(id, { department_id });
-                if (r.success === false) alert(r.message || 'Erro ao mudar o setor.');
-                load();
-              }}
-            >
-              <option value="">Sem setor</option>
-              {departments.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
-            </select>
-          ) : (
-            <span>{project.department || 'Sem setor'}</span>
-          )}
+      {isArchived && (
+        <div className="gestao-archived-banner">
+          <Archive size={15} /> Projeto arquivado em {fmtDate(project.archived_at)} — não aparece na lista nem no Kanban geral.
+          {canManage && <button type="button" className="gestao-btn-secondary" onClick={handleArchive}><ArchiveRestore size={14} /> Desarquivar</button>}
         </div>
+      )}
+      <header className="gestao-header gestao-project-header">
+        <div className="gestao-project-title">
+          <h1>{project.name}</h1>
+          <div className="gestao-project-subtitle">
+            {canManage ? (
+              <select
+                className={`gestao-select-inline gestao-status-select gestao-status-${project.status?.toLowerCase()}`}
+                value={project.status}
+                title="Status do projeto"
+                onChange={async (e) => {
+                  const r = await updateProject(id, { status: e.target.value });
+                  if (r.success === false) alert(r.message || 'Erro ao mudar o status.');
+                  load();
+                }}
+              >
+                {Object.entries(STATUS_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+              </select>
+            ) : (
+              <span className={`gestao-badge gestao-status-${project.status?.toLowerCase()}`}>{STATUS_LABELS[project.status] || project.status}</span>
+            )}
+            <span className="gestao-project-setor" title="Setor do projeto — define quem enxerga">
+              <Building2 size={14} />
+              {isPrivileged ? (
+                <select
+                  className="gestao-select-inline"
+                  value={project.department_id ?? ''}
+                  onChange={async (e) => {
+                    const department_id = e.target.value ? Number(e.target.value) : null;
+                    const r = await updateProject(id, { department_id });
+                    if (r.success === false) alert(r.message || 'Erro ao mudar o setor.');
+                    load();
+                  }}
+                >
+                  <option value="">Sem setor</option>
+                  {departments.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
+                </select>
+              ) : (
+                <span>{project.department || 'Sem setor'}</span>
+              )}
+            </span>
+            <span className="gestao-project-setor" title="Dono do projeto"><User size={14} /> {project.owner?.name || '—'}</span>
+            {(project.start_date || project.end_date) && (
+              <span className="gestao-project-setor" title="Período"><CalendarDays size={14} /> {fmtDate(project.start_date) || '…'} – {fmtDate(project.end_date) || '…'}</span>
+            )}
+          </div>
+        </div>
+        {canManage && (
+          <div className="gestao-project-actions">
+            <button type="button" className="gestao-btn-secondary" onClick={() => setEditOpen(true)}><Pencil size={14} /> Editar</button>
+            <button type="button" className="gestao-btn-secondary" onClick={handleArchive}>
+              {isArchived ? <><ArchiveRestore size={14} /> Desarquivar</> : <><Archive size={14} /> Arquivar</>}
+            </button>
+            <button type="button" className="gestao-btn-secondary danger" onClick={handleDelete}><Trash2 size={14} /> Excluir</button>
+          </div>
+        )}
       </header>
       {project.description && <p style={{ opacity: 0.8, marginTop: -12 }}>{project.description}</p>}
 
@@ -154,7 +217,7 @@ const GestaoProjectDetail = () => {
         <button className={view === 'extras' ? 'active' : ''} onClick={() => setView('extras')}><ClipboardList size={15} /> Marcos/Riscos/Decisões/Ideias</button>
       </div>
 
-      {canCreateTask && (
+      {canCreateTask && !isArchived && (
         <form onSubmit={handleQuickCreate} style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
           <input
             style={{ flex: 1, padding: '9px 12px', border: '1px solid var(--border)', borderRadius: 8, background: 'var(--bg)', color: 'var(--text-h)' }}
@@ -196,6 +259,15 @@ const GestaoProjectDetail = () => {
       {view === 'gantt' && <GestaoGanttView tasks={topLevelTasks} />}
 
       {view === 'extras' && <ProjectExtras projectId={id} canManage={canManageExtras} onTaskCreated={load} />}
+
+      {editOpen && (
+        <ProjectFormModal
+          mode="edit" project={project} departments={departments} teams={[]} isPrivileged={isPrivileged}
+          userDepartment={{ id: user?.department_id, name: user?.department }}
+          onClose={() => setEditOpen(false)} onSaved={() => { setEditOpen(false); load(); }}
+          createProject={createProject} updateProject={updateProject}
+        />
+      )}
 
       {openTaskId && (
         <TaskDrawer

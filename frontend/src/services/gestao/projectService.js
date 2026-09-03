@@ -1,7 +1,7 @@
 import { apiFetch } from '../api';
 
-export async function getProjects() {
-  const r = await apiFetch('/gestao/projects/');
+export async function getProjects({ includeArchived = false } = {}) {
+  const r = await apiFetch(`/gestao/projects/${includeArchived ? '?include_archived=true' : ''}`);
   return r.json();
 }
 

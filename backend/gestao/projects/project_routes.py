@@ -26,7 +26,8 @@ def list_projects():
         return err
     session = SessionLocal()
     try:
-        return jsonify(project_service.list_projects(session, user_id, role)), 200
+        include_archived = request.args.get("include_archived") == "true"
+        return jsonify(project_service.list_projects(session, user_id, role, include_archived=include_archived)), 200
     finally:
         session.close()
 

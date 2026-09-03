@@ -36,6 +36,9 @@ class Project(Base):
     # backend/scripts/migrate_tarefa_tickets.py. Único e nulo pra qualquer
     # projeto criado direto no módulo novo.
     migrated_from_project_id = Column(Integer, nullable=True, unique=True)
+    # Arquivado (03/09/2026): some da lista/Kanban geral (e as tarefas dele também),
+    # mas continua acessível pelo link e pode ser desarquivado. Excluir é definitivo.
+    archived_at = Column(DateTime(timezone=True), nullable=True, index=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False, index=True)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 

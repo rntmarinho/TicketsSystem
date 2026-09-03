@@ -31,6 +31,12 @@ def list_tasks(session, user_id, role, project_id=None, assignee_id=None, only_t
 
     if project_id:
         query = query.filter(Task.project_id == project_id)
+    else:
+        # Sem projeto específico (Kanban geral, "minhas tarefas"): esconde as tarefas
+        # de projeto arquivado — a tela do projeto arquivado (com project_id) segue mostrando.
+        query = query.outerjoin(Project, Project.id == Task.project_id).filter(
+            or_(Task.project_id.is_(None), Project.archived_at.is_(None))
+        )
     if assignee_id:
         query = query.filter(Task.assignee_id == assignee_id)
     if only_top_level:
