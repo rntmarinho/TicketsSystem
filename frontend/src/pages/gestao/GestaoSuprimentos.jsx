@@ -1,10 +1,10 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
-  Package, Upload, Pencil, Trash2, X, Loader2, Search,
+  Package, Pencil, Trash2, X, Loader2, Search,
   Clock, RefreshCcw, CheckCircle2, ShoppingCart, AlertTriangle, XCircle, ChevronDown,
 } from 'lucide-react';
 import {
-  getItems, updateItem, deleteItem, getCompradores, importSpreadsheet,
+  getItems, updateItem, deleteItem, getCompradores,
 } from '../../services/gestao/suprimentosService';
 import { STATUS_OPTIONS, getStatusMeta } from '../../constants/suprimentosStatus';
 import './styles/Gestao.css';
@@ -143,12 +143,9 @@ const GestaoSuprimentos = () => {
   const [items, setItems] = useState([]);
   const [compradores, setCompradores] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [importing, setImporting] = useState(false);
-  const [importSummary, setImportSummary] = useState(null);
   const [editingItem, setEditingItem] = useState(null);
   const [formData, setFormData] = useState({});
   const [saving, setSaving] = useState(false);
-  const fileInputRef = useRef(null);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFiltro, setStatusFiltro] = useState('');
@@ -194,27 +191,6 @@ const GestaoSuprimentos = () => {
 
   const limparFiltros = () => {
     setSearchTerm(''); setStatusFiltro(''); setCompradorFiltro(''); setPrazoDe(''); setPrazoAte('');
-  };
-
-  const handleFileChange = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setImporting(true);
-    setImportSummary(null);
-    try {
-      const response = await importSpreadsheet(file);
-      if (response.success === false) {
-        setImportSummary({ error: response.message || 'Erro ao importar planilha.' });
-      } else {
-        setImportSummary(response);
-        await load();
-      }
-    } catch {
-      setImportSummary({ error: 'Erro ao importar planilha.' });
-    } finally {
-      setImporting(false);
-      if (fileInputRef.current) fileInputRef.current.value = '';
-    }
   };
 
   const [gruposAbertos, setGruposAbertos] = useState(GRUPOS_ABERTOS_PADRAO);
@@ -288,17 +264,9 @@ const GestaoSuprimentos = () => {
     <div className="gestao-container suprimentos-page">
       <header className="gestao-header">
         <h1><Package size={24} /> Suprimentos</h1>
-        <label className="gestao-btn-primary" style={{ cursor: importing ? 'not-allowed' : 'pointer' }}>
-          <Upload size={18} /> {importing ? 'Importando...' : 'Importar Planilha'}
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".xlsx"
-            onChange={handleFileChange}
-            disabled={importing}
-            style={{ display: 'none' }}
-          />
-        </label>
+        <span className="gestao-hint" style={{ margin: 0 }} title="Carga automática do Senior (E405SOL), todo dia às 06:00">
+          Atualizado automaticamente do Senior às 06:00
+        </span>
       </header>
 
       <div className="suprimentos-stats">
@@ -355,19 +323,6 @@ const GestaoSuprimentos = () => {
 
       {hasFiltro && (
         <p className="suprimentos-filter-count">Exibindo {filteredItems.length} de {items.length} linha(s).</p>
-      )}
-
-      {importSummary && (
-        <div className={`suprimentos-import-summary ${importSummary.error ? 'suprimentos-import-summary--error' : ''}`}>
-          {importSummary.error ? (
-            <span>{importSummary.error}</span>
-          ) : (
-            <span>
-              Importação concluída: {importSummary.inserted} nova(s), {importSummary.updated} atualizada(s)
-              {importSummary.skipped > 0 && `, ${importSummary.skipped} ignorada(s) por falta de número de Solicitação`}.
-            </span>
-          )}
-        </div>
       )}
 
       <div className="gestao-table-wrap suprimentos-table-wrap">

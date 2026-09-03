@@ -5,7 +5,7 @@ from gestao.models.suprimentos_models import (
     SUPRIMENTOS_STATUS_LABELS, CAMPOS_ACOMPANHAMENTO, PRAZO_PADRAO_HORAS,
 )
 from gestao.models.legacy import LegacyUser, LegacyDepartment
-from gestao.suprimentos.suprimentos_import import parse_workbook, parse_numeric
+from gestao.suprimentos.suprimentos_import import parse_numeric
 from gestao.serializers import user_brief
 
 ATRIBUTOS_PLANILHA = set(PLANILHA_COLUNAS.values())
@@ -160,56 +160,8 @@ def delete_item(session, user_id, role, item_id):
     return {"success": True}, 200
 
 
-def import_spreadsheet(session, owner_id, file_storage):
-    if not file_storage or file_storage.filename == "":
-        return {"success": False, "message": "Nenhum arquivo enviado."}, 400
-    if not file_storage.filename.lower().endswith(".xlsx"):
-        return {"success": False, "message": "Envie um arquivo .xlsx."}, 400
-
-    try:
-        linhas, pulados, erro_cabecalho = parse_workbook(file_storage)
-    except ValueError as exc:
-        return {"success": False, "message": str(exc)}, 422
-
-    if erro_cabecalho:
-        return {"success": False, "message": erro_cabecalho}, 422
-
-    inserted = 0
-    updated = 0
-    for dados in linhas:
-        existente = (
-            session.query(SuprimentosSolicitacao)
-            .filter(
-                SuprimentosSolicitacao.owner_id == owner_id,
-                SuprimentosSolicitacao.solicitacao == dados.get("solicitacao"),
-                SuprimentosSolicitacao.seq_solicitacao == dados.get("seq_solicitacao"),
-            )
-            .first()
-        )
-        if existente:
-            # Nunca sobrescreve os campos de acompanhamento (prazo/status/
-            # status_descricao/justificativa/comprador_id/transporte) — são
-            # estado de trabalho do usuário, não vêm da planilha.
-            for atributo, valor in dados.items():
-                setattr(existente, atributo, valor)
-            updated += 1
-        else:
-            # Prazo padrão de compra: 72h a partir da importação (decisão da
-            # Renata, 24/08) — só se aplica a linha nova; uma linha existente
-            # nunca tem o prazo tocado pelo merge (ver acima).
-            prazo_padrao = (datetime.now(timezone.utc) + timedelta(hours=PRAZO_PADRAO_HORAS)).date()
-            item = SuprimentosSolicitacao(owner_id=owner_id, prazo=prazo_padrao, **dados)
-            session.add(item)
-            inserted += 1
-
-    session.commit()
-    return {
-        "success": True,
-        "inserted": inserted,
-        "updated": updated,
-        "skipped": len(pulados),
-        "errors": pulados,
-    }, 201
+# import_spreadsheet() removida em 03/09/2026: a carga passou a vir do ERP Senior via
+# sync_from_erp() (n8n, 1x/dia). suprimentos_import.py continua só pelo parse_numeric.
 
 
 def list_all_for_report(session, inicio=None, fim=None, centro_custo=None):

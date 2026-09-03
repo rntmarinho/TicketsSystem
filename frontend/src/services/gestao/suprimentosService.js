@@ -25,10 +25,3 @@ export async function getCompradores() {
   const r = await apiFetch('/gestao/suprimentos/compradores');
   return r.json();
 }
-
-export async function importSpreadsheet(file) {
-  const formData = new FormData();
-  formData.append('arquivo', file);
-  const r = await apiFetch('/gestao/suprimentos/import', { method: 'POST', body: formData });
-  return r.json();
-}

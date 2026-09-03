@@ -37,18 +37,7 @@ def _guard():
     return int(get_jwt_identity()), get_current_role()
 
 
-@suprimentos_bp.route("/import", methods=["POST"])
-@require_department("Suprimentos")
-def import_spreadsheet():
-    user_id, role = _guard()
-    if "arquivo" not in request.files:
-        return jsonify({"success": False, "message": "Campo 'arquivo' ausente."}), 400
-    session = SessionLocal()
-    try:
-        response, status = suprimentos_service.import_spreadsheet(session, user_id, request.files["arquivo"])
-        return jsonify(response), status
-    finally:
-        session.close()
+# (rota POST /import removida em 03/09/2026 — a carga vem do Senior via /sync, decisão da Renata)
 
 
 @suprimentos_bp.route("/", methods=["GET"])
