@@ -7,13 +7,10 @@ gestao/models/conferencia_oc_models.py).
 Testado ao vivo em 10/09/2026 contra o tenant real (usuário gabriel.faria):
 NUMOCP/DATEMI/CODFOR/VLRLIQ/SITOCP/SITAPR/USUGER/USU_DATVECT existem e vêm
 populados em toda OC recente — a query de _fetch_ocp_rows() funciona como
-está. Faltou confirmar só a tabela de fornecedores (ver _lookup_fornecedores):
-"E070FOR" não existe (erro "tabela ... inexistente"); "E440NFC" existe mas não
-tem coluna NOMFOR (erro "Símbolo não encontrado" — mensagem diferente de
-"tabela inexistente", útil pra distinguir os dois casos numa próxima tentativa);
-ALL_TAB_COLUMNS/USER_TAB_COLUMNS não são consultáveis por esse serviço
-(bloqueado ou trava até estourar timeout) — sem acesso ao dicionário de dados,
-não dá pra descobrir a tabela certa sem alguém que conheça o schema confirmar.
+está. Cadastro de fornecedores confirmado também: E095FOR
+(CODFOR/NOMFOR/SIGUFS), informado por quem conhece o schema deste tenant e
+validado com CODFOR reais das OCs de teste (ex.: 617268 -> "MERCADO LIVRE
+NEW CLICK" / AM) — ver defaults de FORNECEDOR_TABELA abaixo.
 
 Domínio de valores observado (não documentado em lugar nenhum, e não
 confirmado com o time de negócio — mostrado cru na tela até validar):
@@ -36,13 +33,13 @@ NUMOCP_JANELA = int(os.getenv("SENIOR_OCP_JANELA", "3000"))
 
 CAMPOS_OCP = ("NUMOCP", "DATEMI", "CODFOR", "VLRLIQ", "SITOCP", "SITAPR", "USUGER", "USU_DATVECT")
 
-# Tabela/colunas do cadastro de fornecedores — não confirmadas neste tenant
-# (ver .env.example). Sem SENIOR_FORNECEDOR_TABELA configurada, a busca é
-# pulada e a tela mostra só o código do fornecedor.
-FORNECEDOR_TABELA = os.getenv("SENIOR_FORNECEDOR_TABELA", "")
+# Tabela/colunas do cadastro de fornecedores — confirmadas neste tenant em
+# 10/09/2026 (E095FOR). Configurável via env só pra cobrir outro tenant com
+# nomes diferentes; deixar vazia desliga a busca (tela mostra só o código).
+FORNECEDOR_TABELA = os.getenv("SENIOR_FORNECEDOR_TABELA", "E095FOR")
 FORNECEDOR_COL_CODIGO = os.getenv("SENIOR_FORNECEDOR_COL_CODIGO", "CODFOR")
 FORNECEDOR_COL_NOME = os.getenv("SENIOR_FORNECEDOR_COL_NOME", "NOMFOR")
-FORNECEDOR_COL_UF = os.getenv("SENIOR_FORNECEDOR_COL_UF", "UF")
+FORNECEDOR_COL_UF = os.getenv("SENIOR_FORNECEDOR_COL_UF", "SIGUFS")
 
 # Domínio de SITOCP/SITAPR ainda não confirmado neste tenant — até validar
 # com dado real, a tela mostra o código cru em vez de um rótulo (ver
