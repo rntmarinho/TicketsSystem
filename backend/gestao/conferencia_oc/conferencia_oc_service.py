@@ -4,16 +4,25 @@ conferência local (Financeiro) — a única coisa que este sistema armazena
 sobre a OC é o campo de acompanhamento que o ERP não tem (ver
 gestao/models/conferencia_oc_models.py).
 
-Mapeamento de campos ainda a validar com uma consulta real contra o tenant
-(ver knowledge doc do projeto Grupo Consominas):
-  - "Fornecedor"/"UF": dependem das variáveis SENIOR_FORNECEDOR_* (ver
-    _lookup_fornecedores) — sem configurar, aparecem em branco na tela.
-  - "Situação"/"Situação Aprovação": mostram o código cru (SITOCP/SITAPR) até
-    confirmarmos o domínio de valores real desse tenant.
+Testado ao vivo em 10/09/2026 contra o tenant real (usuário gabriel.faria):
+NUMOCP/DATEMI/CODFOR/VLRLIQ/SITOCP/SITAPR/USUGER/USU_DATVECT existem e vêm
+populados em toda OC recente — a query de _fetch_ocp_rows() funciona como
+está. Faltou confirmar só a tabela de fornecedores (ver _lookup_fornecedores):
+"E070FOR" não existe (erro "tabela ... inexistente"); "E440NFC" existe mas não
+tem coluna NOMFOR (erro "Símbolo não encontrado" — mensagem diferente de
+"tabela inexistente", útil pra distinguir os dois casos numa próxima tentativa);
+ALL_TAB_COLUMNS/USER_TAB_COLUMNS não são consultáveis por esse serviço
+(bloqueado ou trava até estourar timeout) — sem acesso ao dicionário de dados,
+não dá pra descobrir a tabela certa sem alguém que conheça o schema confirmar.
+
+Domínio de valores observado (não documentado em lugar nenhum, e não
+confirmado com o time de negócio — mostrado cru na tela até validar):
+  - SITOCP: "1" e "9" nas OCs recentes vistas.
+  - SITAPR: "APR", "PRE" e "ANA" nas OCs recentes vistas.
+
+Outras suposições ainda não confirmadas:
   - "Valor Aberto": assumido como VLRLIQ (valor líquido da OC) — validar se é
     esse o campo certo ou se precisa descontar o que já foi faturado/pago.
-  - "Vencimento Título": assumido como o campo customizado USU_DATVECT, que o
-    próprio E420OCP já guarda (ver knowledge doc, seção de campos USU_).
 """
 import os
 

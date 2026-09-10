@@ -47,12 +47,18 @@ def _escape(value):
 
 
 def _build_envelope(user, password, sql):
+    # pmParams precisa conter um XML <params> válido (ainda que vazio), escapado
+    # como texto — mandar a tag vazia ou omitida faz a Senior devolver
+    # erroExecucao "Empty string" mesmo com pmSQL correto (confirmado testando
+    # ao vivo em 10/09/2026). Este cliente não monta pmParams com parâmetros
+    # reais (ver get_db_info), então é sempre este placeholder fixo.
+    pm_params_vazio = _escape("<params></params>")
     return (
         '<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" '
         'xmlns:ser="http://services.senior.com.br">'
         "<soapenv:Header/><soapenv:Body><ser:GetDBInfo>"
         f"<user>{_escape(user)}</user><password>{_escape(password)}</password><encryption>0</encryption>"
-        f"<parameters><pmSQL>{_escape(sql)}</pmSQL><pmParams></pmParams></parameters>"
+        f"<parameters><pmSQL>{_escape(sql)}</pmSQL><pmParams>{pm_params_vazio}</pmParams></parameters>"
         "</ser:GetDBInfo></soapenv:Body></soapenv:Envelope>"
     ).encode("utf-8")
 
