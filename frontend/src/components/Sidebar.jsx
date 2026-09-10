@@ -21,6 +21,8 @@ import { LayoutDashboard,
   MessageSquare,
   FolderKanban,
   ChevronRight,
+  Wallet,
+  ClipboardCheck,
   X } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
@@ -76,6 +78,8 @@ const Sidebar = ({ isOpen, onClose, role }) => {
   // controlado por access_type como o resto do menu. Espelha
   // App.jsx::DepartmentProtectedRoute / services/department_access.py.
   const canSeeSuprimentos = isAdmin || isDepartment(user?.department, 'Suprimentos');
+  // Item exclusivo do setor Financeiro — mesmo padrão de canSeeSuprimentos.
+  const canSeeFinanceiro = isAdmin || isDepartment(user?.department, 'Financeiro');
   const isAdminOrTechnician = role === 'ADMIN' || role === 'GESTOR_PROJETO';
   // Espelha App.jsx::TICKET_ROLES / backend/tickets/ticket_routes.py::SELF_SERVICE_ROLES —
   // equipe de atendimento + autoatendimento (cliente e papéis internos da fusão com Gestão).
@@ -114,6 +118,10 @@ const Sidebar = ({ isOpen, onClose, role }) => {
     canSeeGestao && { to: '/gestao/indicadores', icon: Gauge, label: 'Indicadores' },
   ].filter(Boolean);
 
+  const financeiroItems = [
+    canSeeFinanceiro && { to: '/financeiro/conferencia-oc', icon: ClipboardCheck, label: 'Conferência de OC' },
+  ].filter(Boolean);
+
   return (
     <>
       {/* Overlay escuro no mobile quando sidebar está aberta */}
@@ -148,6 +156,18 @@ const Sidebar = ({ isOpen, onClose, role }) => {
             icon={Briefcase}
             label="Projetos"
             items={projetosItems}
+            openGroup={openGroup}
+            onToggle={toggleGroup}
+            isActive={isActive}
+            onNavClick={handleNavClick}
+            currentPath={location.pathname}
+          />
+
+          <NavGroup
+            groupKey="financeiro"
+            icon={Wallet}
+            label="Financeiro"
+            items={financeiroItems}
             openGroup={openGroup}
             onToggle={toggleGroup}
             isActive={isActive}

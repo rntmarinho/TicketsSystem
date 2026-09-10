@@ -24,6 +24,7 @@ import GestaoGoals from './pages/gestao/GestaoGoals';
 import GestaoScorecard from './pages/gestao/GestaoScorecard';
 import GestaoAuditLog from './pages/gestao/GestaoAuditLog';
 import GestaoSuprimentos from './pages/gestao/GestaoSuprimentos';
+import ConferenciaOC from './pages/financeiro/ConferenciaOC';
 import GestaoChat from './pages/gestao/GestaoChat';
 import GestaoKanbanGeral from './pages/gestao/GestaoKanbanGeral';
 import PortalCliente from './pages/portal-cliente/PortalCliente';
@@ -316,6 +317,14 @@ function App() {
                     element={
                       <DepartmentProtectedRoute role={role} department="Suprimentos" userDepartment={user?.department}>
                         <GestaoSuprimentos />
+                      </DepartmentProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/financeiro/conferencia-oc"
+                    element={
+                      <DepartmentProtectedRoute role={role} department="Financeiro" userDepartment={user?.department}>
+                        <ConferenciaOC />
                       </DepartmentProtectedRoute>
                     }
                   />

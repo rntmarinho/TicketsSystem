@@ -35,6 +35,7 @@ from gestao.audit.audit_routes import audit_bp as gestao_audit_bp
 from gestao.notifications.notification_routes import notification_bp as gestao_notification_bp
 
 from gestao.suprimentos.suprimentos_routes import suprimentos_bp as gestao_suprimentos_bp
+from gestao.conferencia_oc.conferencia_oc_routes import conferencia_oc_bp as financeiro_conferencia_oc_bp
 # Fase 3 da fusão com o APPCNS — chat/chamadas, presença online e Portal do Cliente
 from gestao.messages.message_routes import message_bp as gestao_message_bp
 from gestao.presence.presence_routes import presence_bp as gestao_presence_bp
@@ -177,6 +178,10 @@ def create_app():
     # Módulo Suprimentos — restrito por departamento (services/department_access.py),
     # não por access_type como o resto do gestao_*.
     app.register_blueprint(gestao_suprimentos_bp)
+    # Financeiro / Conferência de OC — também restrito por departamento, mas
+    # busca os dados ao vivo no Senior (GetDBInfo), sem passar pelo n8n como
+    # o Suprimentos faz hoje (ver integrations/senior/senior_client.py).
+    app.register_blueprint(financeiro_conferencia_oc_bp)
     # Fase 3 — chat de equipe/direto + chamadas (Jitsi), presença (heartbeat)
     # e Portal do Cliente (blueprint separado, só CLIENTE vinculado por project_clients).
     app.register_blueprint(gestao_message_bp)

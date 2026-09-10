@@ -47,9 +47,10 @@ def require_department(*department_names, bypass_roles=("ADMIN",)):
                     user_department = dept.name if dept else None
 
                 if _normalize(user_department) not in department_names_normalizadas:
+                    setores = " / ".join(department_names)
                     return jsonify({
                         "success": False,
-                        "message": "Acesso negado: este módulo é restrito ao setor de Suprimentos."
+                        "message": f"Acesso negado: este módulo é restrito ao setor de {setores}."
                     }), 403
             finally:
                 session.close()
