@@ -20,8 +20,13 @@
 .finance-oc-status--warning { background: #fef3c7; color: #92400e; }
 
 .finance-demand-form {
-  display: flex; flex-direction: column; gap: 20px; max-width: 760px;
+  display: flex; flex-direction: column; gap: 20px; max-width: 900px;
 }
+.rh-form-header { max-width: 900px; }
+.rh-form-header h1 { margin-bottom: 0; }
+.rh-form-step { display: flex; align-items: center; gap: 9px; color: var(--text); font-size: .76rem; line-height: 1.25; }
+.rh-form-step span { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: var(--accent); color: #fff; font-weight: 800; }
+.rh-vaga-form { background: rgba(255,255,255,.35); }
 .finance-demand-form > label {
   display: flex; flex-direction: column; gap: 6px; font-size: 0.9rem; font-weight: 600; color: var(--text-h);
 }
@@ -53,9 +58,10 @@
    (a tabela de itens) — em vez de rolar SÓ a tabela, o fieldset inteiro
    vazava pra fora da tela no celular (bug real, achado testando mobile). */
 .finance-fieldset {
-  border: 1px solid var(--border); border-radius: 10px; padding: 20px 22px;
+  border: 1px solid var(--border); border-radius: 14px; padding: 24px 26px;
   display: flex; flex-direction: column; gap: 16px; background: var(--bg);
   min-width: 0;
+  box-shadow: 0 6px 20px rgba(30,20,50,.035);
 }
 .finance-fieldset legend {
   font-weight: 700; color: var(--text-h); padding: 0 8px; font-size: 0.95rem;
@@ -76,6 +82,12 @@
   display: flex; align-items: center; gap: 6px; font-weight: 400; font-size: 0.88rem; color: var(--text);
 }
 .finance-radio input { width: auto; padding: 0; }
+.rh-vaga-form > button { padding: 12px 20px; border: 0; border-radius: 9px; background: var(--accent); color: #fff; font-weight: 700; font-size: .9rem; box-shadow: 0 5px 12px rgba(170,59,255,.2); cursor: pointer; }
+.rh-vaga-form > button:disabled { opacity: .65; cursor: wait; }
+@media (max-width: 640px) {
+  .rh-form-header { align-items: flex-start; flex-direction: column; gap: 14px; }
+  .finance-fieldset { padding: 19px 16px; }
+}
 
 /* ── Itens da OC — tabela em card, colunas numéricas alinhadas à direita ── */
 .finance-items-table-wrap {

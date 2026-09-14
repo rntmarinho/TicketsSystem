@@ -79,12 +79,16 @@ const NovaVaga = () => {
 
   return (
     <div className="gestao-container">
-      <header className="gestao-header"><h1>Solicitar Vaga</h1></header>
-      <p className="gestao-hint">
-        Preencha os dados da vaga — a solicitação vai direto pro aprovador do centro de custo escolhido.
-      </p>
+      <header className="gestao-header gestao-header--hero rh-form-header">
+        <div>
+          <div className="gestao-eyebrow">ATS · RECRUTAMENTO</div>
+          <h1><Send size={24} /> Solicitar nova vaga</h1>
+          <p className="gestao-subtitle">Envie a requisição para aprovação do responsável pelo centro de custo.</p>
+        </div>
+        <div className="rh-form-step"><span>1</span><small>Preenchimento<br />da requisição</small></div>
+      </header>
 
-      <form className="finance-demand-form" onSubmit={handleSubmit}>
+      <form className="finance-demand-form rh-vaga-form" onSubmit={handleSubmit}>
         {error && <div className="finance-demand-error">{error}</div>}
 
         <fieldset className="finance-fieldset">
