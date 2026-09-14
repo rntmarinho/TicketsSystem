@@ -26,6 +26,10 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s"
 )
+# O nivel de fato em producao quem decide e o [logger_root] do alembic.ini --
+# run_alembic_upgrade() roda no boot (depois deste import) e o fileConfig()
+# do Alembic reconfigura o root logger inteiro a partir do ini, sobrescrevendo
+# o que basicConfig() setou aqui. Ver [logger_root] em backend/alembic.ini.
 
 # ─── Busca as configurações de e-mail da base de dados ───────────────────────
 
@@ -369,7 +373,11 @@ def processar_emails_imap():
     try:
         logging.info(f"Conectando ao IMAP {host}")
 
-        with MailBox(host, port=port).login(
+        # timeout evita que uma conexao que trava sem responder (sem RST/FIN)
+        # prenda essa thread para sempre -- sem isso, uma unica falha de rede
+        # parava o processamento de e-mail ate o container ser reiniciado
+        # manualmente (aconteceu em 11-14/09/2026, ~2.5 dias sem novos chamados).
+        with MailBox(host, port=port, timeout=30).login(
             user, password, initial_folder="INBOX"
         ) as mailbox:
 
