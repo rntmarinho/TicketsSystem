@@ -45,11 +45,18 @@ const FilaRH = () => {
 
   const pendentes = vagas.filter((v) => v.status === 'APROVADA');
   const criadas = vagas.filter((v) => v.status === 'VAGA_CRIADA');
+  const total = vagas.length;
 
   return (
     <div className="gestao-container">
-      <header className="gestao-header"><h1>RH — Fila de Vagas Aprovadas</h1></header>
-      <p className="gestao-hint">Vagas aprovadas pelo gerente do centro de custo, prontas pra criar no Senior.</p>
+      <header className="gestao-header gestao-header--hero">
+        <div><div className="gestao-eyebrow">GESTÃO DE PESSOAS</div><h1>Fila de Vagas</h1><p className="gestao-subtitle">Acompanhe as vagas aprovadas e registre a criação no Senior.</p></div>
+      </header>
+      <section className="rh-summary" aria-label="Resumo da fila">
+        <div><span>Aguardando criação</span><strong>{pendentes.length}</strong><small>prontas para o RH</small></div>
+        <div className="rh-summary--done"><span>Vagas criadas</span><strong>{criadas.length}</strong><small>registradas no Senior</small></div>
+        <div className="rh-summary--total"><span>Total no fluxo</span><strong>{total}</strong><small>solicitações aprovadas</small></div>
+      </section>
 
       <div className="gestao-table-wrap finance-table-wrap">
         <table className="gestao-table">
