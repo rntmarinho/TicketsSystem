@@ -21,13 +21,14 @@ const CAMPO_TIPO = {
   qtde_solicitada: 'decimal', preco_sol: 'decimal', qtde_aprovada: 'decimal', qtde_cancelada: 'decimal',
   previsao: 'date', data_solicitacao: 'date', data_limite_compra: 'date', data_envio: 'date', data_cancelamento: 'date',
   obs_solicitacao: 'textarea', complemento: 'textarea', descricao_complementar_produto: 'textarea',
+  descricao_produto: 'textarea',
 };
 
 const GRUPOS_PLANILHA = [
   {
     titulo: 'Identificação',
     campos: [
-      ['transacao', 'Transação'], ['produto', 'Produto'], ['derivacao', 'Derivação'],
+      ['transacao', 'Transação'], ['produto', 'Produto'], ['descricao_produto', 'Descrição do Produto'], ['derivacao', 'Derivação'],
       ['familia', 'Família'], ['um', 'UM'], ['descricao_complementar_produto', 'Descrição Complementar do Produto'],
       ['centro_custo', 'Centro de Custo'], ['descricao_centro_custo', 'Descrição Centro de Custo'],
       ['requisicao', 'Requisição'], ['seq_requisicao', 'Seq. Requisição'],
@@ -176,7 +177,7 @@ const GestaoSuprimentos = () => {
     return items.filter((item) => {
       if (termo) {
         const alvo = [
-          item.produto, item.descricao_complementar_produto, item.solicitacao,
+          item.produto, item.descricao_produto, item.descricao_complementar_produto, item.solicitacao,
           item.centro_custo, item.descricao_centro_custo, item.situacao,
         ].filter(Boolean).join(' ').toLowerCase();
         if (!alvo.includes(termo)) return false;
@@ -367,7 +368,7 @@ const GestaoSuprimentos = () => {
                 return (
                   <tr key={item.id}>
                     <td className="suprimentos-col-wrap">{item.produto || '—'}</td>
-                    <td className="suprimentos-col-wrap">{item.descricao_complementar_produto || '—'}</td>
+                    <td className="suprimentos-col-wrap">{item.descricao_produto || item.descricao_complementar_produto || '—'}</td>
                     <td className="suprimentos-col-qtd">{formatDecimalDisplay(item.qtde_solicitada, { grouping: true }) || '—'}</td>
                     <td className="suprimentos-col-wrap">{item.descricao_centro_custo || '—'}</td>
                     <td>{item.solicitacao || '—'}{item.seq_solicitacao ? `/${item.seq_solicitacao}` : ''}</td>

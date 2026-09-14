@@ -49,6 +49,12 @@ class SuprimentosSolicitacao(Base):
     # ── Colunas da planilha do ERP (nomes = slug do cabeçalho original) ──
     transacao = Column(String(50))
     produto = Column(String(50), index=True)
+    # Descricao oficial do cadastro do produto na Senior (E075PRO.DESPRO) --
+    # NAO vem da planilha original, so do sync automatico (n8n). Distinta de
+    # descricao_complementar_produto (CPLPRO), que e so o complemento/derivacao
+    # da linha da solicitacao e costuma vir em branco (achado real, 14/09/2026:
+    # a tela mostrava a Observacao onde devia mostrar a descricao do produto).
+    descricao_produto = Column(String(255), nullable=True)
     derivacao = Column(String(50))
     familia = Column(String(50))
     um = Column(String(10))
@@ -146,6 +152,7 @@ class SuprimentosSolicitacao(Base):
 PLANILHA_COLUNAS = {
     "Transação": "transacao",
     "Produto": "produto",
+    "Descrição do Produto": "descricao_produto",
     "Derivação": "derivacao",
     "Família": "familia",
     "UM": "um",
