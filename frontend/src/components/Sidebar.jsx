@@ -23,6 +23,7 @@ import {
   Inbox,
   ListChecks,
   ClipboardCheck,
+  Users2,
   X } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -78,6 +79,7 @@ function buildModules(ctx) {
       prefixes: ['/administracao', '/clientes', '/LGPD', '/gestao/auditoria', '/users', '/gestao/equipes'],
       items: [
         ctx.isAdmin && { to: '/administracao/email', icon: Settings, label: 'Config. de E-mail' },
+        ctx.isAdmin && { to: '/administracao/aprovadores-centro-custo', icon: Users2, label: 'Aprovadores de Centro de Custo' },
         ctx.isAdmin && { to: '/clientes', icon: Building2, label: 'Clientes' },
         ctx.isAdmin && { to: '/LGPD', icon: Scale, label: 'LGPD' },
         ctx.isAdmin && { to: '/gestao/auditoria', icon: ScrollText, label: 'Auditoria' },
@@ -108,10 +110,22 @@ function buildModules(ctx) {
       ].filter(Boolean),
     },
     {
+      // RH (14/09/2026): solicitar/aprovar vaga aberto a todo mundo, igual
+      // ao padrao do Financeiro -- so a fila (raiz /rh) e restrita ao setor.
+      key: 'rh',
+      label: 'RH',
+      icon: Users2,
+      prefixes: ['/rh'],
+      items: [
+        ctx.isOperational && { to: '/rh/nova-vaga', icon: Send, label: 'Solicitar Vaga' },
+        ctx.isOperational && { to: '/rh/aprovacoes', icon: CheckSquare, label: 'Aprovações de Vaga' },
+      ].filter(Boolean),
+    },
+    {
       key: 'futuro',
       label: 'Em breve',
       icon: Package,
-      prefixes: ['/almoxarifado', '/rh', '/departamento-pessoal'],
+      prefixes: ['/almoxarifado', '/departamento-pessoal'],
       items: [],
     },
   ];

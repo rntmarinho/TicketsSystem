@@ -34,6 +34,10 @@ import Priorities from './pages/Priority';
 import Clients from './pages/Clients';
 import ProfileSettings from './components/ProfileSettings';
 import EmailSettings from './pages/administracao/EmailSettings';
+import AprovadoresCentroCusto from './pages/administracao/AprovadoresCentroCusto';
+import NovaVaga from './pages/rh/NovaVaga';
+import AprovacoesVagas from './pages/rh/AprovacoesVagas';
+import FilaRH from './pages/rh/FilaRH';
 import LGPD from './pages/LGPD';
 import Notes from './pages/Notes';
 import ForgotPassword from './pages/ForgotPassword';
@@ -324,8 +328,27 @@ function App() {
                     path="/rh"
                     element={
                       <DepartmentProtectedRoute role={role} department="RH" userDepartment={user?.department}>
-                        <ModulePlaceholder title="RH" />
+                        <FilaRH />
                       </DepartmentProtectedRoute>
+                    }
+                  />
+                  {/* Solicitar vaga e ver aprovações (14/09/2026): abertas a todo
+                      mundo, igual ao padrão do Financeiro -- o filtro de quem vê
+                      o quê é feito dentro de cada tela/endpoint, não no gate da rota. */}
+                  <Route
+                    path="/rh/nova-vaga"
+                    element={
+                      <RoleProtectedRoute role={role} allowed={TICKET_ROLES}>
+                        <NovaVaga />
+                      </RoleProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/rh/aprovacoes"
+                    element={
+                      <RoleProtectedRoute role={role} allowed={TICKET_ROLES}>
+                        <AprovacoesVagas />
+                      </RoleProtectedRoute>
                     }
                   />
                   <Route
@@ -436,6 +459,14 @@ function App() {
                     element={
                       <RoleProtectedRoute role={role} allowed={['ADMIN']}>
                         <EmailSettings />
+                      </RoleProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/administracao/aprovadores-centro-custo"
+                    element={
+                      <RoleProtectedRoute role={role} allowed={['ADMIN']}>
+                        <AprovadoresCentroCusto />
                       </RoleProtectedRoute>
                     }
                   />
