@@ -7,9 +7,10 @@ import '../gestao/styles/Gestao.css';
 import '../financeiro/styles/Financeiro.css';
 
 // Tela ADMIN (14/09/2026): quem aprova solicitação de vaga de cada centro de
-// custo. Cadastro manual porque não existe essa informação pronta na Senior
-// (E044CCU.CODUSU está zerado em todo mundo — achado real, ver
-// rh/models.py::RhAprovadorCentroCusto).
+// custo. Sincronizado automaticamente da Senior (ListaGerente) 1x/dia + sob
+// demanda -- Senior sempre vence. Essa tela é só pra ajuste manual quando o
+// gerente não tem conta no TicketSystem ou a Senior ainda não respondeu pra
+// aquele centro (ver rh/models.py::RhAprovadorCentroCusto).
 const AprovadoresCentroCusto = () => {
   const [mapeamentos, setMapeamentos] = useState([]);
   const [centrosCusto, setCentrosCusto] = useState([]);
@@ -70,7 +71,7 @@ const AprovadoresCentroCusto = () => {
     <div className="gestao-container">
       <header className="gestao-header"><h1>Aprovadores de Centro de Custo</h1></header>
       <p className="gestao-hint">
-        Quem aprova as solicitações de vaga de cada centro de custo. Sem isso configurado, ninguém consegue solicitar vaga pra esse centro.
+        Sincronizado automaticamente da Senior 1x/dia (sempre que ela tiver o gerente cadastrado). Use aqui só pra ajustar os centros onde a Senior ainda não responde ou o gerente não tem conta no sistema.
       </p>
 
       <form className="finance-demand-form" onSubmit={handleAdicionar} style={{ maxWidth: 600 }}>

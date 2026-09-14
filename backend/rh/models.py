@@ -19,11 +19,16 @@ REGIME_CONTRATACAO = ("CLT", "PJ", "ESTAGIO", "TEMPORARIO", "OUTRO")
 
 
 class RhAprovadorCentroCusto(Base):
-    """Quem aprova solicitações de vaga de um centro de custo. Cadastrado à
-    mão por um ADMIN (achado real, 14/09/2026: o campo que parecia ser isso
-    na Senior, E044CCU.CODUSU, está zerado em 100% dos centros de custo —
-    não existe essa informação pronta na Senior). Chave é o código do centro
-    de custo (FinanceCentroCusto.codigo), sem FK pelo mesmo motivo de
+    """Quem aprova solicitações de vaga de um centro de custo. Sincronizado
+    automaticamente 1x/dia (+ sob demanda) via n8n a partir do webservice da
+    Senior com.senior.g5.co.ger.cad.usuario (porta ListaGerente, devolve o
+    e-mail do gerente por centro de custo -- achado real, 14/09/2026, depois
+    de confirmar que E044CCU.CODUSU está zerado em 100% dos centros e não
+    servia pra isso). Senior sempre vence no sync (decisão da Renata); o PUT
+    manual (tela de admin) existe só pra ajuste temporário quando o gerente
+    não tem e-mail cadastrado como usuário no TicketSystem, ou a Senior ainda
+    não tem ninguém pra aquele centro. Chave é o código do centro de custo
+    (FinanceCentroCusto.codigo), sem FK pelo mesmo motivo de
     finance_demands.centro_custos: a sincronização diária do Senior é
     DELETE+INSERT completo e uma FK quebraria isso."""
     __tablename__ = "rh_aprovadores_centro_custo"
