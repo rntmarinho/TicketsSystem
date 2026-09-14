@@ -523,3 +523,11 @@
 .gestao-project-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 .gestao-status-select { font-weight: 600; border-radius: 999px; padding: 3px 26px 3px 10px; }
 .gestao-archived-banner { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 10px 14px; margin-bottom: 12px; border-radius: 8px; background: #fef3c7; color: #92400e; font-size: 0.85rem; }
+
+/* ── Conferência de OC (Financeiro) — botão de alternância Não conferido/Conferido ── */
+.conferencia-oc-toggle-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  border: none; border-radius: 999px; padding: 5px 12px;
+  font-size: 0.75rem; font-weight: 600; cursor: pointer;
+}
+.conferencia-oc-toggle-btn:disabled { opacity: 0.6; cursor: not-allowed; }

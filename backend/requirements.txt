@@ -29,3 +29,8 @@ bleach>=6.1.0
 
 # Leitura de planilha .xlsx (módulo Suprimentos — importação da exportação do ERP Senior)
 openpyxl>=3.1.2
+
+# Chamada HTTP simples ao webservice SOAP GetDBInfo da Senior (módulo
+# Financeiro / Conferência de OC) — envelope montado como string, sem lib
+# SOAP completa (zeep/suds)
+requests>=2.31.0

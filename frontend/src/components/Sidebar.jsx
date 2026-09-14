@@ -22,8 +22,11 @@ import {
   Send,
   Inbox,
   ListChecks,
+  ClipboardCheck,
   X } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { isDepartment } from '../utils/department';
 import './Sidebar.css';
 
 // 09/09/2026 (pedido da Renata): a barra lateral deixou de mostrar tudo junto
@@ -101,6 +104,7 @@ function buildModules(ctx) {
         ctx.isOperational && { to: '/financeiro/nova', icon: Send, label: 'Solicitar Demanda' },
         ctx.isOperational && { to: '/financeiro/abertas', icon: Inbox, label: 'Demandas em Aberto' },
         ctx.isOperational && { to: '/financeiro/todas', icon: ListChecks, label: 'Todas as Demandas' },
+        ctx.canSeeFinanceiro && { to: '/financeiro/conferencia-oc', icon: ClipboardCheck, label: 'Conferência de OC' },
       ].filter(Boolean),
     },
     {
@@ -115,17 +119,22 @@ function buildModules(ctx) {
 
 const Sidebar = ({ isOpen, onClose, role }) => {
   const location = useLocation();
+  const { user } = useAuth();
 
   // Página inicial não tem barra lateral nenhuma (pedido explícito da Renata).
   if (location.pathname === '/') return null;
 
   const isActive = (path) => (location.pathname === path ? 'nav-item active' : 'nav-item');
   const isAdmin = role === 'ADMIN';
+  // Item exclusivo do setor Financeiro (tbl_users.department_id) — não é
+  // controlado por access_type como o resto do menu. Espelha
+  // App.jsx::DepartmentProtectedRoute / services/department_access.py.
+  const canSeeFinanceiro = isAdmin || isDepartment(user?.department, 'Financeiro');
   const isOperational = ['ADMIN', 'GESTOR_PROJETO', 'CLIENTE', 'COLABORADOR', 'DIRETOR', 'APROVADOR', 'VISUALIZADOR'].includes(role);
   const canSeeReports = role === 'ADMIN' || role === 'GESTOR_PROJETO' || role === 'VISUALIZADOR';
   const canSeeGestao = ['ADMIN', 'DIRETOR', 'GESTOR_PROJETO', 'APROVADOR', 'COLABORADOR', 'VISUALIZADOR', 'CLIENTE'].includes(role);
 
-  const modules = buildModules({ isAdmin, isOperational, canSeeReports, canSeeGestao });
+  const modules = buildModules({ isAdmin, isOperational, canSeeReports, canSeeGestao, canSeeFinanceiro });
   const currentModule = modules.find((m) =>
     m.prefixes.some((p) => location.pathname === p || location.pathname.startsWith(`${p}/`))
   );

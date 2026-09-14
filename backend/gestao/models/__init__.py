@@ -18,3 +18,4 @@ from gestao.models.scorecard_models import ScorecardItem  # noqa: F401
 from gestao.models.audit_models import AuditLog  # noqa: F401
 from gestao.models.notification_models import Notification  # noqa: F401
 from gestao.models.message_models import ProjectClient  # noqa: F401
+from gestao.models.conferencia_oc_models import ConferenciaOcStatus  # noqa: F401

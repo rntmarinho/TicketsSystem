@@ -24,6 +24,7 @@ import GestaoGoals from './pages/gestao/GestaoGoals';
 import GestaoScorecard from './pages/gestao/GestaoScorecard';
 import GestaoAuditLog from './pages/gestao/GestaoAuditLog';
 import GestaoSuprimentos from './pages/gestao/GestaoSuprimentos';
+import ConferenciaOC from './pages/financeiro/ConferenciaOC';
 import GestaoKanbanGeral from './pages/gestao/GestaoKanbanGeral';
 import CalendarView from './pages/CalendarView';
 import TicketDetails from './pages/TicketDetails';
@@ -377,6 +378,14 @@ function App() {
                   />
                   {/* Calendário (09/09/2026): abriu pra todo mundo — mostra sempre só os
                       próprios itens da pessoa, filtro feito dentro de CalendarView.jsx. */}
+                  <Route
+                    path="/financeiro/conferencia-oc"
+                    element={
+                      <DepartmentProtectedRoute role={role} department="Financeiro" userDepartment={user?.department}>
+                        <ConferenciaOC />
+                      </DepartmentProtectedRoute>
+                    }
+                  />
                   <Route
                     path="/calendario"
                     element={
