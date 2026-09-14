@@ -35,10 +35,14 @@ from gestao.audit.audit_routes import audit_bp as gestao_audit_bp
 from gestao.notifications.notification_routes import notification_bp as gestao_notification_bp
 
 from gestao.suprimentos.suprimentos_routes import suprimentos_bp as gestao_suprimentos_bp
-# Fase 3 da fusão com o APPCNS — chat/chamadas, presença online e Portal do Cliente
-from gestao.messages.message_routes import message_bp as gestao_message_bp
-from gestao.presence.presence_routes import presence_bp as gestao_presence_bp
+# Módulo de Chat/Presença/Ligações (Fase 3) excluído em 09/09/2026 — Portal do
+# Cliente continua, é feature separada (só compartilhava a mesma migration).
 from portal_cliente.portal_routes import portal_bp
+
+# Módulo Financeiro (09/09/2026) — primeira funcionalidade: demandas internas.
+from finance.demand_routes import demand_bp as finance_demand_bp
+from finance.centro_custo_routes import centro_custo_bp as finance_centro_custo_bp
+from finance.attachment_routes import attachment_bp as finance_attachment_bp
 from flask_cors import CORS
 from services.rate_limiter import limiter
 from database.create_database import create_database, create_tables
@@ -177,11 +181,13 @@ def create_app():
     # Módulo Suprimentos — restrito por departamento (services/department_access.py),
     # não por access_type como o resto do gestao_*.
     app.register_blueprint(gestao_suprimentos_bp)
-    # Fase 3 — chat de equipe/direto + chamadas (Jitsi), presença (heartbeat)
-    # e Portal do Cliente (blueprint separado, só CLIENTE vinculado por project_clients).
-    app.register_blueprint(gestao_message_bp)
-    app.register_blueprint(gestao_presence_bp)
+    # Portal do Cliente (blueprint separado, só CLIENTE vinculado por project_clients).
     app.register_blueprint(portal_bp)
+    # Módulo Financeiro — demandas internas, aberto a todo mundo (só vê a
+    # própria, exceto ADMIN/setor Financeiro).
+    app.register_blueprint(finance_demand_bp)
+    app.register_blueprint(finance_centro_custo_bp)
+    app.register_blueprint(finance_attachment_bp)
     # Health Check
     @app.route("/", methods=["GET"])
     def home():

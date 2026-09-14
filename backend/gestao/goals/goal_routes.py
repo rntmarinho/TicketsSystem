@@ -36,9 +36,10 @@ def _serialize(session, goal):
 
 
 def _can_manage_goal(session, user_id, role, goal):
-    """Meta de projeto: quem gerencia a equipe do projeto. Meta solta/de equipe: ADMIN/DIRETOR
-    ou gestor da equipe atribuída; sem equipe nem projeto, qualquer staff pode (meta pessoal)."""
-    if role in ("ADMIN", "DIRETOR"):
+    """Meta de projeto: quem gerencia a equipe do projeto. Meta solta/de equipe: ADMIN
+    ou gestor da equipe atribuída; sem equipe nem projeto, qualquer staff pode (meta pessoal).
+    DIRETOR não tem mais bypass geral aqui (09/09/2026)."""
+    if role == "ADMIN":
         return True
     if goal.project_id:
         project = session.query(Project).get(goal.project_id)

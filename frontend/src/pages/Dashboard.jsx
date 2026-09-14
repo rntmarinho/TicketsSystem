@@ -1,9 +1,14 @@
 import { useEffect, useState } from 'react';
-import { Plus } from 'lucide-react'; 
+import { Plus, ListChecks } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { getTickets } from '../services/ticketService'; 
+import { getTickets } from '../services/ticketService';
 import './styles/Dashboard.css';
 
+// Painel do módulo Chamados (montado em /chamados desde 09/09/2026 — antes
+// ficava em "/", que agora é a página inicial de escolha de módulo). Voltou
+// a ser só sobre chamados: as seções de Projetos/Notificações que existiram
+// aqui por um tempo saíram, porque não fazem mais sentido dentro de um único
+// módulo separado dos outros.
 const Dashboard = () => {
   const [tickets, setTickets] = useState([]);
   const [stats, setStats] = useState({ aberto: 0, atendimento: 0, fechado: 0 });
@@ -12,10 +17,10 @@ const Dashboard = () => {
     getTickets('chamado')
       .then(data => {
         setTickets(data);
-        
+
         const summary = data.reduce((acc, t) => {
           const status = t.status?.toLowerCase();
-          
+
           if (status === 'aberto' || status === 'open') {
             acc.aberto++;
           } else if (status === 'fechado' || status === 'closed') {
@@ -35,12 +40,12 @@ const Dashboard = () => {
   const formatStatus = (status) => {
     if (!status) return 'Desconhecido';
     const s = status.toLowerCase();
-    
+
     if (s === 'open' || s === 'aberto') return 'Aberto';
     if (s === 'in_progress' || s === 'andamento') return 'Em atendimento';
     if (s === 'pending' || s === 'pendente') return 'Pendente';
     if (s === 'closed' || s === 'fechado') return 'Fechado';
-    
+
     return status;
   };
 
@@ -48,12 +53,12 @@ const Dashboard = () => {
   const getBadgeClass = (status) => {
     if (!status) return 'badge-default';
     const s = status.toLowerCase();
-    
+
     if (s === 'open' || s === 'aberto') return 'badge-open';
     if (s === 'in_progress' || s === 'andamento') return 'badge-progress';
     if (s === 'pending' || s === 'pendente') return 'badge-pending';
     if (s === 'closed' || s === 'fechado') return 'badge-closed';
-    
+
     return 'badge-default';
   };
 
@@ -63,7 +68,7 @@ const Dashboard = () => {
         <div>
           <h1>Sistema de Gerenciamento de Chamados</h1>
           <p>Síntese das atividades operacionais e quadro geral de solicitações.</p>
-        </div>       
+        </div>
       </header>
 
       <section className="stats-cards">
@@ -88,7 +93,7 @@ const Dashboard = () => {
       </div>
 
       <section className="tickets-table-section">
-        <h2 className="titulo">Chamados Recentes</h2>
+        <h2 className="titulo"><ListChecks size={18} /> Chamados Recentes</h2>
         <div className="table-responsive">
           <table className="custom-table">
             <thead>

@@ -59,7 +59,9 @@ def create_request():
     user_id, role, err = _guard()
     if err:
         return err
-    if role == "VISUALIZADOR":
+    # DIRETOR (09/09/2026): somente-leitura — não cria solicitação, mas continua
+    # podendo decidir uma onde é o aprovador designado (ver decide_request).
+    if role in ("VISUALIZADOR", "DIRETOR"):
         return jsonify({"success": False, "message": "Seu perfil não pode criar solicitações de aprovação."}), 403
 
     data = request.get_json() or {}

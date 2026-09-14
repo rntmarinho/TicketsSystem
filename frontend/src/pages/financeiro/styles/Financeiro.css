@@ -1,0 +1,239 @@
+.finance-badge {
+  display: inline-block; padding: 2px 10px; border-radius: 999px;
+  font-size: 0.78rem; font-weight: 600;
+}
+.finance-badge--aberta { background: #dbeafe; color: #1d4ed8; }
+.finance-badge--concluida { background: #dcfce7; color: #166534; }
+
+/* Número da OC + status ficam numa coluna própria ("OC"), fora da coluna
+   Status — evita competir por espaço com o badge Aberta/Concluída. */
+.finance-oc-line { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
+.finance-numero-oc { font-size: 0.82rem; font-weight: 600; color: var(--text-h); white-space: nowrap; }
+.finance-numero-oc-valor { font-weight: 700; color: var(--text-h); }
+
+.finance-oc-status {
+  display: inline-block; padding: 1px 8px; border-radius: 999px;
+  font-size: 0.72rem; font-weight: 600; white-space: nowrap;
+}
+.finance-oc-status--success { background: #dcfce7; color: #166534; }
+.finance-oc-status--danger { background: #fee2e2; color: #991b1b; }
+.finance-oc-status--warning { background: #fef3c7; color: #92400e; }
+
+.finance-demand-form {
+  display: flex; flex-direction: column; gap: 20px; max-width: 760px;
+}
+.finance-demand-form > label {
+  display: flex; flex-direction: column; gap: 6px; font-size: 0.9rem; font-weight: 600; color: var(--text-h);
+}
+.finance-demand-form input,
+.finance-demand-form textarea,
+.finance-demand-form select {
+  padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px;
+  background: var(--bg); color: var(--text); font: inherit; resize: vertical;
+}
+.finance-demand-form input:focus,
+.finance-demand-form textarea:focus,
+.finance-demand-form select:focus {
+  outline: none; border-color: var(--accent-border); box-shadow: 0 0 0 3px var(--accent-bg);
+}
+.finance-demand-form > button {
+  align-self: flex-start;
+}
+.finance-demand-error {
+  padding: 10px 14px; border-radius: 8px; background: #fef2f2; color: #991b1b;
+  border: 1px solid #fecaca; font-size: 0.88rem;
+}
+.finance-field-hint {
+  font-weight: 400; font-size: 0.78rem; color: #b45309;
+}
+
+/* ── Formulário: seções (fieldset) ──
+   min-width:0 é essencial aqui: <fieldset> é item flex de .finance-demand-form
+   e, sem isso, o navegador não deixa encolher abaixo do conteúdo mais largo
+   (a tabela de itens) — em vez de rolar SÓ a tabela, o fieldset inteiro
+   vazava pra fora da tela no celular (bug real, achado testando mobile). */
+.finance-fieldset {
+  border: 1px solid var(--border); border-radius: 10px; padding: 20px 22px;
+  display: flex; flex-direction: column; gap: 16px; background: var(--bg);
+  min-width: 0;
+}
+.finance-fieldset legend {
+  font-weight: 700; color: var(--text-h); padding: 0 8px; font-size: 0.95rem;
+}
+.finance-fieldset > label {
+  display: flex; flex-direction: column; gap: 6px; font-size: 0.9rem; font-weight: 600; color: var(--text-h);
+}
+
+.finance-form-row {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
+}
+@media (max-width: 640px) {
+  .finance-form-row { grid-template-columns: 1fr; }
+}
+
+.finance-radio-group span { display: flex; gap: 16px; margin-top: 2px; }
+.finance-radio {
+  display: flex; align-items: center; gap: 6px; font-weight: 400; font-size: 0.88rem; color: var(--text);
+}
+.finance-radio input { width: auto; padding: 0; }
+
+/* ── Itens da OC — tabela em card, colunas numéricas alinhadas à direita ── */
+.finance-items-table-wrap {
+  overflow-x: auto; border: 1px solid var(--border); border-radius: 8px; background: var(--bg);
+}
+.finance-items-table {
+  width: 100%; border-collapse: collapse; font-size: 0.85rem;
+}
+.finance-items-table th {
+  text-align: left; padding: 8px 12px; font-size: 0.75rem; text-transform: uppercase;
+  color: var(--text); opacity: 0.65; font-weight: 700; background: var(--code-bg);
+  border-bottom: 1px solid var(--border);
+}
+.finance-items-table td { padding: 8px 12px; vertical-align: middle; border-bottom: 1px solid var(--border); }
+.finance-items-table tbody tr:last-child td { border-bottom: none; }
+.finance-items-table input {
+  width: 100%; min-width: 90px; padding: 7px 8px !important;
+}
+/* Quantidade / Valor Unitário / Subtotal — alinhados à direita, como
+   qualquer coluna numérica (facilita comparar valores olhando a coluna). */
+.finance-items-table th:nth-child(2), .finance-items-table td:nth-child(2),
+.finance-items-table th:nth-child(3), .finance-items-table td:nth-child(3),
+.finance-items-table th:nth-child(4), .finance-items-table td:nth-child(4) {
+  text-align: right;
+}
+.finance-items-table input[type="number"] { text-align: right; }
+.finance-items-subtotal { white-space: nowrap; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+.finance-remove-item-btn {
+  background: none; border: none; color: #991b1b; cursor: pointer; padding: 4px;
+  display: flex; align-items: center; border-radius: 6px;
+}
+.finance-remove-item-btn:hover:not(:disabled) { background: #fef2f2; }
+.finance-remove-item-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+.finance-add-item-btn {
+  display: flex; align-items: center; gap: 6px; align-self: flex-start;
+  background: none; border: 1px dashed var(--border); border-radius: 8px;
+  padding: 8px 14px; font-size: 0.85rem; font-weight: 600; color: var(--accent); cursor: pointer;
+}
+.finance-add-item-btn:hover { background: var(--accent-bg); }
+
+/* ── Anexos ── */
+.finance-staged-files { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.finance-staged-files li {
+  display: flex; align-items: center; gap: 10px; padding: 6px 10px;
+  border: 1px solid var(--border); border-radius: 8px; background: var(--code-bg); font-size: 0.85rem;
+}
+.finance-staged-file-name { flex: 1; overflow-wrap: anywhere; color: var(--text-h); }
+.finance-staged-file-size { opacity: 0.6; white-space: nowrap; font-size: 0.78rem; }
+.finance-staged-files li button {
+  background: none; border: none; color: #991b1b; cursor: pointer; padding: 2px; display: flex; align-items: center;
+}
+.finance-attachment-list { display: flex; flex-direction: column; gap: 2px; margin-bottom: 8px; }
+.finance-anexos-count {
+  display: inline-flex; align-items: center; gap: 4px; font-size: 0.78rem; color: var(--text); opacity: 0.75;
+}
+
+.finance-total-geral {
+  text-align: right; font-size: 0.95rem; color: var(--text-h); font-variant-numeric: tabular-nums;
+}
+
+/* ── Lista: tabela em card (cabeçalho tingido, linha com hover) ──
+   var(--card-bg) é usada em outras telas do sistema mas nunca foi definida
+   no index.css (fica transparente) — aqui uso só variáveis reais do tema. */
+.finance-table-wrap {
+  border: 1px solid var(--border); border-radius: 10px; background: var(--code-bg); overflow-x: auto;
+}
+.finance-table-wrap .gestao-table { background: var(--bg); }
+.finance-table-wrap .gestao-table th {
+  background: var(--code-bg); padding: 12px 14px; white-space: nowrap;
+}
+.finance-table-wrap .gestao-table td { padding: 12px 14px; }
+.finance-table-wrap .finance-row:hover > td { background: var(--accent-bg); }
+.finance-table-wrap .gestao-btn-primary { white-space: nowrap; }
+.finance-col-fornecedor { min-width: 200px; }
+.finance-col-fornecedor-valor { font-weight: 600; color: var(--text-h); }
+.finance-col-total { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.finance-col-acoes { min-width: 156px; white-space: nowrap; }
+
+.finance-expand-btn {
+  background: none; border: none; cursor: pointer; padding: 4px;
+  display: flex; align-items: center; color: var(--text); opacity: 0.6; border-radius: 6px;
+}
+.finance-expand-btn:hover { opacity: 1; background: var(--code-bg); }
+
+/* ── Lista: painel de detalhe expandido — grade de campos com rótulo em
+   vez de "Label: valor" corrido, itens e observação em cartões próprios ── */
+.finance-detail-row > td { background: var(--code-bg); padding: 0 !important; }
+.finance-detail { padding: 18px 20px; display: flex; flex-direction: column; gap: 14px; }
+.finance-detail-header { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.finance-detail-header strong { font-size: 1rem; color: var(--text-h); }
+
+.finance-detail-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px 22px;
+  background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px;
+}
+.finance-detail-field { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.finance-detail-label {
+  font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em;
+  color: var(--text); opacity: 0.6;
+}
+.finance-detail-value { font-size: 0.88rem; color: var(--text-h); overflow-wrap: break-word; }
+
+.finance-items-table-card {
+  border: 1px solid var(--border); border-radius: 8px; background: var(--bg); overflow: hidden;
+}
+.finance-items-table-card .finance-items-table th,
+.finance-items-table-card .finance-items-table td { padding: 8px 12px; }
+
+.finance-detail-obs {
+  background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px;
+}
+.finance-detail-obs p { margin: 4px 0 0; font-size: 0.85rem; color: var(--text-h); white-space: pre-line; }
+
+.finance-detail-attachments {
+  background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px;
+}
+.finance-detail-attachments .finance-detail-label { display: flex; align-items: center; gap: 5px; margin-bottom: 8px; }
+
+/* ── Lista no celular: rolar a tabela de lado é ruim de usar — cada linha
+   vira um cartão próprio, com rótulo em cima de cada valor (célula ganha o
+   rótulo via data-label no JSX + ::before aqui). ── */
+@media (max-width: 720px) {
+  .finance-table-wrap {
+    border: none; background: transparent; overflow: visible;
+  }
+  .finance-table-wrap .gestao-table,
+  .finance-table-wrap .gestao-table tbody { display: block; width: 100%; }
+  .finance-table-wrap .gestao-table thead { display: none; }
+  .finance-table-wrap .finance-row {
+    display: block; position: relative;
+    border: 1px solid var(--border); border-radius: 10px; background: var(--bg);
+    padding: 14px 40px 14px 14px; margin-bottom: 12px;
+  }
+  .finance-table-wrap .finance-row:hover > td { background: none; }
+  .finance-table-wrap .finance-row > td {
+    display: block; border-bottom: none; padding: 0;
+  }
+  .finance-table-wrap .finance-row td[data-label]::before {
+    content: attr(data-label); display: block;
+    font-size: 0.68rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.02em; color: var(--text); opacity: 0.55; margin-top: 10px;
+  }
+  .finance-table-wrap .finance-row td[data-label]:first-of-type::before { margin-top: 0; }
+  .finance-table-wrap .finance-col-expand {
+    position: absolute; top: 10px; right: 8px;
+  }
+  .finance-table-wrap .finance-col-fornecedor {
+    padding-right: 26px;
+  }
+  .finance-table-wrap .finance-col-fornecedor-valor { font-size: 1rem; }
+  .finance-table-wrap .finance-col-total { text-align: left; }
+  .finance-table-wrap .finance-col-acoes { margin-top: 12px; }
+  .finance-table-wrap .finance-col-acoes .gestao-btn-primary { width: 100%; justify-content: center; }
+
+  .finance-detail-row > td { display: block; }
+  .finance-detail-row td[data-label]::before { display: none; }
+  .finance-detail { padding: 16px; }
+  .finance-detail-grid { grid-template-columns: 1fr 1fr; padding: 12px; gap: 12px 14px; }
+}

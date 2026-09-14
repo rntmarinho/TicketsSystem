@@ -87,12 +87,17 @@ def update_user(user_id):
         permitidos = ("nome", "name", "email", "senha", "password", "cargo", "ramal", "whatsapp")
         data = {k: v for k, v in (data or {}).items() if k in permitidos}
 
-    response = UserController.update_user(
+    result = UserController.update_user(
         user_id,
         data
     )
 
-    return jsonify(response)
+    # update_user devolve (dict, status) em erro (404/422) e só dict em sucesso
+    # — sem esse unwrap, jsonify(tupla) virava um array JSON com status 200.
+    if isinstance(result, tuple):
+        response, status = result
+        return jsonify(response), status
+    return jsonify(result)
 
 # Rota para deletar (inativar) um usuário (somente admin)
 @user_bp.route("/<int:user_id>", methods=["DELETE"])

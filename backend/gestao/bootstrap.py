@@ -10,7 +10,9 @@ from gestao.models.team_models import Team, UserTeam
 from gestao.models.legacy import LegacyUser
 
 DEFAULT_TEAM_NAME = "Geral"
-GESTOR_ROLES = ("ADMIN", "DIRETOR", "GESTOR_PROJETO")
+# DIRETOR não entra mais aqui (09/09/2026) — é somente-leitura no módulo, não
+# deve receber o papel GESTOR de equipe automaticamente.
+GESTOR_ROLES = ("ADMIN", "GESTOR_PROJETO")
 
 
 def bootstrap_default_team():

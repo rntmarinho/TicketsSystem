@@ -61,7 +61,8 @@ const Login = () => {
       <div className="login-card">
 
         <div className="login-header">
-          <h1>Sistema de Chamados</h1>
+          <img src="/consominas-logo.png" alt="Grupo Consominas" className="login-logo" />
+          <h1>Sistema Interno</h1>
           <p>Faça login para acessar o sistema</p>
         </div>
 

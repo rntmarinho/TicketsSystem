@@ -9,7 +9,7 @@ reports_bp = Blueprint("reports_bp", __name__, url_prefix="/reports")
 
 
 @reports_bp.route("/summary", methods=["GET"])
-@require_role("ADMIN", "GESTOR_PROJETO", "VISUALIZADOR")
+@require_role("ADMIN", "GESTOR_PROJETO", "VISUALIZADOR", "DIRETOR")
 def get_summary():
     """
     GET /reports/summary?periodo=todos|7d|30d|90d
@@ -25,7 +25,7 @@ def get_summary():
 
 
 @reports_bp.route("/suprimentos/summary", methods=["GET"])
-@require_role("ADMIN", "GESTOR_PROJETO", "VISUALIZADOR")
+@require_role("ADMIN", "GESTOR_PROJETO", "VISUALIZADOR", "DIRETOR")
 def get_suprimentos_summary():
     """
     GET /reports/suprimentos/summary?inicio=YYYY-MM-DD&fim=YYYY-MM-DD&centro_custo=
@@ -41,7 +41,7 @@ def get_suprimentos_summary():
 
 
 @reports_bp.route("/suprimentos/export", methods=["GET"])
-@require_role("ADMIN", "GESTOR_PROJETO", "VISUALIZADOR")
+@require_role("ADMIN", "GESTOR_PROJETO", "VISUALIZADOR", "DIRETOR")
 def export_suprimentos():
     """
     GET /reports/suprimentos/export?inicio=YYYY-MM-DD&fim=YYYY-MM-DD&centro_custo=

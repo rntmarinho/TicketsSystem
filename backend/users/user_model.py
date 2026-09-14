@@ -195,6 +195,31 @@ class UserModel:
         cursor.close()
         conn.close()
 
+    @staticmethod
+    def get_gestor_imediato_id(user_id):
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT gestor_imediato_id FROM tbl_users WHERE id = %s", (user_id,))
+        row = cursor.fetchone()
+        cursor.close()
+        conn.close()
+        return row[0] if row else None
+
+    # Usado pra bloquear ciclo na hierarquia (organograma editável, 09/09/2026):
+    # sobe a cadeia de gestor_imediato_id a partir de candidate_id; True se
+    # encontrar possible_ancestor_id no caminho (ou seja, candidate_id já é
+    # subordinado dele, direto ou indireto).
+    @staticmethod
+    def is_descendant(candidate_id, possible_ancestor_id):
+        visited = set()
+        current = candidate_id
+        while current is not None and current not in visited:
+            visited.add(current)
+            current = UserModel.get_gestor_imediato_id(current)
+            if current == possible_ancestor_id:
+                return True
+        return False
+
     # Inativa o usuário alterando seu status para "inativo"
     @staticmethod
     def delete(user_id):

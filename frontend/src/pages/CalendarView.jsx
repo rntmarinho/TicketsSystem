@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react';
 import { apiFetch } from '../services/api';
+import { getTasks } from '../services/gestao/taskService';
 import { getStatusMeta } from '../constants/ticketStatus';
+import { useAuth } from '../context/AuthContext';
 import './styles/CalendarView.css';
 
 const MESES = [
@@ -10,6 +12,8 @@ const MESES = [
   'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
 ];
 const DIAS_SEMANA = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+
+const TASK_COR = { bg: '#ede9fe', color: '#6d28d9' };
 
 const parseDate = (val) => {
   if (!val) return null;
@@ -20,10 +24,17 @@ const parseDate = (val) => {
 
 const dayKey = (d) => `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
 
+// Calendário pessoal (09/09/2026, pedido da Renata): mostra sempre só os
+// itens da PRÓPRIA pessoa — chamados em que é solicitante ou responsável
+// (t.user_id / t.assigned_to, campos que a API de chamados já devolve, sem
+// precisar de mudança no backend) + tarefas de projeto de que é responsável
+// (GET /gestao/tasks/?assignee_id=<eu>, que já filtra isso sozinho). Aberto
+// pra todo papel agora — antes era só ADMIN/GESTOR_PROJETO/VISUALIZADOR, e
+// esses viam o calendário de todo mundo, não só o próprio.
 const CalendarView = () => {
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const typeFilter = searchParams.get('type') || '';
+  const { user } = useAuth();
+  const myId = user?.id;
 
   const [cursor, setCursor] = useState(() => {
     const d = new Date();
@@ -31,41 +42,42 @@ const CalendarView = () => {
   });
 
   const [tickets, setTickets] = useState([]);
+  const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!myId) return;
     setLoading(true);
-    const params = new URLSearchParams();
-    if (typeFilter) params.set('type', typeFilter);
-    const qs = params.toString();
-    const endpoint = qs ? `/tickets/?${qs}` : '/tickets/';
-
-    apiFetch(endpoint).then(r => r.json())
-      .then((ticketData) => {
-        setTickets(Array.isArray(ticketData) ? ticketData : []);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
-  }, [typeFilter]);
-
-  const updateParam = (key, value) => {
-    const next = new URLSearchParams(searchParams);
-    if (value) next.set(key, value);
-    else next.delete(key);
-    setSearchParams(next);
-  };
+    Promise.all([
+      apiFetch('/tickets/').then((r) => r.json()).catch(() => []),
+      getTasks({ assigneeId: myId }).catch(() => []),
+    ]).then(([ticketData, taskData]) => {
+      const ownTickets = (Array.isArray(ticketData) ? ticketData : [])
+        .filter((t) => t.user_id === myId || t.assigned_to === myId);
+      setTickets(ownTickets);
+      setTasks(Array.isArray(taskData) ? taskData : []);
+      setLoading(false);
+    });
+  }, [myId]);
 
   const itemsByDay = useMemo(() => {
     const map = {};
-    tickets.forEach(t => {
+    const push = (key, item) => {
+      if (!map[key]) map[key] = [];
+      map[key].push(item);
+    };
+    tickets.forEach((t) => {
       const due = parseDate(t.sla);
       if (!due) return;
-      const key = dayKey(due);
-      if (!map[key]) map[key] = [];
-      map[key].push(t);
+      push(dayKey(due), { id: `chamado-${t.id}`, kind: 'chamado', label: `#${t.id} ${t.subject}`, status: t.status, to: `/tickets/${t.id}` });
+    });
+    tasks.forEach((t) => {
+      const due = parseDate(t.due_date);
+      if (!due) return;
+      push(dayKey(due), { id: `tarefa-${t.id}`, kind: 'tarefa', label: t.title, to: `/gestao/projetos/${t.project_id}` });
     });
     return map;
-  }, [tickets]);
+  }, [tickets, tasks]);
 
   const weeks = useMemo(() => {
     const firstOfMonth = cursor;
@@ -95,16 +107,7 @@ const CalendarView = () => {
           <CalendarDays size={24} />
           <h1>Calendário</h1>
         </div>
-
-        <select
-          className="cal-project-select"
-          value={typeFilter}
-          onChange={e => updateParam('type', e.target.value)}
-        >
-          <option value="">Chamados e tarefas</option>
-          <option value="chamado">Só chamados</option>
-          <option value="tarefa">Só tarefas</option>
-        </select>
+        <p className="cal-hint">Seus chamados e tarefas de projeto.</p>
 
         <div className="cal-nav">
           <button onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() - 1, 1))}>
@@ -135,17 +138,17 @@ const CalendarView = () => {
               <span className="cal-day-number">{day.getDate()}</span>
               <div className="cal-day-items">
                 {dayItems.slice(0, 3).map(item => {
-                  const sm = getStatusMeta(item.status);
+                  const cor = item.kind === 'tarefa' ? TASK_COR : getStatusMeta(item.status);
                   return (
                     <div
                       key={item.id}
                       className="cal-item"
-                      style={{ background: sm.bg, color: sm.color }}
-                      title={item.subject}
-                      onClick={() => navigate(`/tickets/${item.id}`)}
+                      style={{ background: cor.bg, color: cor.color }}
+                      title={item.label}
+                      onClick={() => navigate(item.to)}
                     >
-                      #{item.id} {item.subject}
-                      {item.type === 'tarefa' && <span className="cal-item-tag">Tarefa</span>}
+                      {item.label}
+                      {item.kind === 'tarefa' && <span className="cal-item-tag">Tarefa</span>}
                     </div>
                   );
                 })}

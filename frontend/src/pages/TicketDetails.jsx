@@ -79,7 +79,7 @@ const TicketDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { role } = useAuth();
-  const isReadOnly = role === 'VISUALIZADOR';
+  const isReadOnly = role === 'VISUALIZADOR' || role === 'DIRETOR';
   // Autoatendimento (cliente + papéis internos) participa da conversa
   // (mensagens) mas não edita metadados do chamado nem exclui/funde — só
   // admin/técnico gerenciam o chamado em si. VISUALIZADOR fica de fora (só

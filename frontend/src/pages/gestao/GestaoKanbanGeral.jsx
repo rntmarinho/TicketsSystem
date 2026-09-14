@@ -113,7 +113,8 @@ const GestaoKanbanGeral = () => {
     }
   };
 
-  const canCreateProject = role !== 'VISUALIZADOR' && (['ADMIN', 'DIRETOR', 'GESTOR_PROJETO'].includes(role) || !!user?.department_id);
+  // VISUALIZADOR e DIRETOR (09/09/2026) são somente-leitura — nunca criam projeto.
+  const canCreateProject = !['VISUALIZADOR', 'DIRETOR'].includes(role) && (['ADMIN', 'GESTOR_PROJETO'].includes(role) || !!user?.department_id);
 
   if (loading) {
     return <div className="gestao-loading"><Loader2 className="spin" size={28} /></div>;

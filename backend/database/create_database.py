@@ -364,15 +364,20 @@ def create_tables():
             END IF;
         END $$;
 
-        -- Fase 3 da fusão com o APPCNS: presença online (chat/chamada) — marca
-        -- o último heartbeat de cada usuário. Também é atributo do usuário, não
-        -- do módulo de gestão, por isso fica em tbl_users (mesma lógica dos
-        -- campos de perfil da Fase 2).
-        -- TIMESTAMPTZ (não TIMESTAMP): o heartbeat grava datetime em UTC e o
-        -- Postgres desta stack roda em America/Sao_Paulo — sem fuso na coluna, o
-        -- valor era convertido pra hora local na gravação e lido de volta como se
-        -- fosse UTC (3h de diferença → todo mundo aparecia offline).
-        ALTER TABLE tbl_users ADD COLUMN IF NOT EXISTS last_seen_at TIMESTAMPTZ;
+        -- (coluna last_seen_at de presença/chat removida em 09/09/2026 junto
+        -- com o módulo de Chat/Presença/Ligações — ver migration 0011_remove_chat_module)
+
+        -- Anotações por setor (09/09/2026): abertas pra todo usuário, restritas
+        -- ao MESMO setor de quem criou (note_controller.py::_check_access) —
+        -- sem exceção nem pra ADMIN, diferente do padrão "vê tudo" usado no
+        -- resto do sistema. Setor gravado na nota no momento da criação.
+        ALTER TABLE tbl_notes ADD COLUMN IF NOT EXISTS department_id INTEGER REFERENCES tbl_departments(id);
+
+        -- Backfill idempotente pras notas "setor" já existentes (WHERE
+        -- department_id IS NULL só bate na primeira vez que isso roda).
+        UPDATE tbl_notes n SET department_id = u.department_id
+        FROM tbl_users u
+        WHERE u.id = n.owner_id AND n.department_id IS NULL AND u.department_id IS NOT NULL;
 
 
 

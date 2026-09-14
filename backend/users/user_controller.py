@@ -144,6 +144,18 @@ class UserController:
         if not current_user:
             return {"success": False, "message": "Usuário não encontrado."}, 404
 
+        # 1.1 Gestor imediato novo (organograma editável, 09/09/2026): bloquear
+        # ciclo antes de gravar — self ou um subordinado (direto/indireto) do
+        # próprio usuário criariam um laço na árvore do organograma.
+        novo_gestor_id = data.get("gestor_imediato_id", current_user[12])
+        if novo_gestor_id is not None:
+            novo_gestor_id = int(novo_gestor_id)
+            if novo_gestor_id == user_id or UserModel.is_descendant(novo_gestor_id, user_id):
+                return {
+                    "success": False,
+                    "message": "Não é possível definir esse gestor: criaria um ciclo na hierarquia (o usuário escolhido é subordinado, direto ou indireto, deste)."
+                }, 422
+
         # 2. Mescla os dados recebidos (suportando 'nome') com os dados do banco
         payload = {
             "name": data.get("nome", data.get("name", current_user[1])),
@@ -155,7 +167,7 @@ class UserController:
             "ramal": data.get("ramal", current_user[9]),
             "whatsapp": data.get("whatsapp", current_user[10]),
             "nivel_hierarquico": data.get("nivel_hierarquico", current_user[11]),
-            "gestor_imediato_id": data.get("gestor_imediato_id", current_user[12])
+            "gestor_imediato_id": novo_gestor_id
         }
 
         # 3. Executa a atualização dos dados principais

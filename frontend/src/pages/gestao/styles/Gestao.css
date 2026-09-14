@@ -333,6 +333,20 @@
 .gestao-org-contact { opacity: 0.6; font-size: 0.75rem; margin-left: auto; }
 .gestao-badge-nucleo { background: #ede9fe; color: #6d28d9; }
 
+.gestao-org-card-editable { cursor: grab; touch-action: none; }
+.gestao-org-card-editable:active { cursor: grabbing; }
+.gestao-org-drag-handle { opacity: 0.4; flex-shrink: 0; }
+.gestao-org-card-dragging { opacity: 0.45; }
+.gestao-org-card-saving { opacity: 0.6; cursor: wait; }
+.gestao-org-card-dropok { border-color: #16a34a; background: #f0fdf4; }
+.gestao-org-card-dropbad { border-color: #dc2626; background: #fef2f2; cursor: not-allowed; }
+.gestao-org-card-overlay { cursor: grabbing; box-shadow: 0 8px 24px rgba(0,0,0,0.18); background: var(--card-bg); }
+.gestao-org-saving-label { font-size: 0.75rem; opacity: 0.6; font-style: italic; }
+.gestao-org-root-dropzone {
+  margin-bottom: 12px; padding: 10px 14px; border: 2px dashed var(--border); border-radius: 10px;
+  font-size: 0.8rem; opacity: 0.7; text-align: center;
+}
+
 .gestao-approval-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 10px; }
 .gestao-approval-card {
   display: flex; justify-content: space-between; align-items: center; gap: 16px;
@@ -353,31 +367,8 @@
 .gestao-extras-section { background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 14px; }
 .gestao-extras-section h4 { margin: 0 0 10px; font-size: 0.85rem; color: var(--text-h); }
 
-/* ── Fase 3: chat, presença, portal do cliente ── */
-.gestao-chat-page { display: flex; flex-direction: column; height: calc(100vh - 100px); }
-.gestao-chat-layout { display: flex; flex: 1; min-height: 0; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
-.gestao-chat-sidebar { width: 220px; flex: 0 0 220px; border-right: 1px solid var(--border); overflow-y: auto; padding: 10px; background: var(--card-bg); }
-.gestao-chat-contact { display: block; width: 100%; text-align: left; padding: 8px 10px; border: none; background: none; border-radius: 6px; color: var(--text-h); cursor: pointer; font-size: 0.85rem; }
-.gestao-chat-contact:hover { background: var(--code-bg); }
-.gestao-chat-contact.active { background: var(--accent-bg); color: var(--accent); font-weight: 600; }
-.gestao-chat-main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
-.gestao-chat-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; border-bottom: 1px solid var(--border); }
-.gestao-chat-messages { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 8px; }
-.gestao-chat-bubble { align-self: flex-start; max-width: 70%; background: var(--code-bg); border-radius: 10px; padding: 8px 12px; font-size: 0.85rem; }
-.gestao-chat-bubble.mine { align-self: flex-end; background: var(--accent-bg); }
-.gestao-chat-time { font-size: 0.68rem; opacity: 0.55; margin-top: 4px; text-align: right; }
-.gestao-chat-input { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-top: 1px solid var(--border); }
-.gestao-chat-input input[type="text"], .gestao-chat-input input:not([type]) { flex: 1; padding: 8px 12px; border: 1px solid var(--border); border-radius: 20px; background: var(--bg); color: var(--text-h); }
-
-.gestao-incoming-call {
-  position: fixed; top: 16px; right: 16px; z-index: 2000;
-  background: var(--card-bg); border: 1px solid var(--accent); border-radius: 10px;
-  box-shadow: var(--shadow); padding: 14px 16px; display: flex; align-items: center; gap: 14px;
-}
-.gestao-incoming-call strong { color: var(--text-h); }
-
-.gestao-presence-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #9ca3af; margin-right: 6px; }
-.gestao-presence-dot.online { background: #22c55e; }
+/* (chat/presença/chamadas removidos em 09/09/2026 junto com o módulo — ver
+   migration 0011_remove_chat_module) */
 
 /* ── Suprimentos: importação de planilha, badge de status, modal largo ── */
 .suprimentos-import-summary {
@@ -396,6 +387,19 @@
 /* Justificativa é o campo mais usado do acompanhamento — bem mais alto que
    as outras textareas do modal (pedido da Renata, 25/08). */
 .suprimentos-justificativa-textarea { min-height: 150px; }
+
+/* ── Suprimentos: abas do módulo (09/09/2026 — só 1 aba por ora, estrutura
+   pronta pra próximas) ── */
+.suprimentos-tabs {
+  display: flex; gap: 4px; border-bottom: 2px solid var(--border); margin-bottom: 18px;
+}
+.suprimentos-tab {
+  padding: 10px 18px; font-size: 0.9rem; color: var(--text-muted);
+  border-bottom: 2px solid transparent; margin-bottom: -2px; cursor: default;
+}
+.suprimentos-tab--active {
+  color: var(--accent); border-bottom-color: var(--accent); font-weight: 600;
+}
 
 /* ── Suprimentos: indicadores, busca e filtros ── */
 .suprimentos-stats {

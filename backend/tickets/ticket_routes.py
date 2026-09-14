@@ -22,7 +22,10 @@ SELF_SERVICE_ROLES = ("CLIENTE", "COLABORADOR", "DIRETOR", "APROVADOR", "VISUALI
 # Dentro do autoatendimento, restringe "só vê o próprio chamado" — VISUALIZADOR
 # fica de fora de propósito: é papel de oversight, enxerga todos os chamados em
 # modo só-leitura (comportamento já existente em list_tickets/list_messages).
-SELF_ONLY_VIEW_ROLES = ("CLIENTE", "COLABORADOR", "DIRETOR", "APROVADOR")
+# DIRETOR saiu de fora também em 09/09/2026 (decisão da Renata: vê todos os
+# chamados, não só os próprios — mas continua sem poder editar/fechar/atribuir
+# o de outra pessoa, isso já era e continua sendo exclusivo de ADMIN/GESTOR_PROJETO).
+SELF_ONLY_VIEW_ROLES = ("CLIENTE", "COLABORADOR", "APROVADOR")
 
 
 @ticket_bp.route("/", methods=["POST"])

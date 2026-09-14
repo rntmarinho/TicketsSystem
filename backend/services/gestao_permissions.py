@@ -12,10 +12,16 @@ projeto POR SETOR (decisão da Renata):
 - Equipe (Team/UserTeam) NÃO dá mais visibilidade de projeto — continua
   existindo pra chat, organização e o papel GESTOR dentro da equipe.
 - Quem gerencia um projeto (editar, apagar, marcos/riscos, campos, pastas,
-  clientes do portal): ADMIN, DIRETOR, GESTOR_PROJETO, o dono do projeto, ou
-  GESTOR da equipe do projeto.
-- Quem cria projeto: ADMIN/DIRETOR/GESTOR_PROJETO em qualquer setor; os demais
-  só no próprio setor (ver project_service.create_project).
+  clientes do portal): ADMIN, GESTOR_PROJETO, o dono do projeto, ou GESTOR da
+  equipe do projeto.
+- Quem cria projeto: ADMIN/GESTOR_PROJETO em qualquer setor; os demais só no
+  próprio setor (ver project_service.create_project).
+
+09/09/2026 (decisão da Renata): DIRETOR passou a ser somente-leitura em TODO
+o módulo de gestão — continua vendo tudo (SEE_ALL_ROLES), mas não cria nem
+gerencia projeto/tarefa/equipe/núcleo/meta/indicador/aprovação. Mesmo
+tratamento de EQUIPES: só ADMIN edita (não é mais delegável a um GESTOR de
+equipe não-admin).
 
 Simplificação mantida em relação ao APPCNS original: não modelamos
 `Project.diretores`/`coordenadores`/`Project.nucleos` (M:N direto).
@@ -37,8 +43,10 @@ STAFF_ROLES = GESTAO_ROLES
 SEE_ALL_ROLES = ("ADMIN", "DIRETOR", "VISUALIZADOR")
 # Níveis hierárquicos do cadastro (tbl_users.nivel_hierarquico) que também veem tudo.
 SEE_ALL_LEVELS = ("DIRETORIA", "GERENCIA")
-# Gerenciam qualquer projeto e criam em qualquer setor.
-PROJECT_MANAGER_ROLES = ("ADMIN", "DIRETOR", "GESTOR_PROJETO")
+# Gerenciam qualquer projeto e criam em qualquer setor. DIRETOR NÃO entra aqui
+# (09/09/2026, decisão da Renata): vê tudo (SEE_ALL_ROLES acima), mas não cria
+# nem gerencia nada no módulo — ver can_manage_project.
+PROJECT_MANAGER_ROLES = ("ADMIN", "GESTOR_PROJETO")
 
 
 def can_access_gestao(role):
@@ -135,6 +143,11 @@ def can_manage_project(session, user_id, role, project):
     marcos, riscos, decisões, ideias, clientes do portal, cronograma)."""
     if project is None:
         return False
+    # DIRETOR (09/09/2026): nunca gerencia projeto, nem por dono nem por ser
+    # GESTOR da equipe dele — bloqueio explícito pra não vazar por esses
+    # caminhos indiretos, já que PROJECT_MANAGER_ROLES não cobre isso sozinho.
+    if role == "DIRETOR":
+        return False
     if role in PROJECT_MANAGER_ROLES:
         return True
     if project.owner_id == user_id:
@@ -164,20 +177,27 @@ def is_team_manager(session, user_id, team_id):
 
 def can_manage_team(session, user_id, role, team_id):
     """Gestão do dia a dia de uma EQUIPE (membros, metas/indicadores da equipe).
-    Pra coisas escopadas por PROJETO, usar can_manage_project."""
-    if role == "ADMIN":
-        return True
-    return is_team_manager(session, user_id, team_id)
+    Pra coisas escopadas por PROJETO, usar can_manage_project.
+
+    09/09/2026 (decisão da Renata): só ADMIN edita equipe — o antigo caminho
+    "GESTOR da própria equipe também edita" foi removido (equipe passou a ser
+    edição exclusiva de admin, não mais delegável a um membro)."""
+    return role == "ADMIN"
 
 
 def can_manage_org_structure(role):
     """Criar/editar equipe nova ou núcleo — mudança de estrutura organizacional,
-    não gestão do dia a dia de uma equipe já existente (essa é can_manage_team)."""
-    return role in ("ADMIN", "DIRETOR")
+    não gestão do dia a dia de uma equipe já existente (essa é can_manage_team).
+    Só ADMIN (09/09/2026: DIRETOR deixou de ter esse bypass)."""
+    return role == "ADMIN"
 
 
 def is_nucleo_manager(session, user_id, role, nucleo_id):
-    if role in ("ADMIN", "DIRETOR"):
+    # 09/09/2026: DIRETOR deixou de ter bypass geral pra qualquer núcleo — só
+    # ADMIN. Um DIRETOR especificamente cadastrado como NucleoGerente de UM
+    # núcleo continua gerenciando aquele núcleo (responsabilidade pessoalmente
+    # delegada, não privilégio geral do cargo — ver query abaixo).
+    if role == "ADMIN":
         return True
     return (
         session.query(NucleoGerente)
@@ -205,9 +225,10 @@ def can_delete_task(role):
 
 
 def is_read_only_role(role):
-    """Só VISUALIZADOR é somente-leitura no módulo de gestão. CLIENTE deixou de
-    ser (02/09/2026) — é funcionário e participa dos projetos do setor."""
-    return role == "VISUALIZADOR"
+    """VISUALIZADOR e DIRETOR (09/09/2026) são somente-leitura no módulo de
+    gestão — veem tudo, não criam/editam nada. CLIENTE não é (02/09/2026) — é
+    funcionário e participa dos projetos do setor."""
+    return role in ("VISUALIZADOR", "DIRETOR")
 
 
 def can_view_task(session, user_id, role, task):

@@ -26,7 +26,8 @@ def _serialize(s):
 
 
 def _can_manage(session, user_id, role, item):
-    if role in ("ADMIN", "DIRETOR"):
+    # DIRETOR não tem mais bypass geral aqui (09/09/2026) — só ADMIN.
+    if role == "ADMIN":
         return True
     if item.scope == "PESSOAL":
         return item.user_id == user_id
@@ -35,7 +36,7 @@ def _can_manage(session, user_id, role, item):
         return project is not None and can_manage_project(session, user_id, role, project)
     if item.scope == "EQUIPE" and item.team_id:
         return can_manage_team(session, user_id, role, item.team_id)
-    return False  # CORPORATIVO: só ADMIN/DIRETOR
+    return False  # CORPORATIVO: só ADMIN
 
 
 @scorecard_bp.route("/", methods=["GET"])

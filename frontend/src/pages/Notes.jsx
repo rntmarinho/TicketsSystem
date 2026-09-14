@@ -21,7 +21,10 @@ const fmtData = (val) => {
 };
 
 const Notes = () => {
-  const { user } = useAuth();
+  const { user, role } = useAuth();
+  // VISUALIZADOR é somente-leitura aqui também (mesmo tratamento de
+  // tarefas/projetos/aprovações — 09/09/2026, agora que Anotações é pra todo mundo).
+  const canCreate = role !== 'VISUALIZADOR';
   const [activeTab, setActiveTab] = useState('pessoal');
   const [notes, setNotes] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -107,7 +110,13 @@ const Notes = () => {
     loadNotes(activeTab);
   };
 
-  const podeEditar = (note) => activeTab === 'setor' || note.owner_id === user?.id;
+  // Setor (09/09/2026): só quem é do MESMO setor da nota edita/exclui — sem
+  // exceção nem pra admin (espelha note_controller.py::_check_access).
+  const podeEditar = (note) => (
+    activeTab === 'pessoal'
+      ? note.owner_id === user?.id
+      : user?.department_id != null && note.department_id === user.department_id
+  );
 
   return (
     <div className="notes-container">
@@ -116,9 +125,11 @@ const Notes = () => {
           <StickyNote size={24} />
           <h1>Anotações</h1>
         </div>
-        <button className="notes-btn-new" onClick={() => openEditor()}>
-          <Plus size={18} /> Nova Anotação
-        </button>
+        {canCreate && (
+          <button className="notes-btn-new" onClick={() => openEditor()}>
+            <Plus size={18} /> Nova Anotação
+          </button>
+        )}
       </header>
 
       <nav className="notes-tabs">
@@ -137,7 +148,9 @@ const Notes = () => {
         <p className="notes-hint">Só você vê as anotações desta aba.</p>
       )}
       {activeTab === 'setor' && (
-        <p className="notes-hint">Todos os técnicos e admins veem e editam as anotações desta aba.</p>
+        user?.department_id != null
+          ? <p className="notes-hint">Só quem é do seu setor vê e edita as anotações desta aba.</p>
+          : <p className="notes-hint">Seu usuário não tem setor cadastrado — peça ao TI pra cadastrar antes de usar esta aba.</p>
       )}
 
       {loading ? (
@@ -184,7 +197,7 @@ const Notes = () => {
             <div className="modal-header">
               <div>
                 <h2>{editingNote ? 'Editar Anotação' : 'Nova Anotação'}</h2>
-                <p>{activeTab === 'pessoal' ? 'Só você vai ver esta anotação.' : 'Compartilhada com todos os técnicos e admins.'}</p>
+                <p>{activeTab === 'pessoal' ? 'Só você vai ver esta anotação.' : 'Compartilhada com todo mundo do seu setor.'}</p>
               </div>
               <button className="btn-close" onClick={closeEditor}><X size={20} /></button>
             </div>

@@ -28,10 +28,14 @@ class Folder(Base):
 
 class Attachment(Base):
     """
-    Anexo polimórfico por FK de dono — Fase 1 só usa `task_id` e `project_id`
-    (arquivos de tarefa e da aba "Arquivos" do projeto). `team_message_id`/
-    `direct_message_id`/`team_id` chegam na Fase 3 (chat) — colunas reservadas
-    aqui pra não precisar de outra migration só pra isso depois.
+    Anexo polimórfico por FK de dono — `task_id`/`project_id`/`folder_id` (arquivos
+    de tarefa e da aba "Arquivos" do projeto). `team_id` é coluna reservada nunca
+    usada até hoje (nenhum código grava nela). `team_message_id`/`direct_message_id`
+    (anexo de chat) existiram na Fase 3, removidas em 09/09/2026 junto com o
+    módulo de Chat/Presença/Ligações (ver migration 0011_remove_chat_module).
+    `demand_id` (10/09/2026) — anexo de solicitação de OC do Financeiro; mesma
+    convenção de `project_id`: sem `relationship()` de volta, consultado na mão
+    em `finance/attachment_service.py` (evita import cruzado entre os módulos).
     """
     __tablename__ = "attachments"
 
@@ -40,8 +44,7 @@ class Attachment(Base):
     project_id = Column(String(36), ForeignKey("projects.id", ondelete="CASCADE"), nullable=True, index=True)
     team_id = Column(String(36), ForeignKey("teams.id", ondelete="CASCADE"), nullable=True, index=True)
     folder_id = Column(String(36), ForeignKey("folders.id", ondelete="CASCADE"), nullable=True, index=True)
-    team_message_id = Column(String(36), nullable=True, index=True)
-    direct_message_id = Column(String(36), nullable=True, index=True)
+    demand_id = Column(String(36), ForeignKey("finance_demands.id", ondelete="CASCADE"), nullable=True, index=True)
     file_name = Column(String(255), nullable=False)
     file_path = Column(String(500), nullable=False)
     file_size = Column(Integer, nullable=False)

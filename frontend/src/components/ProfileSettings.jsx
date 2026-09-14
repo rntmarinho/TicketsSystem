@@ -6,6 +6,9 @@ import {
   getSignatureUrl, bumpMediaVersion,
 } from '../services/userService';
 import UserAvatar from './UserAvatar';
+// 09/09/2026: montado direto em /configuracoes (sem a casca de abas que
+// existia em Settings.jsx, aposentada) — precisa importar o próprio CSS agora.
+import '../pages/styles/Settings.css';
 
 const ROLE_LABELS = {
   ADMIN: 'Administrador',
@@ -123,6 +126,7 @@ const ProfileSettings = () => {
   const isAtendimento = ['ADMIN', 'GESTOR_PROJETO'].includes(me.access_type);
 
   return (
+    <div className="profile-page">
     <div className="profile-card">
       <div className="profile-header">
         <UserAvatar userId={me.id} name={me.name} hasPicture={me.has_picture} size={82} className="profile-avatar" />
@@ -252,6 +256,7 @@ const ProfileSettings = () => {
             : ' Fica guardada no seu perfil (só respostas da equipe de atendimento levam assinatura no chamado).'}
         </small>
       </div>
+    </div>
     </div>
   );
 };

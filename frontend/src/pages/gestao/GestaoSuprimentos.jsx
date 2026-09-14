@@ -269,6 +269,13 @@ const GestaoSuprimentos = () => {
         </span>
       </header>
 
+      {/* Aba única por ora (09/09/2026) — o módulo vai ganhar mais telas aqui
+          no futuro; a estrutura de abas já fica pronta pra isso. */}
+      <nav className="suprimentos-tabs">
+        <span className="suprimentos-tab suprimentos-tab--active">Solicitações de Compra</span>
+      </nav>
+
+      <div className="suprimentos-tab-content">
       <div className="suprimentos-stats">
         <div className="suprimentos-stat-card">
           <div className="suprimentos-stat-icon"><Package size={18} /></div>
@@ -392,6 +399,8 @@ const GestaoSuprimentos = () => {
             )}
           </tbody>
         </table>
+      </div>
+
       </div>
 
       {editingItem && (

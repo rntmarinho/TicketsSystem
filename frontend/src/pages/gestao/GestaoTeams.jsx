@@ -17,7 +17,9 @@ const GestaoTeams = () => {
   const [addingTo, setAddingTo] = useState(null);
   const [pickUser, setPickUser] = useState('');
 
-  const canManageOrg = ['ADMIN', 'DIRETOR'].includes(role);
+  // 09/09/2026: só ADMIN edita equipe (criar equipe, adicionar/remover membro)
+  // — espelha services/gestao_permissions.py::can_manage_org_structure/can_manage_team.
+  const canManageOrg = role === 'ADMIN';
 
   const load = async () => {
     setLoading(true);
@@ -84,13 +86,15 @@ const GestaoTeams = () => {
           <div key={t.id} className="gestao-team-card">
             <div className="gestao-team-card-header">
               <h3>{t.name}</h3>
-              <button className="gestao-btn-secondary" onClick={() => setAddingTo(addingTo === t.id ? null : t.id)}>
-                <Plus size={14} /> Membro
-              </button>
+              {canManageOrg && (
+                <button className="gestao-btn-secondary" onClick={() => setAddingTo(addingTo === t.id ? null : t.id)}>
+                  <Plus size={14} /> Membro
+                </button>
+              )}
             </div>
             {t.description && <p className="gestao-project-desc">{t.description}</p>}
 
-            {addingTo === t.id && (
+            {canManageOrg && addingTo === t.id && (
               <div className="gestao-inline-form">
                 <select value={pickUser} onChange={(e) => setPickUser(e.target.value)}>
                   <option value="">Selecione...</option>
@@ -105,9 +109,11 @@ const GestaoTeams = () => {
                 <li key={m.id}>
                   <span>{m.name}</span>
                   <span className="gestao-badge">{m.team_role === 'GESTOR' ? 'Gestor' : 'Membro'}</span>
-                  <button className="gestao-icon-btn" onClick={() => handleRemoveMember(t.id, m.id)} title="Remover">
-                    <X size={14} />
-                  </button>
+                  {canManageOrg && (
+                    <button className="gestao-icon-btn" onClick={() => handleRemoveMember(t.id, m.id)} title="Remover">
+                      <X size={14} />
+                    </button>
+                  )}
                 </li>
               ))}
               {(membersByTeam[t.id] || []).length === 0 && <li className="gestao-empty">Sem membros ainda.</li>}

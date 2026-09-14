@@ -55,7 +55,8 @@ def _next_order(session, project_id):
 
 
 def create_task(session, user_id, role, data):
-    if role == "VISUALIZADOR":
+    # DIRETOR (09/09/2026): somente-leitura, mesmo tratamento de VISUALIZADOR aqui.
+    if role in ("VISUALIZADOR", "DIRETOR"):
         return {"success": False, "message": "Seu perfil não pode criar tarefas."}, 403
 
     # Só cria tarefa em projeto que enxerga (setor/dono/aprovador/responsável) —

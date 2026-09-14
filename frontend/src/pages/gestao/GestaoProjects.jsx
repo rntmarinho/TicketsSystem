@@ -17,10 +17,14 @@ export const STATUS_LABELS = {
   CONCLUIDO: 'Concluído',
 };
 
-// Espelha services/gestao_permissions.py::PROJECT_MANAGER_ROLES — criam projeto
-// em qualquer setor e gerenciam qualquer projeto. Os demais criam só no próprio
-// setor e gerenciam só os projetos de que são donos (o backend é quem decide).
+// Quem VÊ/filtra tudo (setor, sem exceção) — inclui DIRETOR, que continua
+// enxergando qualquer projeto mesmo não podendo mais criar/gerenciar nenhum.
 const PRIVILEGED_ROLES = ['ADMIN', 'DIRETOR', 'GESTOR_PROJETO'];
+// Espelha services/gestao_permissions.py::PROJECT_MANAGER_ROLES — criam projeto
+// em qualquer setor e gerenciam qualquer projeto. DIRETOR não entra aqui
+// (09/09/2026: somente-leitura no módulo). Os demais criam só no próprio
+// setor e gerenciam só os projetos de que são donos (o backend é quem decide).
+const MANAGE_ROLES = ['ADMIN', 'GESTOR_PROJETO'];
 
 const fmtDate = (iso) => (iso ? new Date(iso).toLocaleDateString('pt-BR') : null);
 
@@ -71,9 +75,11 @@ const GestaoProjects = () => {
   const [showArchived, setShowArchived] = useState(false);
 
   const isPrivileged = PRIVILEGED_ROLES.includes(role);
+  const canManageAny = MANAGE_ROLES.includes(role);
   const myDepartmentId = user?.department_id || null;
-  const canCreate = role !== 'VISUALIZADOR' && (isPrivileged || !!myDepartmentId);
-  const canManage = (p) => isPrivileged || (p.owner?.id != null && p.owner.id === user?.id);
+  const canCreate = !['VISUALIZADOR', 'DIRETOR'].includes(role) && (canManageAny || !!myDepartmentId);
+  // DIRETOR nunca gerencia, nem por ser dono do projeto (mesma regra do backend).
+  const canManage = (p) => role !== 'DIRETOR' && (canManageAny || (p.owner?.id != null && p.owner.id === user?.id));
 
   const load = async () => {
     setLoading(true);

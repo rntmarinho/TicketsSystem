@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate, useNavigate, Link } from 'react-router-dom';
+import { Routes, Route, Navigate, useNavigate, useLocation, Link } from 'react-router-dom';
 import { LogOut, Menu } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from './context/AuthContext';
@@ -7,8 +7,8 @@ import { isDepartment } from './utils/department';
 // Componentes e Páginas
 import Sidebar from './components/Sidebar';
 import NotificationBell from './components/NotificationBell';
-import PresenceAndCalls from './components/PresenceAndCalls';
 import UserAvatar from './components/UserAvatar';
+import Home from './pages/Home';
 import Dashboard from './pages/Dashboard';
 import NewTicket from './pages/NewTicket';
 import Login from './pages/Login';
@@ -24,20 +24,23 @@ import GestaoGoals from './pages/gestao/GestaoGoals';
 import GestaoScorecard from './pages/gestao/GestaoScorecard';
 import GestaoAuditLog from './pages/gestao/GestaoAuditLog';
 import GestaoSuprimentos from './pages/gestao/GestaoSuprimentos';
-import GestaoChat from './pages/gestao/GestaoChat';
 import GestaoKanbanGeral from './pages/gestao/GestaoKanbanGeral';
-import PortalCliente from './pages/portal-cliente/PortalCliente';
-import PortalClienteProject from './pages/portal-cliente/PortalClienteProject';
 import CalendarView from './pages/CalendarView';
 import TicketDetails from './pages/TicketDetails';
 import Reports from './pages/Reports';
 import ManageCategories from './pages/ManageCategories';
 import Priorities from './pages/Priority';
 import Clients from './pages/Clients';
-import Settings from './pages/Settings';
+import ProfileSettings from './components/ProfileSettings';
+import EmailSettings from './pages/administracao/EmailSettings';
 import LGPD from './pages/LGPD';
 import Notes from './pages/Notes';
 import ForgotPassword from './pages/ForgotPassword';
+import ModulePlaceholder from './pages/ModulePlaceholder';
+import GestaoConsominasReports from './pages/gestao-consominas/GestaoConsominasReports';
+import NovaDemanda from './pages/financeiro/NovaDemanda';
+import DemandasAbertas from './pages/financeiro/DemandasAbertas';
+import TodasDemandas from './pages/financeiro/TodasDemandas';
 
 import './App.css';
 
@@ -67,8 +70,9 @@ const RoleProtectedRoute = ({ role, allowed, children }) => {
   return children;
 };
 
-// Guarda por departamento: usada pelo módulo Suprimentos, restrito a
-// usuários do setor "Suprimentos" (tbl_users.department_id) — ADMIN sempre
+// Guarda por departamento: usada pelo módulo Suprimentos e pelos módulos
+// futuros (Almoxarifado/RH/Departamento Pessoal/Financeiro), restritos a
+// usuários do setor correspondente (tbl_users.department_id) — ADMIN sempre
 // passa, mesma convenção de "vê tudo" usada no resto do sistema. Espelha
 // services/department_access.py::require_department no backend.
 const DepartmentProtectedRoute = ({ role, department, userDepartment, children }) => {
@@ -92,6 +96,7 @@ const TICKET_ROLES = ['ADMIN', 'GESTOR_PROJETO', 'CLIENTE', 'COLABORADOR', 'DIRE
 
 function App() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { isAuthenticated, role, user, loading, logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -103,6 +108,10 @@ function App() {
   if (loading) {
     return null;
   }
+
+  // Página inicial (09/09/2026) não tem barra lateral — o botão de abrir menu
+  // não faz sentido lá (não tem nada pra abrir).
+  const isHome = location.pathname === '/';
 
   return (
     <Routes>
@@ -126,31 +135,30 @@ function App() {
       />
 
       {/* Escopo de Rotas Privadas encapsuladas pela ProtectedRoute */}
-      <Route 
-        path="/*" 
+      <Route
+        path="/*"
         element={
           <ProtectedRoute isAuthenticated={isAuthenticated}>
             <div className="app-layout">
-              <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} role={role} />
+              {!isHome && <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} role={role} />}
               <main className="content">
 
                 <div className="top-bar">
-                  <button
-                    className="hamburger-btn"
-                    onClick={() => setSidebarOpen(true)}
-                    aria-label="Abrir menu"
-                  >
-                    <Menu size={22} />
-                  </button>
+                  {!isHome && (
+                    <button
+                      className="hamburger-btn"
+                      onClick={() => setSidebarOpen(true)}
+                      aria-label="Abrir menu"
+                    >
+                      <Menu size={22} />
+                    </button>
+                  )}
 
                   <div className="top-bar-actions">
                     {/* O componente decide sozinho o que mostrar por papel (alertas de SLA
                         de chamado, atividade, e agora notificações do módulo de gestão) —
                         sempre montado pra qualquer papel autenticado. */}
                     <NotificationBell />
-                    {/* Fase 3: heartbeat de presença + aviso de chamada chegando (só papéis
-                        com acesso ao módulo de gestão — o componente decide sozinho). */}
-                    <PresenceAndCalls />
                     {/* Foto/iniciais do usuário — atalho pra Configurações > Meu Perfil */}
                     <Link to="/configuracoes" className="topbar-avatar" title="Meu perfil">
                       <UserAvatar userId={user?.id} name={user?.name} hasPicture={user?.has_picture} size={34} />
@@ -162,12 +170,18 @@ function App() {
                 </div>
 
                 <Routes>
-                  {/* 'VISUALIZADOR' não tem Painel Inicial — manda pros Projetos em vez de
-                      usar RoleProtectedRoute aqui (que redireciona pra "/" e
-                      criaria um loop infinito nesta rota específica). */}
+                  {/* Página inicial (09/09/2026): escolha de módulo, igual pra todo papel —
+                      substitui o antigo Dashboard/redirect especial de VISUALIZADOR aqui. */}
+                  <Route path="/" element={<Home />} />
+
+                  {/* Painel do módulo Chamados (antigo conteúdo de "/") */}
                   <Route
-                    path="/"
-                    element={role === 'VISUALIZADOR' ? <Navigate to="/gestao/projetos" replace /> : <Dashboard />}
+                    path="/chamados"
+                    element={
+                      <RoleProtectedRoute role={role} allowed={TICKET_ROLES}>
+                        <Dashboard />
+                      </RoleProtectedRoute>
+                    }
                   />
                   <Route
                     path="/novo-chamado"
@@ -277,37 +291,13 @@ function App() {
                       </RoleProtectedRoute>
                     }
                   />
+                  {/* Auditoria (09/09/2026): virou parte de "Administração do sistema"
+                      — só ADMIN (antes também DIRETOR), decisão explícita da Renata. */}
                   <Route
                     path="/gestao/auditoria"
                     element={
-                      <RoleProtectedRoute role={role} allowed={['ADMIN', 'DIRETOR']}>
+                      <RoleProtectedRoute role={role} allowed={['ADMIN']}>
                         <GestaoAuditLog />
-                      </RoleProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/gestao/chat"
-                    element={
-                      <RoleProtectedRoute role={role} allowed={GESTAO_ROLES}>
-                        <GestaoChat />
-                      </RoleProtectedRoute>
-                    }
-                  />
-                  {/* Portal do Cliente (Fase 3): leitura dos projetos vinculados em
-                      project_clients — só CLIENTE; backend em /portal-cliente/*. */}
-                  <Route
-                    path="/portal-cliente"
-                    element={
-                      <RoleProtectedRoute role={role} allowed={['CLIENTE']}>
-                        <PortalCliente />
-                      </RoleProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/portal-cliente/projetos/:id"
-                    element={
-                      <RoleProtectedRoute role={role} allowed={['CLIENTE']}>
-                        <PortalClienteProject />
                       </RoleProtectedRoute>
                     }
                   />
@@ -319,10 +309,78 @@ function App() {
                       </DepartmentProtectedRoute>
                     }
                   />
+                  {/* Módulos futuros (09/09/2026): sem conteúdo ainda, só o mesmo
+                      padrão de restrição por setor já usado no Suprimentos. */}
+                  <Route
+                    path="/almoxarifado"
+                    element={
+                      <DepartmentProtectedRoute role={role} department="Almoxarifado" userDepartment={user?.department}>
+                        <ModulePlaceholder title="Almoxarifado e Patrimônio" />
+                      </DepartmentProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/rh"
+                    element={
+                      <DepartmentProtectedRoute role={role} department="RH" userDepartment={user?.department}>
+                        <ModulePlaceholder title="RH" />
+                      </DepartmentProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/departamento-pessoal"
+                    element={
+                      <DepartmentProtectedRoute role={role} department="Departamento Pessoal" userDepartment={user?.department}>
+                        <ModulePlaceholder title="Departamento Pessoal" />
+                      </DepartmentProtectedRoute>
+                    }
+                  />
+                  {/* Financeiro (09/09/2026): primeiro módulo com conteúdo de verdade —
+                      demandas internas. Aberto a TODO mundo (não mais restrito por
+                      setor): qualquer um abre e vê as próprias; só ADMIN/setor
+                      Financeiro vê e conclui todas — escopo decidido dentro de cada
+                      tela/endpoint, não no gate da rota. */}
+                  <Route path="/financeiro" element={<Navigate to="/financeiro/abertas" replace />} />
+                  <Route
+                    path="/financeiro/nova"
+                    element={
+                      <RoleProtectedRoute role={role} allowed={TICKET_ROLES}>
+                        <NovaDemanda />
+                      </RoleProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/financeiro/abertas"
+                    element={
+                      <RoleProtectedRoute role={role} allowed={TICKET_ROLES}>
+                        <DemandasAbertas />
+                      </RoleProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/financeiro/todas"
+                    element={
+                      <RoleProtectedRoute role={role} allowed={TICKET_ROLES}>
+                        <TodasDemandas />
+                      </RoleProtectedRoute>
+                    }
+                  />
+                  {/* Gestão Consominas (09/09/2026): relatórios corporativos, começando
+                      pelo de Suprimentos (tirado de dentro de /relatorios) — só ADMIN/DIRETOR. */}
+                  <Route
+                    path="/gestao-consominas"
+                    element={
+                      <RoleProtectedRoute role={role} allowed={['ADMIN', 'DIRETOR']}>
+                        <GestaoConsominasReports />
+                      </RoleProtectedRoute>
+                    }
+                  />
+                  {/* Calendário (09/09/2026): abriu pra todo mundo — mostra sempre só os
+                      próprios itens da pessoa, filtro feito dentro de CalendarView.jsx. */}
                   <Route
                     path="/calendario"
                     element={
-                      <RoleProtectedRoute role={role} allowed={['ADMIN', 'GESTOR_PROJETO', 'VISUALIZADOR']}>
+                      <RoleProtectedRoute role={role} allowed={TICKET_ROLES}>
                         <CalendarView />
                       </RoleProtectedRoute>
                     }
@@ -362,22 +420,34 @@ function App() {
                       </RoleProtectedRoute>
                     }
                   />
+                  {/* Config. de E-mail (09/09/2026): tirada de dentro de Configurações,
+                      agora é tela própria dentro de Administração do sistema — só ADMIN. */}
+                  <Route
+                    path="/administracao/email"
+                    element={
+                      <RoleProtectedRoute role={role} allowed={['ADMIN']}>
+                        <EmailSettings />
+                      </RoleProtectedRoute>
+                    }
+                  />
                   <Route path="/LGPD" element={<LGPD />} />
+                  {/* Anotações abertas pra todo mundo desde 09/09/2026 (antes só
+                      ADMIN/GESTOR_PROJETO) — restrito por setor dentro da tela/backend. */}
                   <Route
                     path="/anotacoes"
                     element={
-                      <RoleProtectedRoute role={role} allowed={['ADMIN', 'GESTOR_PROJETO']}>
+                      <RoleProtectedRoute role={role} allowed={TICKET_ROLES}>
                         <Notes />
                       </RoleProtectedRoute>
                     }
                   />
-                  {/* Configurações: aba Meu Perfil pra todo papel; a aba de E-mail só
-                      aparece pra ADMIN (filtro dentro de Settings.jsx). */}
+                  {/* Configurações (09/09/2026): só o Meu Perfil agora — a aba de
+                      E-mail saiu pra /administracao/email. Pra todo papel. */}
                   <Route
                     path="/configuracoes"
                     element={
                       <RoleProtectedRoute role={role} allowed={TICKET_ROLES}>
-                        <Settings />
+                        <ProfileSettings />
                       </RoleProtectedRoute>
                     }
                   />
@@ -386,7 +456,7 @@ function App() {
               </main>
             </div>
           </ProtectedRoute>
-        } 
+        }
       />
     </Routes>
   );

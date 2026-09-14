@@ -70,11 +70,12 @@ const GestaoProjectDetail = () => {
   const [openTaskId, setOpenTaskId] = useState(null);
   const [newTitle, setNewTitle] = useState('');
 
-  // Espelha services/gestao_permissions.py: só VISUALIZADOR é somente-leitura;
-  // gerencia o projeto quem é ADMIN/DIRETOR/GESTOR_PROJETO ou o dono.
-  const canCreateTask = role !== 'VISUALIZADOR';
-  const isPrivileged = ['ADMIN', 'DIRETOR', 'GESTOR_PROJETO'].includes(role);
-  const canManageExtras = isPrivileged || (project?.owner?.id != null && project.owner.id === user?.id);
+  // Espelha services/gestao_permissions.py: VISUALIZADOR e DIRETOR (09/09/2026)
+  // são somente-leitura; gerencia o projeto quem é ADMIN/GESTOR_PROJETO ou o dono.
+  const canCreateTask = !['VISUALIZADOR', 'DIRETOR'].includes(role);
+  const isPrivileged = ['ADMIN', 'GESTOR_PROJETO'].includes(role);
+  // DIRETOR nunca gerencia, nem por ser dono do projeto (mesma regra do backend).
+  const canManageExtras = role !== 'DIRETOR' && (isPrivileged || (project?.owner?.id != null && project.owner.id === user?.id));
   const canManage = canManageExtras;
   const isArchived = !!project?.archived_at;
 

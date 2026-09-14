@@ -42,7 +42,8 @@ def list_projects(session, user_id, role, include_archived=False):
 
 
 def create_project(session, user_id, role, data):
-    if role == "VISUALIZADOR":
+    # DIRETOR (09/09/2026): somente-leitura, mesmo tratamento de VISUALIZADOR aqui.
+    if role in ("VISUALIZADOR", "DIRETOR"):
         return {"success": False, "message": "Seu perfil é somente leitura no módulo de projetos."}, 403
 
     name = (data.get("name") or "").strip()

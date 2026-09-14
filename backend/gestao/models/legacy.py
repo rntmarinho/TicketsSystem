@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, ForeignKey
 from database.gestao_db import Base
 
 
@@ -22,7 +22,6 @@ class LegacyUser(Base):
     whatsapp = Column(String(20))
     nivel_hierarquico = Column(String(20))
     gestor_imediato_id = Column(Integer, ForeignKey("tbl_users.id"))
-    last_seen_at = Column(DateTime(timezone=True))
     # Usado por services/department_access.py::require_department — módulo
     # Suprimentos restringe acesso por departamento, não só por access_type.
     department_id = Column(Integer, ForeignKey("tbl_departments.id"))

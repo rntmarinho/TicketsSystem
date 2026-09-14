@@ -29,12 +29,10 @@
   font-weight: 700;
 }
 
-.cal-project-select {
-  padding: 8px 12px;
-  border-radius: 8px;
-  border: 1px solid #cbd5e1;
-  color: #334155;
-  background: #fff;
+.cal-hint {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.85rem;
 }
 
 .cal-nav {
