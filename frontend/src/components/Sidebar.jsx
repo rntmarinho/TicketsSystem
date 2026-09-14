@@ -117,6 +117,7 @@ function buildModules(ctx) {
       icon: Users2,
       prefixes: ['/rh'],
       items: [
+        ctx.canSeeRH && { to: '/rh', icon: LayoutDashboard, label: 'Fila de Vagas' },
         ctx.isOperational && { to: '/rh/nova-vaga', icon: Send, label: 'Solicitar Vaga' },
         ctx.isOperational && { to: '/rh/aprovacoes', icon: CheckSquare, label: 'Aprovações de Vaga' },
       ].filter(Boolean),
@@ -144,11 +145,12 @@ const Sidebar = ({ isOpen, onClose, role }) => {
   // controlado por access_type como o resto do menu. Espelha
   // App.jsx::DepartmentProtectedRoute / services/department_access.py.
   const canSeeFinanceiro = isAdmin || isDepartment(user?.department, 'Financeiro');
+  const canSeeRH = isAdmin || isDepartment(user?.department, 'RH');
   const isOperational = ['ADMIN', 'GESTOR_PROJETO', 'CLIENTE', 'COLABORADOR', 'DIRETOR', 'APROVADOR', 'VISUALIZADOR'].includes(role);
   const canSeeReports = role === 'ADMIN' || role === 'GESTOR_PROJETO' || role === 'VISUALIZADOR';
   const canSeeGestao = ['ADMIN', 'DIRETOR', 'GESTOR_PROJETO', 'APROVADOR', 'COLABORADOR', 'VISUALIZADOR', 'CLIENTE'].includes(role);
 
-  const modules = buildModules({ isAdmin, isOperational, canSeeReports, canSeeGestao, canSeeFinanceiro });
+  const modules = buildModules({ isAdmin, isOperational, canSeeReports, canSeeGestao, canSeeFinanceiro, canSeeRH });
   const currentModule = modules.find((m) =>
     m.prefixes.some((p) => location.pathname === p || location.pathname.startsWith(`${p}/`))
   );
