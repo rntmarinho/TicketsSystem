@@ -344,6 +344,14 @@ function App() {
                     }
                   />
                   <Route
+                    path="/rh/vagas/:id/editar"
+                    element={
+                      <RoleProtectedRoute role={role} allowed={TICKET_ROLES}>
+                        <NovaVaga />
+                      </RoleProtectedRoute>
+                    }
+                  />
+                  <Route
                     path="/rh/aprovacoes"
                     element={
                       <RoleProtectedRoute role={role} allowed={TICKET_ROLES}>

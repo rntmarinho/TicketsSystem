@@ -34,3 +34,16 @@ class LegacyDepartment(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String(50))
+
+
+class LegacyTicket(Base):
+    """Espelho SOMENTE LEITURA de tbl_tickets — só a chave primária, mínimo
+    necessário pra alguma tabela nova poder ter uma ForeignKey("tbl_tickets.id")
+    (ex: rh_vagas_solicitacoes.chamado_ti_id, 18/09/2026) sem o SQLAlchemy
+    reclamar de "NoReferencedTableError" na hora do flush -- sem essa classe,
+    o ORM não sabe que tbl_tickets existe (CRUD de chamado continua
+    exclusivamente por TicketModel, em SQL cru)."""
+    __tablename__ = "tbl_tickets"
+    __table_args__ = {"extend_existing": True}
+
+    id = Column(Integer, primary_key=True)

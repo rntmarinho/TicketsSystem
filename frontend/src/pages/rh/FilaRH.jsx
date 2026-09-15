@@ -149,16 +149,17 @@ const FilaRH = () => {
       <div className="gestao-table-wrap finance-table-wrap">
         <table className="gestao-table">
           <thead>
-            <tr><th>Cargo</th><th>Centro de Custo</th><th>Referência no Senior</th><th>Criada em</th></tr>
+            <tr><th>Cargo</th><th>Centro de Custo</th><th>Referência no Senior</th><th>Chamado de TI</th><th>Criada em</th></tr>
           </thead>
           <tbody>
             {criadas.length === 0 ? (
-              <tr><td colSpan={4} className="gestao-empty">Nenhuma vaga criada ainda.</td></tr>
+              <tr><td colSpan={5} className="gestao-empty">Nenhuma vaga criada ainda.</td></tr>
             ) : criadas.map((v) => (
               <tr key={v.id}>
                 <td>{v.cargo}</td>
                 <td>{v.centro_custo_descricao || v.centro_custo}</td>
                 <td>{v.referencia_vaga_senior || '—'}</td>
+                <td>{v.chamado_ti_id ? <a href={`/tickets/${v.chamado_ti_id}`}>#{v.chamado_ti_id}</a> : '—'}</td>
                 <td>{v.criada_no_senior_em ? new Date(v.criada_no_senior_em).toLocaleDateString('pt-BR') : '—'}</td>
               </tr>
             ))}

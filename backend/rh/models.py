@@ -13,7 +13,7 @@ from gestao.models.team_models import new_uuid
 # nem aceita novos parceiros na API completa). RH cria a vaga manualmente no
 # Senior por enquanto, só marcando aqui quando foi feito.
 
-VAGA_STATUSES = ("PENDENTE_APROVACAO", "APROVADA", "REPROVADA", "VAGA_CRIADA")
+VAGA_STATUSES = ("PENDENTE_APROVACAO", "APROVADA", "REPROVADA", "VAGA_CRIADA", "CANCELADA")
 MOTIVO_ABERTURA = ("AUMENTO_QUADRO", "SUBSTITUICAO")
 REGIME_CONTRATACAO = ("CLT", "PJ", "ESTAGIO", "TEMPORARIO", "OUTRO")
 
@@ -39,11 +39,16 @@ class RhAprovadorCentroCusto(Base):
 
 
 class VagaSolicitacao(Base):
-    """Solicitação de abertura de vaga (formulário FOR 12.0.4 da Renata,
-    parte 1 — dados da vaga; a parte 2, checklist de provisionamento de TI
-    pro primeiro dia, ficou fora desta v1 de propósito). `aprovador_id` é
-    resolvido automaticamente a partir de RhAprovadorCentroCusto no momento
-    da criação, não escolhido por quem solicita."""
+    """Solicitação de abertura de vaga (formulário FOR 12.0.4 da Renata --
+    parte 1, dados da vaga, e parte 2, checklist de provisionamento de TI pro
+    primeiro dia). `aprovador_id` é resolvido automaticamente a partir de
+    RhAprovadorCentroCusto no momento da criação, não escolhido por quem
+    solicita. Só pode ser editada/cancelada pelo próprio solicitante enquanto
+    PENDENTE_APROVACAO -- decidida (aprovada/reprovada), fica travada, é
+    histórico de uma decisão já tomada por outra pessoa. `chamado_ti_id`
+    (18/09/2026) é preenchido quando o RH marca como criada e algum item do
+    checklist de TI foi marcado: abre um chamado normal (categoria "Suporte
+    de TI") no próprio TicketSystem em vez de criar um fluxo paralelo."""
     __tablename__ = "rh_vagas_solicitacoes"
 
     id = Column(String(36), primary_key=True, default=new_uuid)
@@ -56,6 +61,7 @@ class VagaSolicitacao(Base):
     comentario_decisao = Column(Text, nullable=True)
     criada_no_senior_em = Column(DateTime(timezone=True), nullable=True)
     referencia_vaga_senior = Column(String(60), nullable=True)
+    chamado_ti_id = Column(Integer, ForeignKey("tbl_tickets.id"), nullable=True)
 
     # ── Campos do formulário (FOR 12.0.4, parte 1) ──
     motivo_abertura = Column(Enum(*MOTIVO_ABERTURA, name="rh_vaga_motivo", native_enum=False), nullable=False)
@@ -84,6 +90,33 @@ class VagaSolicitacao(Base):
     necessita_cnh = Column(Boolean, nullable=False, default=False)
     categoria_cnh = Column(String(20), nullable=True)
     beneficios = Column(Text, nullable=True)
+
+    # ── Campos do formulário (FOR 12.0.4, parte 2 -- provisionamento de TI) ──
+    # Tudo opcional: só usado se preenchido, vira o chamado de TI quando a
+    # vaga é marcada como criada (ver rh/vaga_routes.py::marcar_criada).
+    ti_mobiliario = Column(Boolean, nullable=False, default=False)
+    ti_telefone_celular = Column(Boolean, nullable=False, default=False)
+    ti_materiais_escritorio = Column(Boolean, nullable=False, default=False)
+    ti_computador = Column(Boolean, nullable=False, default=False)
+    ti_perfil_computador = Column(Text, nullable=True)
+    ti_softwares = Column(Text, nullable=True)
+    ti_outros_softwares = Column(Text, nullable=True)
+    ti_acesso_pastas_rede = Column(Boolean, nullable=False, default=False)
+    ti_caminho_pastas_rede = Column(Text, nullable=True)
+    ti_acesso_vpn = Column(Boolean, nullable=False, default=False)
+    ti_conta_email = Column(Boolean, nullable=False, default=False)
+    ti_email_substituicao = Column(String(255), nullable=True)
+    ti_criacao_assinatura_email = Column(Boolean, nullable=False, default=False)
+    ti_acesso_intranet = Column(Boolean, nullable=False, default=False)
+    ti_senha_telefone_fixo = Column(Boolean, nullable=False, default=False)
+    ti_necessidade_art = Column(Boolean, nullable=False, default=False)
+    ti_necessidade_epi = Column(Boolean, nullable=False, default=False)
+    ti_necessidade_alojamento = Column(Boolean, nullable=False, default=False)
+    ti_kit_roupa_cama_banho = Column(Boolean, nullable=False, default=False)
+    ti_baixada = Column(Boolean, nullable=False, default=False)
+    ti_periodicidade_baixada = Column(String(120), nullable=True)
+    ti_deslocamento_mensal = Column(Boolean, nullable=False, default=False)
+    ti_dias_deslocamento = Column(String(120), nullable=True)
 
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)

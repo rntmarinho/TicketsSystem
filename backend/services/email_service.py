@@ -689,3 +689,70 @@ def process_new_ticket_email(msg, user_id):
     salvar_anexos_email(ticket_id, msg, user_id)
 
     logging.info(f"Ticket #{ticket_id} criado.")
+
+
+# ─── Aviso de vaga sigilosa (módulo RH) ───────────────────────────────────────
+
+def send_vaga_sigilosa_notification(cargo, centro_custo_descricao, solicitante_nome):
+    """Vaga marcada como sigilosa no formulário de solicitação (FOR 12.0.4)
+    pede explicitamente pra avisar rh@consominas.com.br -- destinatário fixo,
+    diferente das outras notificações do módulo (que vão pro solicitante ou
+    pro setor via notify() interno). Falha de e-mail aqui não impede a
+    solicitação de ser criada (mesmo padrão de todo o resto deste arquivo)."""
+    try:
+        cfg = get_email_settings()
+    except RuntimeError as e:
+        logging.warning(str(e))
+        return
+
+    smtp_host = cfg["smtp_host"]
+    smtp_port = cfg["smtp_port"]
+    smtp_user = cfg["email_user"]
+    smtp_pass = cfg["email_password"]
+
+    if not smtp_user or not smtp_pass:
+        logging.warning("SMTP não configurado.")
+        return
+
+    destinatario = "rh@consominas.com.br"
+
+    try:
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = f"[Vaga Sigilosa] {cargo}"
+        msg["From"] = smtp_user
+        msg["To"] = destinatario
+
+        texto = f"""
+Uma solicitação de vaga sigilosa foi registrada no TicketSystem.
+
+Cargo: {cargo}
+Centro de custo: {centro_custo_descricao}
+Solicitante: {solicitante_nome}
+
+Acesse o sistema para ver os detalhes completos.
+"""
+
+        html = f"""
+        <html>
+        <body>
+            <h2>Vaga Sigilosa</h2>
+            <p><strong>Cargo:</strong> {cargo}</p>
+            <p><strong>Centro de custo:</strong> {centro_custo_descricao}</p>
+            <p><strong>Solicitante:</strong> {solicitante_nome}</p>
+            <p>Acesse o sistema para ver os detalhes completos.</p>
+        </body>
+        </html>
+        """
+
+        msg.attach(MIMEText(texto, "plain"))
+        msg.attach(MIMEText(html, "html"))
+
+        with smtplib.SMTP(smtp_host, smtp_port) as server:
+            server.starttls()
+            server.login(smtp_user, smtp_pass)
+            server.sendmail(smtp_user, destinatario, msg.as_string())
+
+        logging.info(f"E-mail de vaga sigilosa enviado para {destinatario}")
+
+    except Exception as e:
+        logging.error(f"Erro ao enviar e-mail de vaga sigilosa: {e}")

@@ -124,6 +124,7 @@ def serialize_attachment(session, attachment):
         "task_id": attachment.task_id,
         "project_id": attachment.project_id,
         "demand_id": attachment.demand_id,
+        "vaga_id": attachment.vaga_id,
         "file_name": attachment.file_name,
         "file_size": attachment.file_size,
         "mime_type": attachment.mime_type,

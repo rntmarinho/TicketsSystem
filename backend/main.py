@@ -49,6 +49,7 @@ from finance.attachment_routes import attachment_bp as finance_attachment_bp
 # pelo gerente do centro de custo -> fila do RH (ver rh/models.py).
 from rh.vaga_routes import vaga_bp as rh_vaga_bp
 from rh.aprovador_routes import aprovador_bp as rh_aprovador_bp
+from rh.attachment_routes import attachment_bp as rh_attachment_bp
 from flask_cors import CORS
 from services.rate_limiter import limiter
 from database.create_database import create_database, create_tables
@@ -202,6 +203,7 @@ def create_app():
     # centro de custo e fila do RH restritos dentro de cada rota.
     app.register_blueprint(rh_vaga_bp)
     app.register_blueprint(rh_aprovador_bp)
+    app.register_blueprint(rh_attachment_bp)
     # Health Check
     @app.route("/", methods=["GET"])
     def home():

@@ -1,6 +1,7 @@
 import { Fragment, useEffect, useState } from 'react';
-import { Check, X, ChevronDown, ChevronRight, Loader2 } from 'lucide-react';
-import { getVagas, decidirVaga } from '../../services/rh/vagaService';
+import { Link } from 'react-router-dom';
+import { Check, X, ChevronDown, ChevronRight, Loader2, Pencil, XCircle, Paperclip } from 'lucide-react';
+import { getVagas, decidirVaga, cancelVaga } from '../../services/rh/vagaService';
 import { useAuth } from '../../context/AuthContext';
 import '../gestao/styles/Gestao.css';
 import '../financeiro/styles/Financeiro.css';
@@ -10,9 +11,10 @@ const STATUS_LABEL = {
   APROVADA: 'Aprovada',
   REPROVADA: 'Reprovada',
   VAGA_CRIADA: 'Vaga Criada',
+  CANCELADA: 'Cancelada',
 };
 const STATUS_TONE = {
-  PENDENTE_APROVACAO: 'warning', APROVADA: 'success', REPROVADA: 'danger', VAGA_CRIADA: 'success',
+  PENDENTE_APROVACAO: 'warning', APROVADA: 'success', REPROVADA: 'danger', VAGA_CRIADA: 'success', CANCELADA: 'danger',
 };
 
 // Tela do aprovador (14/09/2026): mostra as solicitações de vaga onde o
@@ -37,6 +39,10 @@ const AprovacoesVagas = () => {
   useEffect(() => { load(); }, []);
 
   const podeDecidir = (v) => v.status === 'PENDENTE_APROVACAO' && (role === 'ADMIN' || v.aprovador?.id === user?.id);
+  // Editar/cancelar (18/09/2026): só quem abriu a própria solicitação (ou
+  // ADMIN), e só enquanto pendente -- backend garante o mesmo, isso aqui só
+  // evita mostrar um botão que ia dar 403/409 na hora do clique.
+  const podeEditar = (v) => v.status === 'PENDENTE_APROVACAO' && (role === 'ADMIN' || v.requester?.id === user?.id);
 
   const handleDecisao = async (id, decisao) => {
     let comentario = '';
@@ -49,6 +55,21 @@ const AprovacoesVagas = () => {
       const res = await decidirVaga(id, decisao, comentario);
       if (!res?.success) {
         alert(res?.message || 'Erro ao registrar a decisão.');
+        return;
+      }
+      load();
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const handleCancelar = async (id) => {
+    if (!window.confirm('Cancelar esta solicitação de vaga? Essa ação não pode ser desfeita.')) return;
+    setBusyId(id);
+    try {
+      const res = await cancelVaga(id);
+      if (!res?.success) {
+        alert(res?.message || 'Erro ao cancelar a solicitação.');
         return;
       }
       load();
@@ -104,22 +125,37 @@ const AprovacoesVagas = () => {
                     </td>
                     <td>{v.created_at ? new Date(v.created_at).toLocaleDateString('pt-BR') : '—'}</td>
                     <td className="finance-col-acoes">
-                      {podeDecidir(v) && (
-                        <div style={{ display: 'flex', gap: '0.4rem' }}>
-                          <button
-                            type="button" className="gestao-btn-primary" disabled={busyId === v.id}
-                            onClick={() => handleDecisao(v.id, 'APROVADA')}
-                          >
-                            <Check size={14} /> Aprovar
-                          </button>
-                          <button
-                            type="button" className="gestao-icon-btn" disabled={busyId === v.id}
-                            onClick={() => handleDecisao(v.id, 'REPROVADA')} title="Reprovar"
-                          >
-                            <X size={14} />
-                          </button>
-                        </div>
-                      )}
+                      <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+                        {podeDecidir(v) && (
+                          <>
+                            <button
+                              type="button" className="gestao-btn-primary" disabled={busyId === v.id}
+                              onClick={() => handleDecisao(v.id, 'APROVADA')}
+                            >
+                              <Check size={14} /> Aprovar
+                            </button>
+                            <button
+                              type="button" className="gestao-icon-btn" disabled={busyId === v.id}
+                              onClick={() => handleDecisao(v.id, 'REPROVADA')} title="Reprovar"
+                            >
+                              <X size={14} />
+                            </button>
+                          </>
+                        )}
+                        {podeEditar(v) && (
+                          <>
+                            <Link to={`/rh/vagas/${v.id}/editar`} className="gestao-icon-btn" title="Editar solicitação">
+                              <Pencil size={14} />
+                            </Link>
+                            <button
+                              type="button" className="gestao-icon-btn" disabled={busyId === v.id}
+                              onClick={() => handleCancelar(v.id)} title="Cancelar solicitação" style={{ color: '#b91c1c' }}
+                            >
+                              <XCircle size={14} />
+                            </button>
+                          </>
+                        )}
+                      </div>
                     </td>
                   </tr>
                   {isExpanded && (
@@ -155,6 +191,18 @@ const AprovacoesVagas = () => {
                               <span className="finance-detail-label">Aprovador</span>
                               <span className="finance-detail-value">{v.aprovador?.name || '—'}</span>
                             </div>
+                            {v.anexos_count > 0 && (
+                              <div className="finance-detail-field">
+                                <span className="finance-detail-label">Anexos</span>
+                                <span className="finance-detail-value"><Paperclip size={12} /> {v.anexos_count}</span>
+                              </div>
+                            )}
+                            {v.chamado_ti_id && (
+                              <div className="finance-detail-field">
+                                <span className="finance-detail-label">Chamado de TI</span>
+                                <span className="finance-detail-value"><a href={`/tickets/${v.chamado_ti_id}`}>#{v.chamado_ti_id}</a></span>
+                              </div>
+                            )}
                           </div>
                           {v.atividades_principais && (
                             <div className="finance-detail-obs">
