@@ -50,6 +50,14 @@ export async function marcarVagaCriada(id, referenciaVagaSenior) {
   return r.json();
 }
 
+export async function alternarDivulgacao(id, publicadaExternamente) {
+  const r = await apiFetch(`/rh/vagas/${id}/divulgacao`, {
+    method: 'PATCH',
+    body: JSON.stringify({ publicada_externamente: publicadaExternamente }),
+  });
+  return r.json();
+}
+
 // ── Anexos ──
 export async function getVagaAttachments(vagaId) {
   const r = await apiFetch(`/rh/vagas/${vagaId}/attachments`);

@@ -62,6 +62,7 @@ class VagaSolicitacao(Base):
     criada_no_senior_em = Column(DateTime(timezone=True), nullable=True)
     referencia_vaga_senior = Column(String(60), nullable=True)
     chamado_ti_id = Column(Integer, ForeignKey("tbl_tickets.id"), nullable=True)
+    publicada_externamente = Column(Boolean, nullable=False, default=False)
 
     # ── Campos do formulário (FOR 12.0.4, parte 1) ──
     motivo_abertura = Column(Enum(*MOTIVO_ABERTURA, name="rh_vaga_motivo", native_enum=False), nullable=False)
@@ -142,7 +143,10 @@ class VagaCandidato(Base):
     etapa = Column(Enum(*CANDIDATO_ETAPAS, name="rh_candidato_etapa", native_enum=False), nullable=False, default="TRIAGEM", index=True)
     motivo_reprovacao = Column(Text, nullable=True)
     order = Column(Integer, nullable=False, default=0)
-    created_by = Column(Integer, ForeignKey("tbl_users.id"), nullable=False)
+    # Nulo (19/09/2026, Bloco B) = veio de inscrição pública, sem usuário do
+    # sistema por trás (ver rh/public_routes.py) -- distingue de cadastro
+    # manual pelo RH.
+    created_by = Column(Integer, ForeignKey("tbl_users.id"), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 

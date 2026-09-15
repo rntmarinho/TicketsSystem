@@ -42,6 +42,8 @@ import CandidatosVaga from './pages/rh/CandidatosVaga';
 import LGPD from './pages/LGPD';
 import Notes from './pages/Notes';
 import ForgotPassword from './pages/ForgotPassword';
+import VagasPublicas from './pages/publico/VagasPublicas';
+import VagaPublicaDetalhe from './pages/publico/VagaPublicaDetalhe';
 import ModulePlaceholder from './pages/ModulePlaceholder';
 import GestaoConsominasReports from './pages/gestao-consominas/GestaoConsominasReports';
 import NovaDemanda from './pages/financeiro/NovaDemanda';
@@ -139,6 +141,12 @@ function App() {
           </PublicRoute>
         }
       />
+
+      {/* Vagas abertas ao público (Bloco B do ATS, 19/09/2026) -- sem
+          PublicRoute (estar logado não impede ver/indicar a vaga) nem
+          ProtectedRoute (candidato externo não tem conta no sistema). */}
+      <Route path="/vagas-abertas" element={<VagasPublicas />} />
+      <Route path="/vagas-abertas/:id" element={<VagaPublicaDetalhe />} />
 
       {/* Escopo de Rotas Privadas encapsuladas pela ProtectedRoute */}
       <Route

@@ -52,6 +52,7 @@ from rh.aprovador_routes import aprovador_bp as rh_aprovador_bp
 from rh.attachment_routes import attachment_bp as rh_attachment_bp
 from rh.attachment_routes import candidato_attachment_bp as rh_candidato_attachment_bp
 from rh.candidato_routes import candidato_bp as rh_candidato_bp
+from rh.public_routes import public_bp as rh_public_bp
 from flask_cors import CORS
 from services.rate_limiter import limiter
 from database.create_database import create_database, create_tables
@@ -208,6 +209,7 @@ def create_app():
     app.register_blueprint(rh_attachment_bp)
     app.register_blueprint(rh_candidato_attachment_bp)
     app.register_blueprint(rh_candidato_bp)
+    app.register_blueprint(rh_public_bp)
     # Health Check
     @app.route("/", methods=["GET"])
     def home():

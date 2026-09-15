@@ -93,6 +93,7 @@ def _serialize(session, v):
         "criada_no_senior_em": v.criada_no_senior_em.isoformat() if v.criada_no_senior_em else None,
         "referencia_vaga_senior": v.referencia_vaga_senior,
         "chamado_ti_id": v.chamado_ti_id,
+        "publicada_externamente": v.publicada_externamente,
         "anexos_count": session.query(Attachment).filter(Attachment.vaga_id == v.id).count(),
 
         "motivo_abertura": v.motivo_abertura,
@@ -559,6 +560,42 @@ def marcar_criada(vaga_id):
 
         audit_record(session, user_id, "marcar_vaga_criada_senior", "VagaSolicitacao", vaga.id, {
             "referencia_vaga_senior": referencia, "chamado_ti_id": chamado_id,
+        })
+        session.commit()
+        return jsonify({"success": True, "vaga": _serialize(session, vaga)}), 200
+    finally:
+        session.close()
+
+
+@vaga_bp.route("/<string:vaga_id>/divulgacao", methods=["PATCH"])
+@jwt_required()
+def alternar_divulgacao(vaga_id):
+    """Liga/desliga a divulgação externa (Bloco B, 19/09/2026) -- endpoint
+    dedicado, não reaproveita update_vaga porque esse é restrito ao próprio
+    solicitante e só funciona com a vaga ainda PENDENTE_APROVACAO (regra
+    oposta do que precisamos aqui). Uma vez publicada, a vaga some do
+    /public/vagas assim que reprovada/cancelada/desmarcada (ver
+    rh/public_routes.py, filtro por status)."""
+    user_id = int(get_jwt_identity())
+    role = get_current_role()
+    data = request.get_json() or {}
+    session = SessionLocal()
+    try:
+        if not _is_rh(session, user_id, role):
+            return jsonify({"success": False, "message": "Só o RH pode divulgar uma vaga externamente."}), 403
+
+        vaga = session.query(VagaSolicitacao).get(vaga_id)
+        if not vaga:
+            return jsonify({"success": False, "message": "Solicitação não encontrada."}), 404
+        if vaga.status not in ("APROVADA", "VAGA_CRIADA"):
+            return jsonify({"success": False, "message": "Só é possível divulgar uma vaga já aprovada."}), 409
+        if vaga.vaga_sigilosa:
+            return jsonify({"success": False, "message": "Vaga sigilosa não pode ser divulgada externamente."}), 400
+
+        publicar = bool(data.get("publicada_externamente"))
+        vaga.publicada_externamente = publicar
+        audit_record(session, user_id, "alternar_divulgacao_vaga", "VagaSolicitacao", vaga.id, {
+            "publicada_externamente": publicar,
         })
         session.commit()
         return jsonify({"success": True, "vaga": _serialize(session, vaga)}), 200

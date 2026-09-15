@@ -39,6 +39,9 @@ class Attachment(Base):
     `vaga_id` (18/09/2026) — mesma convenção, anexo de solicitação de vaga do
     RH, consultado em `rh/attachment_service.py`. `candidato_id` (19/09/2026)
     — currículo de candidato (Bloco A do ATS), mesmo `rh/attachment_service.py`.
+    `uploaded_by` nulo (Bloco B, 19/09/2026) = currículo enviado por
+    candidato externo via inscrição pública, sem usuário do sistema por trás
+    (ver `rh/public_routes.py`).
     """
     __tablename__ = "attachments"
 
@@ -54,7 +57,7 @@ class Attachment(Base):
     file_path = Column(String(500), nullable=False)
     file_size = Column(Integer, nullable=False)
     mime_type = Column(String(100), nullable=True)
-    uploaded_by = Column(Integer, ForeignKey("tbl_users.id"), nullable=False)
+    uploaded_by = Column(Integer, ForeignKey("tbl_users.id"), nullable=True)
     uploaded_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     task = relationship("Task", back_populates="attachments")

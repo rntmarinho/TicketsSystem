@@ -174,8 +174,12 @@ def delete_attachment(session, user_id, role, attachment_id):
         vaga = session.query(VagaSolicitacao).get(attachment.vaga_id)
         allowed = (is_uploader or role == "ADMIN") and vaga is not None
     else:
+        # Currículo de candidato é dado do RH inteiro, não de quem subiu --
+        # importante desde o Bloco B (19/09/2026): inscrição pública não tem
+        # uploaded_by (None), então "is_uploader" nunca bateria pra ninguém
+        # do RH conseguir excluir o currículo de um candidato externo.
         candidato = session.query(VagaCandidato).get(attachment.candidato_id)
-        allowed = (is_uploader or role == "ADMIN") and candidato is not None and _is_rh(user_id, role, session)
+        allowed = candidato is not None and _is_rh(user_id, role, session)
     if not allowed:
         return {"success": False, "message": "Sem permissão."}, 403
 

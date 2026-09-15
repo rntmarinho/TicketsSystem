@@ -1,7 +1,8 @@
 import { Fragment, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { CheckCircle2, ChevronDown, ChevronRight, Loader2, Users } from 'lucide-react';
+import { CheckCircle2, ChevronDown, ChevronRight, Loader2, Users, Share2 } from 'lucide-react';
 import { getVagas, marcarVagaCriada } from '../../services/rh/vagaService';
+import DivulgacaoModal from './components/DivulgacaoModal';
 import '../gestao/styles/Gestao.css';
 import '../financeiro/styles/Financeiro.css';
 
@@ -14,6 +15,7 @@ const FilaRH = () => {
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState(null);
   const [expandedId, setExpandedId] = useState(null);
+  const [divulgandoVaga, setDivulgandoVaga] = useState(null);
 
   const load = () => {
     setLoading(true);
@@ -95,6 +97,11 @@ const FilaRH = () => {
                         <Link to={`/rh/vagas/${v.id}/candidatos`} className="gestao-icon-btn" title="Ver candidatos">
                           <Users size={14} /> Candidatos
                         </Link>
+                        {!v.vaga_sigilosa && (
+                          <button type="button" className="gestao-icon-btn" onClick={() => setDivulgandoVaga(v)} title="Divulgar vaga">
+                            <Share2 size={14} /> Divulgar
+                          </button>
+                        )}
                         <button
                           type="button" className="gestao-btn-primary" disabled={busyId === v.id}
                           onClick={() => handleMarcarCriada(v.id)}
@@ -168,15 +175,30 @@ const FilaRH = () => {
                 <td>{v.chamado_ti_id ? <a href={`/tickets/${v.chamado_ti_id}`}>#{v.chamado_ti_id}</a> : '—'}</td>
                 <td>{v.criada_no_senior_em ? new Date(v.criada_no_senior_em).toLocaleDateString('pt-BR') : '—'}</td>
                 <td className="finance-col-acoes">
-                  <Link to={`/rh/vagas/${v.id}/candidatos`} className="gestao-icon-btn" title="Ver candidatos">
-                    <Users size={14} /> Candidatos
-                  </Link>
+                  <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+                    <Link to={`/rh/vagas/${v.id}/candidatos`} className="gestao-icon-btn" title="Ver candidatos">
+                      <Users size={14} /> Candidatos
+                    </Link>
+                    {!v.vaga_sigilosa && (
+                      <button type="button" className="gestao-icon-btn" onClick={() => setDivulgandoVaga(v)} title="Divulgar vaga">
+                        <Share2 size={14} /> Divulgar
+                      </button>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+
+      {divulgandoVaga && (
+        <DivulgacaoModal
+          vaga={divulgandoVaga}
+          onClose={() => setDivulgandoVaga(null)}
+          onChanged={load}
+        />
+      )}
     </div>
   );
 };
