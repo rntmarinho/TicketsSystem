@@ -69,3 +69,39 @@ def delete_attachment(attachment_id):
         return jsonify(response), status
     finally:
         session.close()
+
+
+# Anexo de currículo do candidato (Bloco A do ATS, 19/09/2026) -- blueprint
+# separado porque o prefixo de URL é diferente (/rh/candidatos, não /rh/vagas);
+# download/exclusão reaproveitam as rotas genéricas acima (get_attachment_for_download
+# e delete_attachment já resolvem vaga_id OU candidato_id pelo próprio anexo).
+candidato_attachment_bp = Blueprint("rh_candidato_attachment_bp", __name__, url_prefix="/rh/candidatos")
+
+
+@candidato_attachment_bp.route("/<string:candidato_id>/attachments", methods=["GET"])
+@jwt_required()
+def list_candidato_attachments(candidato_id):
+    user_id = int(get_jwt_identity())
+    role = get_current_role()
+    session = SessionLocal()
+    try:
+        result, status = attachment_service.list_candidato_attachments(session, user_id, role, candidato_id)
+        return jsonify(result), status
+    finally:
+        session.close()
+
+
+@candidato_attachment_bp.route("/<string:candidato_id>/attachments", methods=["POST"])
+@jwt_required()
+@limiter.limit("30 per minute")
+def upload_candidato_attachment(candidato_id):
+    user_id = int(get_jwt_identity())
+    role = get_current_role()
+    if "arquivo" not in request.files:
+        return jsonify({"success": False, "message": "Campo 'arquivo' ausente."}), 400
+    session = SessionLocal()
+    try:
+        response, status = attachment_service.upload_candidato_attachment(session, user_id, role, candidato_id, request.files["arquivo"])
+        return jsonify(response), status
+    finally:
+        session.close()

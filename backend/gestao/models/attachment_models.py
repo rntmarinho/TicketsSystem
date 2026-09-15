@@ -37,7 +37,8 @@ class Attachment(Base):
     convenção de `project_id`: sem `relationship()` de volta, consultado na mão
     em `finance/attachment_service.py` (evita import cruzado entre os módulos).
     `vaga_id` (18/09/2026) — mesma convenção, anexo de solicitação de vaga do
-    RH, consultado em `rh/attachment_service.py`.
+    RH, consultado em `rh/attachment_service.py`. `candidato_id` (19/09/2026)
+    — currículo de candidato (Bloco A do ATS), mesmo `rh/attachment_service.py`.
     """
     __tablename__ = "attachments"
 
@@ -48,6 +49,7 @@ class Attachment(Base):
     folder_id = Column(String(36), ForeignKey("folders.id", ondelete="CASCADE"), nullable=True, index=True)
     demand_id = Column(String(36), ForeignKey("finance_demands.id", ondelete="CASCADE"), nullable=True, index=True)
     vaga_id = Column(String(36), ForeignKey("rh_vagas_solicitacoes.id", ondelete="CASCADE"), nullable=True, index=True)
+    candidato_id = Column(String(36), ForeignKey("rh_vaga_candidatos.id", ondelete="CASCADE"), nullable=True, index=True)
     file_name = Column(String(255), nullable=False)
     file_path = Column(String(500), nullable=False)
     file_size = Column(Integer, nullable=False)

@@ -120,3 +120,40 @@ class VagaSolicitacao(Base):
 
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+
+
+CANDIDATO_ETAPAS = ("TRIAGEM", "ENTREVISTA_RH", "ENTREVISTA_GESTOR", "PROPOSTA", "CONTRATADO", "REPROVADO")
+
+
+class VagaCandidato(Base):
+    """Bloco A do ATS (19/09/2026): pipeline de candidatos por vaga, só RH/ADMIN
+    (não o aprovador/gestor). Cadastro manual -- currículo chega por e-mail/
+    WhatsApp, RH lança aqui e move pelas etapas até contratar. Só pode ser
+    criado com a vaga em APROVADA ou VAGA_CRIADA (ver candidato_routes.py);
+    REPROVADO é etapa terminal, não status calculado."""
+    __tablename__ = "rh_vaga_candidatos"
+
+    id = Column(String(36), primary_key=True, default=new_uuid)
+    vaga_id = Column(String(36), ForeignKey("rh_vagas_solicitacoes.id", ondelete="CASCADE"), nullable=False, index=True)
+    nome = Column(String(255), nullable=False)
+    email = Column(String(255), nullable=True)
+    telefone = Column(String(30), nullable=True)
+    origem = Column(String(120), nullable=True)
+    etapa = Column(Enum(*CANDIDATO_ETAPAS, name="rh_candidato_etapa", native_enum=False), nullable=False, default="TRIAGEM", index=True)
+    motivo_reprovacao = Column(Text, nullable=True)
+    order = Column(Integer, nullable=False, default=0)
+    created_by = Column(Integer, ForeignKey("tbl_users.id"), nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+
+
+class VagaCandidatoComentario(Base):
+    """Histórico de interação com o candidato (notas de entrevista, feedback
+    etc.) -- mesmo padrão de gestao.models.task_models.TaskComment."""
+    __tablename__ = "rh_vaga_candidato_comentarios"
+
+    id = Column(String(36), primary_key=True, default=new_uuid)
+    candidato_id = Column(String(36), ForeignKey("rh_vaga_candidatos.id", ondelete="CASCADE"), nullable=False, index=True)
+    author_id = Column(Integer, ForeignKey("tbl_users.id"), nullable=False)
+    body = Column(Text, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)

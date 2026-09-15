@@ -1,5 +1,6 @@
 import { Fragment, useEffect, useState } from 'react';
-import { CheckCircle2, ChevronDown, ChevronRight, Loader2 } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { CheckCircle2, ChevronDown, ChevronRight, Loader2, Users } from 'lucide-react';
 import { getVagas, marcarVagaCriada } from '../../services/rh/vagaService';
 import '../gestao/styles/Gestao.css';
 import '../financeiro/styles/Financeiro.css';
@@ -90,12 +91,17 @@ const FilaRH = () => {
                     <td>{v.aprovador?.name || '—'}</td>
                     <td>{v.decidido_em ? new Date(v.decidido_em).toLocaleDateString('pt-BR') : '—'}</td>
                     <td className="finance-col-acoes">
-                      <button
-                        type="button" className="gestao-btn-primary" disabled={busyId === v.id}
-                        onClick={() => handleMarcarCriada(v.id)}
-                      >
-                        <CheckCircle2 size={14} /> Marcar como Criada
-                      </button>
+                      <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+                        <Link to={`/rh/vagas/${v.id}/candidatos`} className="gestao-icon-btn" title="Ver candidatos">
+                          <Users size={14} /> Candidatos
+                        </Link>
+                        <button
+                          type="button" className="gestao-btn-primary" disabled={busyId === v.id}
+                          onClick={() => handleMarcarCriada(v.id)}
+                        >
+                          <CheckCircle2 size={14} /> Marcar como Criada
+                        </button>
+                      </div>
                     </td>
                   </tr>
                   {isExpanded && (
@@ -149,11 +155,11 @@ const FilaRH = () => {
       <div className="gestao-table-wrap finance-table-wrap">
         <table className="gestao-table">
           <thead>
-            <tr><th>Cargo</th><th>Centro de Custo</th><th>Referência no Senior</th><th>Chamado de TI</th><th>Criada em</th></tr>
+            <tr><th>Cargo</th><th>Centro de Custo</th><th>Referência no Senior</th><th>Chamado de TI</th><th>Criada em</th><th className="finance-col-acoes">Ações</th></tr>
           </thead>
           <tbody>
             {criadas.length === 0 ? (
-              <tr><td colSpan={5} className="gestao-empty">Nenhuma vaga criada ainda.</td></tr>
+              <tr><td colSpan={6} className="gestao-empty">Nenhuma vaga criada ainda.</td></tr>
             ) : criadas.map((v) => (
               <tr key={v.id}>
                 <td>{v.cargo}</td>
@@ -161,6 +167,11 @@ const FilaRH = () => {
                 <td>{v.referencia_vaga_senior || '—'}</td>
                 <td>{v.chamado_ti_id ? <a href={`/tickets/${v.chamado_ti_id}`}>#{v.chamado_ti_id}</a> : '—'}</td>
                 <td>{v.criada_no_senior_em ? new Date(v.criada_no_senior_em).toLocaleDateString('pt-BR') : '—'}</td>
+                <td className="finance-col-acoes">
+                  <Link to={`/rh/vagas/${v.id}/candidatos`} className="gestao-icon-btn" title="Ver candidatos">
+                    <Users size={14} /> Candidatos
+                  </Link>
+                </td>
               </tr>
             ))}
           </tbody>

@@ -38,6 +38,7 @@ import AprovadoresCentroCusto from './pages/administracao/AprovadoresCentroCusto
 import NovaVaga from './pages/rh/NovaVaga';
 import AprovacoesVagas from './pages/rh/AprovacoesVagas';
 import FilaRH from './pages/rh/FilaRH';
+import CandidatosVaga from './pages/rh/CandidatosVaga';
 import LGPD from './pages/LGPD';
 import Notes from './pages/Notes';
 import ForgotPassword from './pages/ForgotPassword';
@@ -329,6 +330,18 @@ function App() {
                     element={
                       <DepartmentProtectedRoute role={role} department="RH" userDepartment={user?.department}>
                         <FilaRH />
+                      </DepartmentProtectedRoute>
+                    }
+                  />
+                  {/* Pipeline de candidatos por vaga (Bloco A do ATS, 19/09/2026):
+                      só RH/ADMIN, mesmo guarda de departamento de /rh -- o
+                      backend também restringe (decisão da Renata: nem o
+                      aprovador/gestor da vaga vê candidato). */}
+                  <Route
+                    path="/rh/vagas/:id/candidatos"
+                    element={
+                      <DepartmentProtectedRoute role={role} department="RH" userDepartment={user?.department}>
+                        <CandidatosVaga />
                       </DepartmentProtectedRoute>
                     }
                   />
