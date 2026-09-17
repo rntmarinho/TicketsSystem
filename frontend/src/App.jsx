@@ -38,6 +38,7 @@ import AprovadoresCentroCusto from './pages/administracao/AprovadoresCentroCusto
 import NovaVaga from './pages/rh/NovaVaga';
 import AprovacoesVagas from './pages/rh/AprovacoesVagas';
 import FilaRH from './pages/rh/FilaRH';
+import KanbanVagas from './pages/rh/KanbanVagas';
 import CandidatosVaga from './pages/rh/CandidatosVaga';
 import LGPD from './pages/LGPD';
 import Notes from './pages/Notes';
@@ -338,6 +339,17 @@ function App() {
                     element={
                       <DepartmentProtectedRoute role={role} department="RH" userDepartment={user?.department}>
                         <FilaRH />
+                      </DepartmentProtectedRoute>
+                    }
+                  />
+                  {/* Kanban geral de vagas (17/09/2026): cards são vagas
+                      inteiras por status, não candidatos (isso já existe em
+                      /rh/vagas/:id/candidatos) -- mesmo guarda de setor. */}
+                  <Route
+                    path="/rh/kanban"
+                    element={
+                      <DepartmentProtectedRoute role={role} department="RH" userDepartment={user?.department}>
+                        <KanbanVagas />
                       </DepartmentProtectedRoute>
                     }
                   />

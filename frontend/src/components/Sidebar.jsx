@@ -118,6 +118,7 @@ function buildModules(ctx) {
       prefixes: ['/rh'],
       items: [
         ctx.canSeeRH && { to: '/rh', icon: LayoutDashboard, label: 'Fila de Vagas' },
+        ctx.canSeeRH && { to: '/rh/kanban', icon: Columns3, label: 'Kanban de Vagas' },
         ctx.isOperational && { to: '/rh/nova-vaga', icon: Send, label: 'Solicitar Vaga' },
         ctx.isOperational && { to: '/rh/aprovacoes', icon: CheckSquare, label: 'Aprovações de Vaga' },
       ].filter(Boolean),
